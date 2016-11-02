@@ -111,7 +111,7 @@ public final class TransformerStateMachine<State, In, Out> implements FlowableTr
 	}
 
 	private static final class UnsubscribedNotificationHolder {
-		private static final Notification<Object> INSTANCE = Notification.createOnNext(null);
+		private static final Notification<Object> INSTANCE = Notification.createOnNext(new Object());
 
 		@SuppressWarnings("unchecked")
 		static <T> Notification<T> unsubscribedNotification() {
