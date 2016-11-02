@@ -2,8 +2,10 @@ package com.github.davidmoten.rx2;
 
 import java.nio.charset.CharsetDecoder;
 import java.util.concurrent.Callable;
+import java.util.regex.Pattern;
 
 import com.github.davidmoten.rx2.internal.flowable.FlowableTransformerStateMachine;
+import com.github.davidmoten.rx2.internal.flowable.FlowableTransformerStringSplit;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.FlowableEmitter;
@@ -12,10 +14,17 @@ import io.reactivex.functions.BiPredicate;
 import io.reactivex.functions.Function3;
 
 public class Transformers {
+	
+	private Transformers() {
+		//prevent instantiation
+	}
 
-	public static FlowableTransformer<String, String> split(String pattern) {
-		// TODO Auto-generated method stub
-		return null;
+	public static FlowableTransformer<String, String> split(String pattern, BackpressureStrategy backpressureStrategy, int batchSize) {
+		return FlowableTransformerStringSplit.split(pattern, null, backpressureStrategy, batchSize);
+	}
+
+	public static FlowableTransformer<String, String> split(Pattern pattern, BackpressureStrategy backpressureStrategy, int batchSize) {
+		return FlowableTransformerStringSplit.split(null, pattern, backpressureStrategy, batchSize);
 	}
 
 	public static FlowableTransformer<byte[], String> decode(CharsetDecoder decoder) {

@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -81,7 +82,7 @@ public final class Strings {
 	}
 
 	public static Flowable<String> split(Flowable<String> source, String pattern) {
-		return source.compose(Transformers.split(pattern));
+		return source.compose(Transformers.split(pattern,BackpressureStrategy.BUFFER, 1));
 	}
 
 	public static Maybe<String> concat(Flowable<String> source) {
@@ -205,7 +206,7 @@ public final class Strings {
 
 	public static Flowable<List<String>> splitLines(InputStream is, Charset charset, final String delimiter,
 			final String commentPrefix) {
-		return from(is, charset).compose(Transformers.split("\n")) //
+		return from(is, charset).compose(Transformers.split("\n", BackpressureStrategy.BUFFER, 1)) //
 				.filter(new Predicate<String>() {
 					@Override
 					public boolean test(String line) {
