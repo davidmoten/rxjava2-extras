@@ -11,7 +11,9 @@ import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableOnSubscribe;
 import io.reactivex.FlowableTransformer;
 import io.reactivex.Notification;
-import io.reactivex.functions.BiFunction;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.BiPredicate;
+import io.reactivex.functions.Cancellable;
 import io.reactivex.functions.Function;
 import io.reactivex.functions.Function3;
 import io.reactivex.functions.Predicate;
@@ -19,14 +21,14 @@ import io.reactivex.functions.Predicate;
 public final class FlowableTransformerStateMachine<State, In, Out> implements FlowableTransformer<In, Out> {
 
 	private final Callable<? extends State> initialState;
-	private final Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition;
-	private final BiFunction<? super State, ? super Emitter<Out>, Boolean> completion;
+	private final Function3<? super State, ? super In, ? super FlowableEmitter<Out>, ? extends State> transition;
+	private final BiPredicate<? super State, ? super FlowableEmitter<Out>> completion;
 	private final BackpressureStrategy backpressureStrategy;
 	private final int initialRequest;
 
 	private FlowableTransformerStateMachine(Callable<? extends State> initialState,
-			Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition,
-			BiFunction<? super State, ? super Emitter<Out>, Boolean> completion,
+			Function3<? super State, ? super In, ? super FlowableEmitter<Out>, ? extends State> transition,
+			BiPredicate<? super State, ? super FlowableEmitter<Out>> completion,
 			BackpressureStrategy backpressureStrategy, int initialRequest) {
 		Preconditions.checkNotNull(initialState);
 		Preconditions.checkNotNull(transition);
@@ -41,13 +43,13 @@ public final class FlowableTransformerStateMachine<State, In, Out> implements Fl
 	}
 
 	public static <State, In, Out> FlowableTransformer<In, Out> create(Callable<? extends State> initialState,
-			Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition,
-			BiFunction<? super State, ? super Emitter<Out>, Boolean> completion,
-			BackpressureStrategy backpressureStrategy, int initialRequest) {
-		return new FlowableTransformerStateMachine<State, In, Out>(initialState, transition, completion, backpressureStrategy,
-				initialRequest);
+			Function3<? super State, ? super In, ? super FlowableEmitter<Out>, ? extends State> transition,
+			BiPredicate<? super State, ? super FlowableEmitter<Out>> completion, BackpressureStrategy backpressureStrategy,
+			int initialRequest) {
+		return new FlowableTransformerStateMachine<State, In, Out>(initialState, transition, completion,
+				backpressureStrategy, initialRequest);
 	}
-
+	
 	@Override
 	public Flowable<Out> apply(final Flowable<In> source) {
 		// use defer so we can have a single state reference for each
@@ -70,8 +72,8 @@ public final class FlowableTransformerStateMachine<State, In, Out> implements Fl
 	}
 
 	private static <State, Out, In> Function<Notification<In>, Flowable<Notification<Out>>> execute(
-			final Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition,
-			final BiFunction<? super State, ? super Emitter<Out>, Boolean> completion, final Mutable<State> state,
+			final Function3<? super State, ? super In, ? super FlowableEmitter<Out>, ? extends State> transition,
+			final BiPredicate<? super State, ? super FlowableEmitter<Out>> completion, final Mutable<State> state,
 			final BackpressureStrategy backpressureStrategy) {
 
 		return new Function<Notification<In>, Flowable<Notification<Out>>>() {
@@ -83,7 +85,7 @@ public final class FlowableTransformerStateMachine<State, In, Out> implements Fl
 
 					@Override
 					public void subscribe(FlowableEmitter<Notification<Out>> emitter) throws Exception {
-						Emitter<Out> w = wrap(emitter);
+						FlowableEmitter<Out> w = wrap(emitter);
 						if (in.isOnNext()) {
 							state.value = transition.apply(state.value, in.getValue(), w);
 							if (!emitter.isCancelled())
@@ -95,7 +97,7 @@ public final class FlowableTransformerStateMachine<State, In, Out> implements Fl
 								emitter.onNext(UnsubscribedNotificationHolder.<Out>unsubscribedNotification());
 							}
 						} else if (in.isOnComplete()) {
-							if (completion.apply(state.value, w) && !emitter.isCancelled()) {
+							if (completion.test(state.value, w) && !emitter.isCancelled()) {
 								w.onComplete();
 							}
 						} else if (!emitter.isCancelled()) {
@@ -134,15 +136,15 @@ public final class FlowableTransformerStateMachine<State, In, Out> implements Fl
 		}
 	}
 
-	private static <Out> NotificationEmitter<Out> wrap(Emitter<? super Notification<Out>> emitter) {
+	private static <Out> NotificationEmitter<Out> wrap(FlowableEmitter<? super Notification<Out>> emitter) {
 		return new NotificationEmitter<Out>(emitter);
 	}
 
-	private static final class NotificationEmitter<Out> implements Emitter<Out> {
+	private static final class NotificationEmitter<Out> implements FlowableEmitter<Out> {
 
-		private final Emitter<? super Notification<Out>> emitter;
+		private final FlowableEmitter<? super Notification<Out>> emitter;
 
-		NotificationEmitter(Emitter<? super Notification<Out>> emitter) {
+		NotificationEmitter(FlowableEmitter<? super Notification<Out>> emitter) {
 			this.emitter = emitter;
 		}
 
@@ -161,6 +163,36 @@ public final class FlowableTransformerStateMachine<State, In, Out> implements Fl
 			emitter.onNext(Notification.createOnNext(t));
 		}
 
+		@Override
+		public void setDisposable(Disposable s) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void setCancellable(Cancellable c) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public long requested() {
+			return emitter.requested();
+		}
+
+		@Override
+		public boolean isCancelled() {
+			return emitter.isCancelled();
+
+		}
+
+		@Override
+		public FlowableEmitter<Out> serialize() {
+			throw new UnsupportedOperationException();
+		}
+
 	}
+
+	
+
+	
 
 }
