@@ -18,36 +18,36 @@ import io.reactivex.functions.Function;
 import io.reactivex.functions.Function3;
 import io.reactivex.functions.Predicate;
 
-public final class FlowableTransformerStateMachine<State, In, Out> implements FlowableTransformer<In, Out> {
+public final class TransformerStateMachine<State, In, Out> implements FlowableTransformer<In, Out> {
 
 	private final Callable<? extends State> initialState;
 	private final Function3<? super State, ? super In, ? super FlowableEmitter<Out>, ? extends State> transition;
 	private final BiPredicate<? super State, ? super FlowableEmitter<Out>> completion;
 	private final BackpressureStrategy backpressureStrategy;
-	private final int initialRequest;
+	private final int requestBatchSize;
 
-	private FlowableTransformerStateMachine(Callable<? extends State> initialState,
+	private TransformerStateMachine(Callable<? extends State> initialState,
 			Function3<? super State, ? super In, ? super FlowableEmitter<Out>, ? extends State> transition,
 			BiPredicate<? super State, ? super FlowableEmitter<Out>> completion,
-			BackpressureStrategy backpressureStrategy, int initialRequest) {
+			BackpressureStrategy backpressureStrategy, int requestBatchSize) {
 		Preconditions.checkNotNull(initialState);
 		Preconditions.checkNotNull(transition);
 		Preconditions.checkNotNull(completion);
 		Preconditions.checkNotNull(backpressureStrategy);
-		Preconditions.checkArgument(initialRequest > 0, "initialRequest must be greater than zero");
+		Preconditions.checkArgument(requestBatchSize > 0, "initialRequest must be greater than zero");
 		this.initialState = initialState;
 		this.transition = transition;
 		this.completion = completion;
 		this.backpressureStrategy = backpressureStrategy;
-		this.initialRequest = initialRequest;
+		this.requestBatchSize = requestBatchSize;
 	}
 
 	public static <State, In, Out> FlowableTransformer<In, Out> create(Callable<? extends State> initialState,
 			Function3<? super State, ? super In, ? super FlowableEmitter<Out>, ? extends State> transition,
 			BiPredicate<? super State, ? super FlowableEmitter<Out>> completion, BackpressureStrategy backpressureStrategy,
-			int initialRequest) {
-		return new FlowableTransformerStateMachine<State, In, Out>(initialState, transition, completion,
-				backpressureStrategy, initialRequest);
+			int requestBatchSize) {
+		return new TransformerStateMachine<State, In, Out>(initialState, transition, completion,
+				backpressureStrategy, requestBatchSize);
 	}
 	
 	@Override
@@ -61,7 +61,7 @@ public final class FlowableTransformerStateMachine<State, In, Out> implements Fl
 				return source.materialize()
 						// do state transitions and emit notifications
 						// use flatMap to emit notification values
-						.flatMap(execute(transition, completion, state, backpressureStrategy), initialRequest)
+						.flatMap(execute(transition, completion, state, backpressureStrategy), requestBatchSize)
 						// complete if we encounter an unsubscribed sentinel
 						.takeWhile(NOT_UNSUBSCRIBED)
 						// flatten notifications to a stream which will enable

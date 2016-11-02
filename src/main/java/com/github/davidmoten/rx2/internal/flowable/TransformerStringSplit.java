@@ -12,7 +12,7 @@ import io.reactivex.FlowableTransformer;
 import io.reactivex.functions.BiPredicate;
 import io.reactivex.functions.Function3;
 
-public final class FlowableTransformerStringSplit {
+public final class TransformerStringSplit {
 
 	public static <T> FlowableTransformer<String, String> split(final String pattern, final Pattern compiledPattern, final BackpressureStrategy backpressureStrategy, int batchSize) {
 		Callable<String> initialState = Callables.constant(null);

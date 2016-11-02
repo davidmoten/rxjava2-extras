@@ -115,22 +115,6 @@ public final class Bytes {
 		return Flowable.using(resourceFactory, observableFactory, disposeAction);
 	}
 
-	private static final class ZipHolder {
-		static final Consumer<ZipInputStream> DISPOSER = new Consumer<ZipInputStream>() {
-
-			@Override
-			public void accept(ZipInputStream zis) throws IOException {
-				zis.close();
-			}
-		};
-		final static Function<ZipInputStream, Flowable<ZippedEntry>> OBSERVABLE_FACTORY = new Function<ZipInputStream, Flowable<ZippedEntry>>() {
-			@Override
-			public Flowable<ZippedEntry> apply(ZipInputStream zis) {
-				return unzip(zis);
-			}
-		};
-	}
-
 	public static Flowable<ZippedEntry> unzip(final InputStream is) {
 		return unzip(new ZipInputStream(is));
 	}
@@ -144,7 +128,8 @@ public final class Bytes {
 				if (zipEntry != null) {
 					emitter.onNext(new ZippedEntry(zipEntry, zis));
 				} else {
-					//end of stream so eagerly close the stream
+					// end of stream so eagerly close the stream (might not be a
+					// good idea since this method did not create the zis
 					zis.close();
 					emitter.onComplete();
 				}
@@ -152,7 +137,7 @@ public final class Bytes {
 		});
 
 	}
-	
+
 	public static Single<byte[]> collect(Flowable<byte[]> source) {
 		return source.collect(BosCreatorHolder.INSTANCE, BosCollectorHolder.INSTANCE).map(BosToArrayHolder.INSTANCE);
 	}
@@ -165,7 +150,7 @@ public final class Bytes {
 			}
 		};
 	}
-	
+
 	private static final class BosCreatorHolder {
 
 		static final Callable<ByteArrayOutputStream> INSTANCE = new Callable<ByteArrayOutputStream>() {
@@ -193,6 +178,22 @@ public final class Bytes {
 			@Override
 			public byte[] apply(ByteArrayOutputStream bos) {
 				return bos.toByteArray();
+			}
+		};
+	}
+	
+	private static final class ZipHolder {
+		static final Consumer<ZipInputStream> DISPOSER = new Consumer<ZipInputStream>() {
+
+			@Override
+			public void accept(ZipInputStream zis) throws IOException {
+				zis.close();
+			}
+		};
+		final static Function<ZipInputStream, Flowable<ZippedEntry>> OBSERVABLE_FACTORY = new Function<ZipInputStream, Flowable<ZippedEntry>>() {
+			@Override
+			public Flowable<ZippedEntry> apply(ZipInputStream zis) {
+				return unzip(zis);
 			}
 		};
 	}
