@@ -4,6 +4,7 @@ import java.nio.charset.CharsetDecoder;
 import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 
+import com.github.davidmoten.rx2.StateMachine;
 import com.github.davidmoten.rx2.internal.flowable.TransformerDecode;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStateMachine;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStringSplit;
@@ -15,6 +16,8 @@ import io.reactivex.functions.BiPredicate;
 import io.reactivex.functions.Function3;
 
 public class Transformers {
+	
+	public static final int DEFAULT_INITIAL_BATCH = 1;
 
 	private Transformers() {
 		// prevent instantiation
@@ -31,7 +34,7 @@ public class Transformers {
 	}
 
 	public static FlowableTransformer<byte[], String> decode(CharsetDecoder decoder) {
-		return TransformerDecode.decode(decoder, BackpressureStrategy.BUFFER, 1);
+		return TransformerDecode.decode(decoder, BackpressureStrategy.BUFFER, DEFAULT_INITIAL_BATCH);
 	}
 	
 	public static FlowableTransformer<byte[], String> decode(CharsetDecoder decoder, BackpressureStrategy backpressureStrategy, int requestBatchSize) {
@@ -45,5 +48,9 @@ public class Transformers {
 		return TransformerStateMachine.create(initialState, transition, completion, backpressureStrategy,
 				requestBatchSize);
 	}
+	
+	public static StateMachine.Builder stateMachine() {
+        return StateMachine.builder();
+    }
 
 }
