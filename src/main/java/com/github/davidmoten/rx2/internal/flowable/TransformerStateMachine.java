@@ -5,7 +5,6 @@ import java.util.concurrent.Callable;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.BackpressureStrategy;
-import io.reactivex.Emitter;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableOnSubscribe;
