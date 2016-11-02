@@ -16,7 +16,7 @@ import com.github.davidmoten.rx2.util.ZippedEntry;
 
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
-import io.reactivex.FlowableTransformer;
+import io.reactivex.Single;
 import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
@@ -152,18 +152,20 @@ public final class Bytes {
 		});
 
 	}
+	
+	public static Single<byte[]> collect(Flowable<byte[]> source) {
+		return source.collect(BosCreatorHolder.INSTANCE, BosCollectorHolder.INSTANCE).map(BosToArrayHolder.INSTANCE);
+	}
 
-	public static FlowableTransformer<byte[], byte[]> collect() {
-		return new FlowableTransformer<byte[], byte[]>() {
-
+	public static Function<Flowable<byte[]>, Single<byte[]>> collect() {
+		return new Function<Flowable<byte[]>, Single<byte[]>>() {
 			@Override
-			public Flowable<byte[]> apply(Flowable<byte[]> source) {
-				return source.collect(BosCreatorHolder.INSTANCE, BosCollectorHolder.INSTANCE)
-						.map(BosToArrayHolder.INSTANCE).toFlowable();
+			public Single<byte[]> apply(Flowable<byte[]> source) throws Exception {
+				return collect(source);
 			}
 		};
 	}
-
+	
 	private static final class BosCreatorHolder {
 
 		static final Callable<ByteArrayOutputStream> INSTANCE = new Callable<ByteArrayOutputStream>() {
