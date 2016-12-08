@@ -1,2 +1,2 @@
-# rxjava-extras-2
+# rxjava2-extras
 Utilities for use with RxJava 2
