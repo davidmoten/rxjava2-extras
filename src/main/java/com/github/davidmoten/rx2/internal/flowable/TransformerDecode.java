@@ -15,7 +15,12 @@ import io.reactivex.functions.Function3;
 
 public final class TransformerDecode {
 
-    public static FlowableTransformer<byte[], String> decode(final CharsetDecoder decoder, BackpressureStrategy backpressureStrategy, int batchSize) {
+    private TransformerDecode() {
+        // prevent instantiation
+    }
+
+    public static FlowableTransformer<byte[], String> decode(final CharsetDecoder decoder,
+            BackpressureStrategy backpressureStrategy, int batchSize) {
         Callable<ByteBuffer> initialState = new Callable<ByteBuffer>() {
 
             @Override
@@ -39,7 +44,8 @@ public final class TransformerDecode {
             }
         };
 
-        return com.github.davidmoten.rx2.Transformers.stateMachine(initialState, transition, completion, backpressureStrategy, batchSize);
+        return com.github.davidmoten.rx2.Transformers.stateMachine(initialState, transition,
+                completion, backpressureStrategy, batchSize);
     }
 
     private static final class Result {

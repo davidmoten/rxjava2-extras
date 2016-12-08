@@ -2,17 +2,19 @@ package com.github.davidmoten.rx2;
 
 import static com.github.davidmoten.rx2.Strings.decode;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.util.Iterator;
 
 import org.junit.Test;
 
 import io.reactivex.Flowable;
 import io.reactivex.functions.BiFunction;
-
 
 public class StringsTest {
 
@@ -82,15 +84,81 @@ public class StringsTest {
             assertEquals(IOException.class, e.getCause().getClass());
         }
     }
-    
+
     @Test
     public void testFromClasspath() {
-    	String expected = "hello world\nincoming message";
-    	assertEquals(expected, Strings.fromClasspath("/test2.txt").reduce(new BiFunction<String, String, String>() {
-			@Override
-			public String apply(String a, String b) {
-				return a+b;
-			}
-		}).blockingGet());
+        String expected = "hello world\nincoming message";
+        assertEquals(expected, Strings.fromClasspath("/test2.txt")
+                .reduce(new BiFunction<String, String, String>() {
+                    @Override
+                    public String apply(String a, String b) {
+                        return a + b;
+                    }
+                }).blockingGet());
+    }
+
+    @Test
+    public void testSplitLongPattern() {
+        Iterator<String> iter = Strings.split(Flowable.just("asdfqw", "erasdf"), "qwer")
+                .blockingIterable().iterator();
+        assertTrue(iter.hasNext());
+        assertEquals("asdf", iter.next());
+        assertTrue(iter.hasNext());
+        assertEquals("asdf", iter.next());
+        assertFalse(iter.hasNext());
+    }
+
+    @Test
+    public void testSplitEmpty() {
+        Flowable.<String> empty() //
+                .compose(Transformers.split("\n")) //
+                .test() //
+                .assertNoValues() //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSplitNormal() {
+        Flowable.just("boo:an", "d:you") //
+                .compose(Transformers.split(":")) //
+                .test() //
+                .assertValues("boo", "and", "you") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSplitEmptyItemsAtBeginningMiddleAndEndProduceBlanks() {
+        Flowable.just("::boo:an", "d:::you::") //
+                .compose(Transformers.split(":")) //
+                .test() //
+                .assertValues("", "", "boo", "and", "", "", "you", "", "") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSplitBlankProducesBlank() {
+        Flowable.just("") //
+                .compose(Transformers.split(":")) //
+                .test() //
+                .assertValues("") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSplitNoSeparatorProducesSingle() {
+        Flowable.just("and") //
+                .compose(Transformers.split(":")) //
+                .test() //
+                .assertValues("and") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSplitSeparatorOnlyProducesTwoBlanks() {
+        Flowable.just(":") //
+                .compose(Transformers.split(":")) //
+                .test() //
+                .assertValues("", "") //
+                .assertComplete();
     }
 }
