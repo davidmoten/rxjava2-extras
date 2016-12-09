@@ -248,7 +248,7 @@ public class StringsTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testSplitLinesWithComments() {
-        Strings.splitLinesFilterComments(StringsTest.class.getResourceAsStream("/test4.txt"),
+        Strings.splitLinesSkipComments(StringsTest.class.getResourceAsStream("/test4.txt"),
                 Strings.UTF_8, ",", "#") //
                 .test() //
                 .assertValues(Lists.newArrayList("23", "176", "FRED"), //

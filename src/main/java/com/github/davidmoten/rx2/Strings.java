@@ -228,7 +228,7 @@ public final class Strings {
         });
     }
 
-    public static Flowable<List<String>> splitLinesFilterComments(InputStream is, Charset charset,
+    public static Flowable<List<String>> splitLinesSkipComments(InputStream is, Charset charset,
             final String delimiter, final String commentPrefix) {
         return from(is, charset) //
                 .compose(Strings.split("\n", BackpressureStrategy.BUFFER, 1)) //
