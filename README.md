@@ -14,6 +14,10 @@ Features
 * [`StateMachine`](#transformersstatemachine) - a more expressive form of `scan` that can emit multiple events for each source event
 * supports Java 1.6+
 
+Status: *released to Maven Central*
+
+Maven site reports are [here](http://davidmoten.github.io/rxjava2-extras/index.html) including [javadoc](http://davidmoten.github.io/rxjava2-extras/apidocs/index.html).
+
 Migration
 ------------
 * Primary target type is `Flowable` (the backpressure supporting stream)
