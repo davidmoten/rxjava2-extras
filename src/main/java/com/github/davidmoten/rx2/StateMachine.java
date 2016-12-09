@@ -14,21 +14,20 @@ public final class StateMachine {
         // prevent instantiation
     }
 
-    public static interface Transition<State, In, Out>
+    public interface Transition<State, In, Out>
             extends Function3<State, In, FlowableEmitter<Out>, State> {
 
         // override so IDEs have better suggestions for parameters
         @Override
-        public State apply(State state, In value, FlowableEmitter<Out> FlowableEmitter);
+        State apply(State state, In value, FlowableEmitter<Out> FlowableEmitter);
 
     }
 
-    public static interface Completion<State, Out>
-            extends BiPredicate<State, FlowableEmitter<Out>> {
+    public interface Completion<State, Out> extends BiPredicate<State, FlowableEmitter<Out>> {
 
         // override so IDEs have better suggestions for parameters
         @Override
-        public boolean test(State state, FlowableEmitter<Out> FlowableEmitter);
+        boolean test(State state, FlowableEmitter<Out> FlowableEmitter);
 
     }
 
