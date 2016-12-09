@@ -3,6 +3,7 @@ package com.github.davidmoten.rx2;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
@@ -22,7 +23,6 @@ import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
-
 
 public class BytesTest {
 
@@ -45,18 +45,43 @@ public class BytesTest {
     public void testUnzipPartial() {
         InputStream is = BytesTest.class.getResourceAsStream("/test.zip");
         assertNotNull(is);
-        List<String> list = Bytes.unzip(is).concatMap(new Function<ZippedEntry, Flowable<String>>() {
+        List<String> list = Bytes.unzip(is)
+                .concatMap(new Function<ZippedEntry, Flowable<String>>() {
 
-            @Override
-            public Flowable<String> apply(ZippedEntry entry) {
-                try {
-                    return Flowable.just((char) entry.getInputStream().read() + "");
-                } catch (IOException e) {
-                    return Flowable.error(e);
-                }
-            }
-        }).toList().blockingGet();
+                    @Override
+                    public Flowable<String> apply(ZippedEntry entry) {
+                        try {
+                            return Flowable.just((char) entry.getInputStream().read() + "");
+                        } catch (IOException e) {
+                            return Flowable.error(e);
+                        }
+                    }
+                }).toList().blockingGet();
         assertEquals(Arrays.asList("h", "h"), list);
+    }
+
+    @Test
+    public void testUnzipCheckEntryFields() {
+        Bytes.unzip(new File("src/test/resources/test.zip")) //
+                .filter(new Predicate<ZippedEntry>() {
+
+                    @Override
+                    public boolean test(ZippedEntry entry) {
+                        return entry.getName().equals("document2.txt");
+                    }
+                }).doOnNext(new Consumer<ZippedEntry>() {
+                    @Override
+                    public void accept(ZippedEntry e) throws Exception {
+                        assertEquals(1091476648, e.getCrc());
+                        assertNull(e.getComment());
+                        assertEquals(18, e.getCompressedSize());
+                        assertEquals(18, e.getSize());
+                        assertEquals(0, e.getMethod());
+                        assertEquals("document2.txt", e.getName());
+                        assertEquals(1440656394000L, e.getTime());
+                        System.out.println(Arrays.toString(e.getExtra()));
+                    }
+                }).test().assertNoErrors().assertComplete();
     }
 
     @Test

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.Iterator;
+import java.util.regex.Pattern;
 
 import org.junit.Test;
 
@@ -121,6 +122,15 @@ public class StringsTest {
     public void testSplitNormal() {
         Flowable.just("boo:an", "d:you") //
                 .compose(Transformers.split(":")) //
+                .test() //
+                .assertValues("boo", "and", "you") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSplitNormalWithPattern() {
+        Flowable.just("boo:an", "d:you") //
+                .compose(Transformers.split(Pattern.compile(":"))) //
                 .test() //
                 .assertValues("boo", "and", "you") //
                 .assertComplete();
