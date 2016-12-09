@@ -12,6 +12,7 @@ Features
 * [`Strings`](#strings) - create/manipulate streams of `String`, conversions to and from
 * [`Bytes`](#bytes) - create/manipulate streams of `byte[]`
 * [`StateMachine`](#transformersstatemachine) - a more expressive form of `scan` that can emit multiple events for each source event
+* supports Java 1.6+
 
 Migration
 ------------
