@@ -226,7 +226,7 @@ public class StringsTest {
     @Test
     public void testSplitLinesWithComments() {
         Strings.splitLinesFilterComments(StringsTest.class.getResourceAsStream("/test4.txt"),
-                Strings.DEFAULT_CHARSET, ",", "#") //
+                Strings.UTF_8, ",", "#") //
                 .test() //
                 .assertValues(Lists.newArrayList("23", "176", "FRED"), //
                         Lists.newArrayList("13", "130", "JOHN"))
