@@ -19,7 +19,7 @@ Maybe<String> o = Flowable
   .just("a","b")
   .to(Strings.join());
 ```
-&nbsp;&nbsp;to get `"ab"`.
+&nbsp;&nbsp;&nbsp;&nbsp;to get `"ab"`.
 
 Strings
 ----------
