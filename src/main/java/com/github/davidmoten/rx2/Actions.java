@@ -2,8 +2,6 @@ package com.github.davidmoten.rx2;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.crypto.IllegalBlockSizeException;
-
 import io.reactivex.functions.Action;
 
 public final class Actions {
