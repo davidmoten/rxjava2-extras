@@ -15,7 +15,7 @@ Migration
 
 ```java
 Flowable.just("a","b")
-  .compose(Strings.join());
+  .to(Strings.join());
 ```
 to get a `Maybe<String>` with value `"ab"`.
 
