@@ -45,7 +45,7 @@ Strings
 
 `strings`
 
-`splitLinesFilterComments`
+`splitLinesSkipComments`
 
 Bytes
 --------------
