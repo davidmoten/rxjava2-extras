@@ -8,13 +8,13 @@
         <artifactId>sonatype-parent</artifactId>
         <version>0.1</version>
     </parent>
-    <artifactId>rxjava-extras-2</artifactId>
+    <artifactId>rxjava2-extras</artifactId>
     <version>0.1-SNAPSHOT</version>
     <name>${project.artifactId}</name>
     <description>RxJava 2 utilities</description>
     <packaging>jar</packaging>
 
-    <url>http://github.com/davidmoten/rxjava-extras-2</url>
+    <url>http://github.com/davidmoten/rxjava2-extras</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -52,12 +52,12 @@
 
     <ciManagement>
         <system>Travis</system>
-        <url>https://travis-ci.org/davidmoten/rxjava-extras-2</url>
+        <url>https://travis-ci.org/davidmoten/rxjava2-extras</url>
     </ciManagement>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/davidmoten/rxjava-extras-2/issues</url>
+        <url>https://github.com/davidmoten/rxjava2-extras/issues</url>
     </issueManagement>
 
     <inceptionYear>2013</inceptionYear>
@@ -75,9 +75,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:https://github.com/davidmoten/rxjava-extras-2.git</connection>
-        <developerConnection>scm:git:https://github.com/davidmoten/rxjava-extras-2.git</developerConnection>
-        <url>scm:git:https://github.com:davidmoten/rxjava-extras-2.git</url>
+        <connection>scm:git:https://github.com/davidmoten/rxjava2-extras.git</connection>
+        <developerConnection>scm:git:https://github.com/davidmoten/rxjava2-extras.git</developerConnection>
+        <url>scm:git:https://github.com:davidmoten/rxjava2-extras.git</url>
         <tag>0.7.1-RC6</tag>
     </scm>
 
@@ -92,7 +92,7 @@
         <dependency>
             <groupId>io.reactivex.rxjava2</groupId>
             <artifactId>rxjava</artifactId>
-            <version>2.0.1</version>
+            <version>2.0.2</version>
         </dependency>
 
 
@@ -101,7 +101,6 @@
             <artifactId>guava-mini</artifactId>
             <version>0.1.1</version>
         </dependency>
-
 
         <dependency>
             <groupId>org.slf4j</groupId>
