@@ -12,7 +12,7 @@ Migration
 * Primary target type is `Flowable` (the backpressure supporting stream)
 * Where applicable `Single`, `Maybe` and `Completable` will be used
 * To cross types (say from `Flowable` to `Maybe`) it is necessary to use `to` rather than `compose`
-* Transformers (for use with `compose` and `to`) are clustered within the primary owning class rather than bunched together in the `Transformers` class. For example, you can call:
+* Transformers (for use with `compose` and `to`) are clustered within the primary owning class rather than bunched together in the `Transformers` class. For example, `Strings.join`:
 
 ```java
 //produces a stream of "ab"
