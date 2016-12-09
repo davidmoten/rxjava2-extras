@@ -33,7 +33,7 @@ public final class Strings {
     }
 
     public static final String DEFAULT_COMMENT_PREFIX = "#";
-    public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
+    public static final Charset UTF_8 = Charset.forName("UTF-8");
     private static final int DEFAULT_BUFFER_SIZE = 8192;
 
     /**
@@ -77,7 +77,7 @@ public final class Strings {
     }
 
     public static Flowable<String> from(InputStream is) {
-        return from(is, DEFAULT_CHARSET);
+        return from(is, UTF_8);
     }
 
     public static Flowable<String> from(InputStream is, Charset charset) {
@@ -110,7 +110,7 @@ public final class Strings {
     }
 
     public static Flowable<String> from(File file) {
-        return from(file, DEFAULT_CHARSET);
+        return from(file, UTF_8);
     }
 
     public static Flowable<String> from(final File file, final Charset charset) {

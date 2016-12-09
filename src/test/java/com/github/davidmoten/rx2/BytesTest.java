@@ -13,7 +13,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -146,13 +145,13 @@ public class BytesTest {
     @Test
     public void testBytesFromInputStreamDefaultBufferSize() {
         String s = "hello there";
-        Bytes.from(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8))) //
+        Bytes.from(new ByteArrayInputStream(s.getBytes(Strings.UTF_8))) //
                 .to(Bytes.collect()) //
                 .map(new Function<byte[], String>() {
 
                     @Override
                     public String apply(byte[] b) throws Exception {
-                        return new String(b, StandardCharsets.UTF_8);
+                        return new String(b, Strings.UTF_8);
                     }
                 }) //
                 .test().assertValue("hello there") //
