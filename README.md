@@ -15,11 +15,12 @@ Migration
 * Transformers (for use with `compose` and `to`) are clustered within the primary owning class rather than bunched together in the `Transformers` class. For example, you can call:
 
 ```java
+//produces a stream of "ab"
 Maybe<String> o = Flowable
   .just("a","b")
-  .to(Strings.join());
+  .to(Strings.join()); 
 ```
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to get `"ab"`.
+
 
 Strings
 ----------
