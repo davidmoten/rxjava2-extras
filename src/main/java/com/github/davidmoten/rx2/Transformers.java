@@ -2,15 +2,20 @@ package com.github.davidmoten.rx2;
 
 import java.util.concurrent.Callable;
 
+import org.reactivestreams.Publisher;
+
+import com.github.davidmoten.rx2.internal.flowable.FlowableDoOnEmpty;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStateMachine;
 
 import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableTransformer;
+import io.reactivex.functions.Action;
 import io.reactivex.functions.BiPredicate;
 import io.reactivex.functions.Function3;
 
-public final class Transformers {
+public final class Transformers<T> {
 
     private Transformers() {
         // prevent instantiation
@@ -27,6 +32,15 @@ public final class Transformers {
 
     public static StateMachine.Builder stateMachine() {
         return StateMachine.builder();
+    }
+    
+    public static <T> FlowableTransformer<T,T> doOnEmpty(final Action action) {
+        return new FlowableTransformer<T,T>() {
+
+            @Override
+            public Publisher<T> apply(Flowable<T> upstream) {
+                return new FlowableDoOnEmpty<T>(upstream, action);
+            }};
     }
 
 }
