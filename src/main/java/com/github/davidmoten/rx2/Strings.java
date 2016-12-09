@@ -14,12 +14,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
+
+import org.reactivestreams.Publisher;
 
 import com.github.davidmoten.guavamini.Preconditions;
+import com.github.davidmoten.rx2.internal.flowable.TransformerDecode;
+import com.github.davidmoten.rx2.internal.flowable.TransformerStringSplit;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
+import io.reactivex.FlowableTransformer;
 import io.reactivex.Maybe;
 import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
@@ -32,6 +38,7 @@ public final class Strings {
         // prevent instantiation
     }
 
+    public static final int DEFAULT_REQUEST_SIZE = 1;
     public static final String DEFAULT_COMMENT_PREFIX = "#";
     public static final Charset UTF_8 = Charset.forName("UTF-8");
     private static final int DEFAULT_BUFFER_SIZE = 8192;
@@ -89,7 +96,7 @@ public final class Strings {
     }
 
     public static Flowable<String> split(Flowable<String> source, String pattern) {
-        return source.compose(Transformers.split(pattern, BackpressureStrategy.BUFFER, 1));
+        return source.compose(Strings.split(pattern, BackpressureStrategy.BUFFER, 1));
     }
 
     public static Maybe<String> concat(Flowable<String> source) {
@@ -160,8 +167,17 @@ public final class Strings {
         return join(source, "");
     }
 
+    public static FlowableTransformer<byte[], String> decode(CharsetDecoder decoder) {
+        return decode(decoder, BackpressureStrategy.BUFFER, DEFAULT_REQUEST_SIZE);
+    }
+
+    public static FlowableTransformer<byte[], String> decode(CharsetDecoder decoder,
+            BackpressureStrategy backpressureStrategy, int requestBatchSize) {
+        return TransformerDecode.decode(decoder, BackpressureStrategy.BUFFER, requestBatchSize);
+    }
+
     public static Flowable<String> decode(Flowable<byte[]> source, CharsetDecoder decoder) {
-        return source.compose(Transformers.decode(decoder));
+        return source.compose(Strings.decode(decoder));
     }
 
     public static Flowable<String> decode(Flowable<byte[]> source, Charset charset) {
@@ -215,7 +231,7 @@ public final class Strings {
     public static Flowable<List<String>> splitLinesFilterComments(InputStream is, Charset charset,
             final String delimiter, final String commentPrefix) {
         return from(is, charset) //
-                .compose(Transformers.split("\n", BackpressureStrategy.BUFFER, 1)) //
+                .compose(Strings.split("\n", BackpressureStrategy.BUFFER, 1)) //
                 .filter(new Predicate<String>() {
                     @Override
                     public boolean test(String line) {
@@ -257,6 +273,58 @@ public final class Strings {
             public boolean test(String line) {
                 return !line.isEmpty();
             }
+        };
+    }
+
+    public static FlowableTransformer<String, String> split(String pattern) {
+        return split(pattern, BackpressureStrategy.BUFFER, 128);
+    }
+
+    public static FlowableTransformer<String, String> split(Pattern pattern) {
+        return split(pattern, BackpressureStrategy.BUFFER, 128);
+    }
+
+    public static FlowableTransformer<String, String> split(String pattern,
+            BackpressureStrategy backpressureStrategy, int requestBatchSize) {
+        return TransformerStringSplit.split(pattern, null, backpressureStrategy, requestBatchSize);
+    }
+
+    public static FlowableTransformer<String, String> split(Pattern pattern,
+            BackpressureStrategy backpressureStrategy, int batchSize) {
+        return TransformerStringSplit.split(null, pattern, backpressureStrategy, batchSize);
+    }
+
+    public static Function<Flowable<String>, Maybe<String>> join(final String delimiter) {
+        return new Function<Flowable<String>, Maybe<String>>() {
+
+            @Override
+            public Maybe<String> apply(Flowable<String> source) throws Exception {
+                return Strings.join(source, delimiter);
+            }
+
+        };
+    }
+
+    public static Function<Flowable<String>, Maybe<String>> join() {
+        return join("");
+    }
+
+    public static Function<Flowable<String>, Maybe<String>> concat(final String delimiter) {
+        return join(delimiter);
+    }
+
+    public static Function<Flowable<String>, Maybe<String>> concat() {
+        return concat("");
+    }
+
+    public static <T> FlowableTransformer<T, String> strings() {
+        return new FlowableTransformer<T, String>() {
+
+            @Override
+            public Publisher<String> apply(Flowable<T> source) {
+                return Strings.strings(source);
+            }
+
         };
     }
 

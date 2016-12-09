@@ -1,12 +1,8 @@
 package com.github.davidmoten.rx2;
 
-import java.nio.charset.CharsetDecoder;
 import java.util.concurrent.Callable;
-import java.util.regex.Pattern;
 
-import com.github.davidmoten.rx2.internal.flowable.TransformerDecode;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStateMachine;
-import com.github.davidmoten.rx2.internal.flowable.TransformerStringSplit;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.FlowableEmitter;
@@ -16,37 +12,8 @@ import io.reactivex.functions.Function3;
 
 public final class Transformers {
 
-    public static final int DEFAULT_INITIAL_BATCH = 1;
-
     private Transformers() {
         // prevent instantiation
-    }
-
-    public static FlowableTransformer<String, String> split(String pattern) {
-        return split(pattern, BackpressureStrategy.BUFFER, 128);
-    }
-
-    public static FlowableTransformer<String, String> split(Pattern pattern) {
-        return split(pattern, BackpressureStrategy.BUFFER, 128);
-    }
-
-    public static FlowableTransformer<String, String> split(String pattern,
-            BackpressureStrategy backpressureStrategy, int requestBatchSize) {
-        return TransformerStringSplit.split(pattern, null, backpressureStrategy, requestBatchSize);
-    }
-
-    public static FlowableTransformer<String, String> split(Pattern pattern,
-            BackpressureStrategy backpressureStrategy, int batchSize) {
-        return TransformerStringSplit.split(null, pattern, backpressureStrategy, batchSize);
-    }
-
-    public static FlowableTransformer<byte[], String> decode(CharsetDecoder decoder) {
-        return decode(decoder, BackpressureStrategy.BUFFER, DEFAULT_INITIAL_BATCH);
-    }
-
-    public static FlowableTransformer<byte[], String> decode(CharsetDecoder decoder,
-            BackpressureStrategy backpressureStrategy, int requestBatchSize) {
-        return TransformerDecode.decode(decoder, BackpressureStrategy.BUFFER, requestBatchSize);
     }
 
     public static <State, In, Out> FlowableTransformer<In, Out> stateMachine(

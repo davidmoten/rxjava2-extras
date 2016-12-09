@@ -117,7 +117,7 @@ public class StringsTest {
     @Test
     public void testSplitEmpty() {
         Flowable.<String> empty() //
-                .compose(Transformers.split("\n")) //
+                .compose(Strings.split("\n")) //
                 .test() //
                 .assertNoValues() //
                 .assertComplete();
@@ -126,7 +126,7 @@ public class StringsTest {
     @Test
     public void testSplitNormal() {
         Flowable.just("boo:an", "d:you") //
-                .compose(Transformers.split(":")) //
+                .compose(Strings.split(":")) //
                 .test() //
                 .assertValues("boo", "and", "you") //
                 .assertComplete();
@@ -135,7 +135,7 @@ public class StringsTest {
     @Test
     public void testSplitNormalWithPattern() {
         Flowable.just("boo:an", "d:you") //
-                .compose(Transformers.split(Pattern.compile(":"))) //
+                .compose(Strings.split(Pattern.compile(":"))) //
                 .test() //
                 .assertValues("boo", "and", "you") //
                 .assertComplete();
@@ -144,7 +144,7 @@ public class StringsTest {
     @Test
     public void testSplitEmptyItemsAtBeginningMiddleAndEndProduceBlanks() {
         Flowable.just("::boo:an", "d:::you::") //
-                .compose(Transformers.split(":")) //
+                .compose(Strings.split(":")) //
                 .test() //
                 .assertValues("", "", "boo", "and", "", "", "you", "", "") //
                 .assertComplete();
@@ -153,7 +153,7 @@ public class StringsTest {
     @Test
     public void testSplitBlankProducesBlank() {
         Flowable.just("") //
-                .compose(Transformers.split(":")) //
+                .compose(Strings.split(":")) //
                 .test() //
                 .assertValues("") //
                 .assertComplete();
@@ -162,7 +162,7 @@ public class StringsTest {
     @Test
     public void testSplitNoSeparatorProducesSingle() {
         Flowable.just("and") //
-                .compose(Transformers.split(":")) //
+                .compose(Strings.split(":")) //
                 .test() //
                 .assertValues("and") //
                 .assertComplete();
@@ -171,7 +171,7 @@ public class StringsTest {
     @Test
     public void testSplitSeparatorOnlyProducesTwoBlanks() {
         Flowable.just(":") //
-                .compose(Transformers.split(":")) //
+                .compose(Strings.split(":")) //
                 .test() //
                 .assertValues("", "") //
                 .assertComplete();
@@ -179,7 +179,11 @@ public class StringsTest {
 
     @Test
     public void testTrim() {
-        Flowable.just(" hello ").map(Strings.trim()).test().assertValue("hello").assertComplete();
+        Flowable.just(" hello ") //
+                .map(Strings.trim()) //
+                .test() //
+                .assertValue("hello") //
+                .assertComplete();
     }
 
     @Test
@@ -193,8 +197,26 @@ public class StringsTest {
     }
 
     @Test
+    public void testConcatTransformer() {
+        Flowable.just("hello ", "there") //
+                .to(Strings.concat()) //
+                .test() //
+                .assertValue("hello there") //
+                .assertComplete();
+    }
+
+    @Test
     public void testConcat() {
         Strings.concat(Flowable.just("hello ", "there")) //
+                .test() //
+                .assertValue("hello there") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testJoinTransformer() {
+        Flowable.just("hello ", "there") //
+                .to(Strings.join()) //
                 .test() //
                 .assertValue("hello there") //
                 .assertComplete();
@@ -210,7 +232,8 @@ public class StringsTest {
 
     @Test
     public void testStrings() {
-        Strings.strings(Flowable.just(12, 34)) //
+        Flowable.just(12, 34) //
+                .compose(Strings.<Integer> strings()) //
                 .test() //
                 .assertValues("12", "34") //
                 .assertComplete();

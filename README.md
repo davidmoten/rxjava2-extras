@@ -4,6 +4,8 @@
 [![codecov](https://codecov.io/gh/davidmoten/rxjava2-extras/branch/master/graph/badge.svg)](https://codecov.io/gh/davidmoten/rxjava2-extras)
 Utilities for use with RxJava 2
 
+Bit by bit, features from [rxjava-extras](https://github.com/davidmoten/rxjava-extras) will be migrated to use RxJava2.
+
 Strings
 ----------
 `concat`, `join`
@@ -29,6 +31,11 @@ Bytes
 `from(InputStream)`, `from(File)`
 
 `unzip(File)`, `unzip(InputStream)`
+
+Transformers
+-----------------
+`stateMachine`
+
 
 
 

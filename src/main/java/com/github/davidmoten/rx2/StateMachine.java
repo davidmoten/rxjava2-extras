@@ -69,11 +69,13 @@ public final class StateMachine {
 
     public static final class Builder3<State, In, Out> {
 
+        private static final int DEFAULT_REQUEST_SIZE = 1;
+
         private final Callable<State> initialState;
         private final Transition<State, In, Out> transition;
         private Completion<State, Out> completion = CompletionAlwaysTrueHolder.instance();
         private BackpressureStrategy backpressureStrategy = BackpressureStrategy.BUFFER;
-        private int requestBatchSize = Transformers.DEFAULT_INITIAL_BATCH;
+        private int requestBatchSize = DEFAULT_REQUEST_SIZE;
 
         private Builder3(Callable<State> initialState, Transition<State, In, Out> transition) {
             this.initialState = initialState;
