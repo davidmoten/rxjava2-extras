@@ -14,7 +14,7 @@ import io.reactivex.FlowableTransformer;
 import io.reactivex.functions.BiPredicate;
 import io.reactivex.functions.Function3;
 
-public class Transformers {
+public final class Transformers {
 
     public static final int DEFAULT_INITIAL_BATCH = 1;
 
@@ -41,8 +41,7 @@ public class Transformers {
     }
 
     public static FlowableTransformer<byte[], String> decode(CharsetDecoder decoder) {
-        return TransformerDecode.decode(decoder, BackpressureStrategy.BUFFER,
-                DEFAULT_INITIAL_BATCH);
+        return decode(decoder, BackpressureStrategy.BUFFER, DEFAULT_INITIAL_BATCH);
     }
 
     public static FlowableTransformer<byte[], String> decode(CharsetDecoder decoder,

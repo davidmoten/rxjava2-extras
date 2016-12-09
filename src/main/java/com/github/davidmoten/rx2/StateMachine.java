@@ -23,7 +23,8 @@ public final class StateMachine {
 
     }
 
-    public static interface Completion<State, Out> extends BiPredicate<State, FlowableEmitter<Out>> {
+    public static interface Completion<State, Out>
+            extends BiPredicate<State, FlowableEmitter<Out>> {
 
         // override so IDEs have better suggestions for parameters
         @Override
@@ -46,7 +47,7 @@ public final class StateMachine {
         }
 
         public <State> Builder2<State> initialState(final State initialState) {
-            return new Builder2<State>(Callables.constant(initialState));
+            return initialStateFactory(Callables.constant(initialState));
         }
 
     }
@@ -72,7 +73,7 @@ public final class StateMachine {
         private final Transition<State, In, Out> transition;
         private Completion<State, Out> completion = CompletionAlwaysTrueHolder.instance();
         private BackpressureStrategy backpressureStrategy = BackpressureStrategy.BUFFER;
-        private int initialRequest = Transformers.DEFAULT_INITIAL_BATCH;
+        private int requestBatchSize = Transformers.DEFAULT_INITIAL_BATCH;
 
         private Builder3(Callable<State> initialState, Transition<State, In, Out> transition) {
             this.initialState = initialState;
@@ -90,19 +91,24 @@ public final class StateMachine {
             return this;
         }
 
-        public Builder3<State, In, Out> initialRequest(int value) {
-            this.initialRequest = value;
+        public Builder3<State, In, Out> requestBatchSize(int value) {
+            this.requestBatchSize = value;
             return this;
         }
 
         public FlowableTransformer<In, Out> build() {
             return Transformers.stateMachine(initialState, transition, completion,
-                    backpressureStrategy, initialRequest);
+                    backpressureStrategy, requestBatchSize);
         }
 
     }
 
-    private static final class CompletionAlwaysTrueHolder {
+    // visible for testing
+    static final class CompletionAlwaysTrueHolder {
+
+        private CompletionAlwaysTrueHolder() {
+            // prevent instantiation
+        }
 
         private static final Completion<Object, Object> INSTANCE = new Completion<Object, Object>() {
             @Override

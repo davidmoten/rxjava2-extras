@@ -3,6 +3,7 @@ package com.github.davidmoten.rx2;
 import static com.github.davidmoten.rx2.Strings.decode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -13,6 +14,8 @@ import java.util.Iterator;
 import java.util.regex.Pattern;
 
 import org.junit.Test;
+
+import com.github.davidmoten.junit.Asserts;
 
 import io.reactivex.Flowable;
 import io.reactivex.functions.BiFunction;
@@ -170,5 +173,20 @@ public class StringsTest {
                 .test() //
                 .assertValues("", "") //
                 .assertComplete();
+    }
+
+    @Test
+    public void testTrim() {
+        Flowable.just(" hello ").map(Strings.trim()).test().assertValue("hello").assertComplete();
+    }
+
+    @Test
+    public void testTrimWithNull() throws Exception {
+        assertNull(Strings.TRIM.apply(null));
+    }
+
+    @Test
+    public void testIsUtilityClass() {
+        Asserts.assertIsUtilityClass(Strings.class);
     }
 }

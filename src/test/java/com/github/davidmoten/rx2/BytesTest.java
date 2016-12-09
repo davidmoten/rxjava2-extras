@@ -6,13 +6,17 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.Test;
 
@@ -109,7 +113,7 @@ public class BytesTest {
     }
 
     @Test
-    public void testBytesFromFile() throws IOException {
+    public void testBytesFromFileLowBufferSize() throws IOException {
         File file = new File("target/testFromFile");
         file.delete();
         FileOutputStream out = new FileOutputStream(file);
@@ -118,6 +122,53 @@ public class BytesTest {
         final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         Bytes //
                 .from(file, 4) //
+                .doOnNext(new Consumer<byte[]>() {
+                    @Override
+                    public void accept(byte[] b) {
+                        try {
+                            bytes.write(b);
+                        } catch (IOException e) {
+                            throw new RuntimeException();
+                        }
+                    }
+                }).subscribe();
+        bytes.close();
+        assertArrayEquals("abcdefg".getBytes(), bytes.toByteArray());
+    }
+
+    @Test
+    public void testBytesFromFileWhenDoesNotExist() {
+        Bytes.from(new File("target/" + UUID.randomUUID())) //
+                .test() //
+                .assertError(FileNotFoundException.class);
+    }
+
+    @Test
+    public void testBytesFromInputStreamDefaultBufferSize() {
+        String s = "hello there";
+        Bytes.from(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8))) //
+                .to(Bytes.collect()) //
+                .map(new Function<byte[], String>() {
+
+                    @Override
+                    public String apply(byte[] b) throws Exception {
+                        return new String(b, StandardCharsets.UTF_8);
+                    }
+                }) //
+                .test().assertValue("hello there") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testBytesFromFileDefaultBufferSize() throws IOException {
+        File file = new File("target/testFromFile");
+        file.delete();
+        FileOutputStream out = new FileOutputStream(file);
+        out.write("abcdefg".getBytes());
+        out.close();
+        final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        Bytes //
+                .from(file) //
                 .doOnNext(new Consumer<byte[]>() {
                     @Override
                     public void accept(byte[] b) {
