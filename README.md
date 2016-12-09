@@ -34,11 +34,11 @@ Strings
 
 `decode`
 
-`from(Reader)`,`from(InputStream)`,`from(File)`, ...
+`from(Reader)`,`from(InputStream)`,`from(File)`, ..
 
-`fromClasspath(String, Charset)`
+`fromClasspath(String, Charset)`, ..
 
-`split`
+`split(String)`, `split(Pattern)`
 
 `trim`
 
