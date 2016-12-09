@@ -7,6 +7,12 @@ Utilities for use with RxJava 2
 
 Bit by bit, features from [rxjava-extras](https://github.com/davidmoten/rxjava-extras) will be migrated to use RxJava2 (and of course new features will be added here too).
 
+Features
+----------
+* [`Strings`](#strings)
+* [`Bytes`](#bytes)
+* [`StateMachine`](#transformersstatemachine)
+
 Migration
 ------------
 * Primary target type is `Flowable` (the backpressure supporting stream)
@@ -48,9 +54,9 @@ Bytes
 
 `unzip(File)`, `unzip(InputStream)`
 
-Transformers
------------------
-`stateMachine`
+Transformers.stateMachine
+---------------------------
+TODO
 
 
 
