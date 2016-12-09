@@ -38,9 +38,9 @@ public final class Strings {
         // prevent instantiation
     }
 
-    public static final int DEFAULT_REQUEST_SIZE = 1;
-    public static final String DEFAULT_COMMENT_PREFIX = "#";
     public static final Charset UTF_8 = Charset.forName("UTF-8");
+
+    private static final int DEFAULT_REQUEST_SIZE = 1;
     private static final int DEFAULT_BUFFER_SIZE = 8192;
 
     /**

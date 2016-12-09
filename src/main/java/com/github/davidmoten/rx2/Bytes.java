@@ -23,17 +23,19 @@ import io.reactivex.functions.Function;
 
 public final class Bytes {
 
+    private static final int DEFAULT_BUFFER_SIZE = 8192;
+
     private Bytes() {
         // prevent instantiation
     }
 
     /**
      * Returns an Flowable stream of byte arrays from the given
-     * {@link InputStream} between 1 and {@code size} bytes.
+     * {@link InputStream} between 1 and {@code bufferSize} bytes.
      * 
      * @param is
      *            input stream of bytes
-     * @param size
+     * @param bufferSize
      *            max emitted byte array size
      * @return a stream of byte arrays
      */
@@ -97,7 +99,7 @@ public final class Bytes {
      * @return a stream of byte arrays
      */
     public static Flowable<byte[]> from(InputStream is) {
-        return from(is, 8192);
+        return from(is, DEFAULT_BUFFER_SIZE);
     }
 
     public static Flowable<ZippedEntry> unzip(final File file) {
