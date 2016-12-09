@@ -6,6 +6,20 @@ Utilities for use with RxJava 2
 
 Bit by bit, features from [rxjava-extras](https://github.com/davidmoten/rxjava-extras) will be migrated to use RxJava2 (and of course new features will be added here too).
 
+Migration
+------------
+* Primary target type is `Flowable` (the backpressure supporting stream)
+* Where applicable `Single`, `Maybe` and `Completable` will be used
+* to cross types (say from `Flowable` to `Maybe`) it is necessary to use `to` rather than `compose`
+* transformers (for use with `compose` and `to`) are clustered within the primary owning class rather than bunched together in the `Transformers` class. For example, you can call:
+
+```java
+Flowable.just("a","b")
+  .compose(Strings.join());
+```
+to get a `Maybe<String>` with value `"ab"`.
+
+
 Strings
 ----------
 `concat`, `join`
