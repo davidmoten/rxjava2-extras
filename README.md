@@ -9,9 +9,9 @@ Bit by bit, features from [rxjava-extras](https://github.com/davidmoten/rxjava-e
 
 Features
 ----------
-* [`Strings`](#strings)
-* [`Bytes`](#bytes)
-* [`StateMachine`](#transformersstatemachine)
+* [`Strings`](#strings) - create/manipulate streams of Strings, conversions to and from
+* [`Bytes`](#bytes) - create/manipulate streams of Bytes
+* [`StateMachine`](#transformersstatemachine) - a more expressive form of `scan` that can emit multiple events for each source event
 
 Migration
 ------------
