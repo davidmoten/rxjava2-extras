@@ -1,0 +1,6 @@
+# example to use with Strings.splitLinesFilterComments
+# a comment line
+# age , height-cm, name
+23,176,FRED
+13,130,JOHN
+# finished

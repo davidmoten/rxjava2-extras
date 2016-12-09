@@ -83,7 +83,7 @@ public class BytesTest {
                         assertEquals(0, e.getMethod());
                         assertEquals("document2.txt", e.getName());
                         assertEquals(1440656394000L, e.getTime());
-                        System.out.println(Arrays.toString(e.getExtra()));
+                        assertNotNull(e.getExtra());
                     }
                 }).test().assertNoErrors().assertComplete();
     }

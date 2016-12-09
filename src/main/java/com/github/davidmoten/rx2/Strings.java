@@ -32,8 +32,8 @@ public final class Strings {
         // prevent instantiation
     }
 
+    public static final String DEFAULT_COMMENT_PREFIX = "#";
     public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
-
     private static final int DEFAULT_BUFFER_SIZE = 8192;
 
     /**
@@ -93,7 +93,7 @@ public final class Strings {
     }
 
     public static Maybe<String> concat(Flowable<String> source) {
-        return join(source, "");
+        return concat(source, "");
     }
 
     public static Maybe<String> concat(Flowable<String> source, final String delimiter) {
@@ -212,9 +212,10 @@ public final class Strings {
         });
     }
 
-    public static Flowable<List<String>> splitLines(InputStream is, Charset charset,
+    public static Flowable<List<String>> splitLinesFilterComments(InputStream is, Charset charset,
             final String delimiter, final String commentPrefix) {
-        return from(is, charset).compose(Transformers.split("\n", BackpressureStrategy.BUFFER, 1)) //
+        return from(is, charset) //
+                .compose(Transformers.split("\n", BackpressureStrategy.BUFFER, 1)) //
                 .filter(new Predicate<String>() {
                     @Override
                     public boolean test(String line) {
@@ -229,10 +230,6 @@ public final class Strings {
                         return Arrays.asList(line.split(delimiter));
                     }
                 });
-    }
-
-    public static Flowable<List<String>> splitLines(InputStream is, String delimiter) {
-        return splitLines(is, DEFAULT_CHARSET, delimiter, "#");
     }
 
     private static class Utf8Holder {

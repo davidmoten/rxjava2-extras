@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
@@ -15,6 +16,7 @@ import java.util.regex.Pattern;
 
 import org.junit.Test;
 
+import com.github.davidmoten.guavamini.Lists;
 import com.github.davidmoten.junit.Asserts;
 
 import io.reactivex.Flowable;
@@ -188,5 +190,46 @@ public class StringsTest {
     @Test
     public void testIsUtilityClass() {
         Asserts.assertIsUtilityClass(Strings.class);
+    }
+
+    @Test
+    public void testConcat() {
+        Strings.concat(Flowable.just("hello ", "there")) //
+                .test() //
+                .assertValue("hello there") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testJoin() {
+        Strings.join(Flowable.just("hello ", "there")) //
+                .test() //
+                .assertValue("hello there") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testStrings() {
+        Strings.strings(Flowable.just(12, 34)) //
+                .test() //
+                .assertValues("12", "34") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testFromFile() {
+        Strings.from(new File("src/test/resources/test3.txt")).test().assertValue("hello there")
+                .assertComplete();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testSplitLinesWithComments() {
+        Strings.splitLinesFilterComments(StringsTest.class.getResourceAsStream("/test4.txt"),
+                Strings.DEFAULT_CHARSET, ",", "#") //
+                .test() //
+                .assertValues(Lists.newArrayList("23", "176", "FRED"), //
+                        Lists.newArrayList("13", "130", "JOHN"))
+                .assertComplete();
     }
 }
