@@ -5,6 +5,7 @@ import java.util.concurrent.Callable;
 import org.reactivestreams.Publisher;
 
 import com.github.davidmoten.rx2.internal.flowable.FlowableDoOnEmpty;
+import com.github.davidmoten.rx2.internal.flowable.FlowableReverse;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStateMachine;
 
 import io.reactivex.BackpressureStrategy;
@@ -41,6 +42,18 @@ public final class Transformers<T> {
             public Publisher<T> apply(Flowable<T> upstream) {
                 return new FlowableDoOnEmpty<T>(upstream, action);
             }};
+    }
+
+    public static <T> FlowableTransformer<T, T> reverse() {
+        //TODO make holder
+        return new FlowableTransformer<T,T>() {
+
+            @Override
+            public Publisher<T> apply(Flowable<T> upstream) {
+                return FlowableReverse.reverse(upstream);
+            }
+            
+        };
     }
 
 }
