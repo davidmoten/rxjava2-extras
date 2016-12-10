@@ -21,6 +21,7 @@ Maven site reports are [here](http://davidmoten.github.io/rxjava2-extras/index.h
 Migration
 ------------
 * Primary target type is `Flowable` (the backpressure supporting stream)
+* Operators will be implemented initially without fusion support (later)  
 * Where applicable `Single`, `Maybe` and `Completable` will be used
 * To cross types (say from `Flowable` to `Maybe`) it is necessary to use `to` rather than `compose`
 * Transformers (for use with `compose` and `to`) are clustered within the primary owning class rather than bunched together in the `Transformers` class. For example, `Strings.join`:
