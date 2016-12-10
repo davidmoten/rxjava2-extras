@@ -11,7 +11,8 @@ Features
 ----------
 * [`Strings`](#strings) - create/manipulate streams of `String`, conversions to and from
 * [`Bytes`](#bytes) - create/manipulate streams of `byte[]`
-* [`StateMachine`](#transformersstatemachine) - a more expressive form of `scan` that can emit multiple events for each source event
+* [`StateMachine`](#transformers) - a more expressive form of `scan` that can emit multiple events for each source event
+* [`Transformers`](#transformers)
 * supports Java 1.6+
 
 Status: *released to Maven Central*
@@ -60,10 +61,12 @@ Bytes
 
 `unzip(File)`, `unzip(InputStream)`
 
-Transformers.stateMachine
+Transformers
 ---------------------------
-TODO
+`doOnEmpty`
 
+`mapLast`
 
+`reverse`
 
-
+`stateMachine`
