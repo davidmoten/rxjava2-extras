@@ -5,6 +5,7 @@ import java.util.concurrent.Callable;
 import org.reactivestreams.Publisher;
 
 import com.github.davidmoten.rx2.internal.flowable.FlowableDoOnEmpty;
+import com.github.davidmoten.rx2.internal.flowable.FlowableMapLast;
 import com.github.davidmoten.rx2.internal.flowable.FlowableReverse;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStateMachine;
 
@@ -14,6 +15,7 @@ import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableTransformer;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.BiPredicate;
+import io.reactivex.functions.Function;
 import io.reactivex.functions.Function3;
 
 public final class Transformers<T> {
@@ -54,6 +56,19 @@ public final class Transformers<T> {
             }
             
         };
+    }
+
+    public static <T> FlowableTransformer<T, T> mapLast(
+            final Function<? super T, ? extends T> function) {
+        return new FlowableTransformer<T,T>() {
+
+            @Override
+            public Publisher<T> apply(Flowable<T> upstream) {
+                return new FlowableMapLast<T>(upstream, function);
+            }
+            
+        };
+      
     }
 
 }
