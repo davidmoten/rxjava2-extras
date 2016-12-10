@@ -2,10 +2,12 @@ package com.github.davidmoten.rx2.internal.flowable;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
+import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Action;
 import io.reactivex.internal.fuseable.ConditionalSubscriber;
 import io.reactivex.internal.subscribers.BasicFuseableConditionalSubscriber;
@@ -23,29 +25,35 @@ public final class FlowableDoOnEmpty<T> extends Flowable<T> {
     private final Action onEmpty;
 
     public FlowableDoOnEmpty(Publisher<T> source, Action onEmpty) {
-        Preconditions.checkNotNull(source);
+        Preconditions.checkNotNull(source, "source cannot be null");
+        Preconditions.checkNotNull(onEmpty, "onEmpty cannot be null");
         this.source = source;
         this.onEmpty = onEmpty;
     }
 
     @Override
     protected void subscribeActual(Subscriber<? super T> s) {
-        if (s instanceof ConditionalSubscriber) {
-            source.subscribe(new DoOnEmptyConditionalSubscriber<T>(
-                    (ConditionalSubscriber<? super T>) s, onEmpty));
-        } else {
-            source.subscribe(new DoOnEmptySubscriber<T>(s, onEmpty));
-        }
+        source.subscribe(new DoOnEmptySubscriber<T>(s, onEmpty));
     }
 
-    static final class DoOnEmptySubscriber<T> extends BasicFuseableSubscriber<T, T> {
+    static final class DoOnEmptySubscriber<T> implements Subscriber<T>, Subscription {
 
-        final Action onEmpty;
-        boolean empty = true;
+        private final Subscriber<? super T> actual;
+        private final Action onEmpty;
+        //mutable state
+        private boolean done;
+        private boolean empty = true;
+        private Subscription subscription;
 
         DoOnEmptySubscriber(Subscriber<? super T> actual, Action onEmpty) {
-            super(actual);
+            this.actual = actual;
             this.onEmpty = onEmpty;
+        }
+        
+        @Override
+        public void onSubscribe(Subscription subscription) {
+            this.subscription = subscription;
+            actual.onSubscribe(this);
         }
 
         @Override
@@ -57,90 +65,38 @@ public final class FlowableDoOnEmpty<T> extends Flowable<T> {
                 try {
                     onEmpty.run();
                 } catch (Throwable e) {
-                    fail(e);
+                    Exceptions.throwIfFatal(e);
+                    onError(e);
                     return;
                 }
             }
             done = true;
             actual.onComplete();
         }
-
-        @Override
-        public int requestFusion(int mode) {
-            return transitiveBoundaryFusion(mode);
-        }
-
-        @Override
-        public T poll() throws Exception {
-            T v = qs.poll();
-            if (v != null) {
-                empty = false;
-            }
-            return v;
-        }
-
+        
         @Override
         public void onNext(T t) {
             empty = false;
             actual.onNext(t);
         }
-    }
-
-    static final class DoOnEmptyConditionalSubscriber<T>
-            extends BasicFuseableConditionalSubscriber<T, T> {
-
-        private final Action onEmpty;
-        private boolean empty = true;
-
-        DoOnEmptyConditionalSubscriber(ConditionalSubscriber<? super T> actual, Action onEmpty) {
-            super(actual);
-            this.onEmpty = onEmpty;
-        }
 
         @Override
-        public void onComplete() {
+        public void onError(Throwable e) {
             if (done) {
                 return;
-            }
-            if (empty) {
-                try {
-                    onEmpty.run();
-                } catch (Throwable e) {
-                    fail(e);
-                    return;
-                }
             }
             done = true;
-            actual.onComplete();
+            actual.onError(e);
         }
 
         @Override
-        public void onNext(T t) {
-            if (done) {
-                return;
-            }
-            empty = false;
-            actual.onNext(t);
+        public void cancel() {
+            subscription.cancel();
         }
 
         @Override
-        public boolean tryOnNext(T t) {
-            empty = false;
-            return actual.tryOnNext(t);
-        }
-
-        @Override
-        public int requestFusion(int mode) {
-            return transitiveBoundaryFusion(mode);
-        }
-
-        @Override
-        public T poll() throws Exception {
-            T v = qs.poll();
-            if (v != null) {
-                empty = false;
-            }
-            return v;
+        public void request(long n) {
+            subscription.request(n);
         }
     }
 }
