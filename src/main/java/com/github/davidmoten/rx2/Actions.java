@@ -1,12 +1,8 @@
 package com.github.davidmoten.rx2;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.reactivestreams.Subscription;
 
 import io.reactivex.functions.Action;
-import io.reactivex.functions.Consumer;
 
 public final class Actions {
 
