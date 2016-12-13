@@ -30,7 +30,7 @@ public final class FlowableServerSocket {
             Predicate<? super Socket> acceptSocket) {
         Function<ServerSocket, Flowable<Flowable<byte[]>>> FlowableFactory = createFlowableFactory(
                 timeoutMs, bufferSize, preAcceptAction, acceptSocket);
-        return Flowable.<Flowable<byte[]>, ServerSocket>using( //
+        return Flowable.<Flowable<byte[]>, ServerSocket> using( //
                 createServerSocketFactory(serverSocketFactory, acceptTimeoutMs), //
                 FlowableFactory, //
                 Consumers.close(), //
@@ -66,21 +66,21 @@ public final class FlowableServerSocket {
         };
     }
 
-    private static Flowable<Flowable<byte[]>> createServerSocketFlowable(final ServerSocket serverSocket,
-            final long timeoutMs, final int bufferSize, final Action preAcceptAction,
-            final Predicate<? super Socket> acceptSocket) {
+    private static Flowable<Flowable<byte[]>> createServerSocketFlowable(
+            final ServerSocket serverSocket, final long timeoutMs, final int bufferSize,
+            final Action preAcceptAction, final Predicate<? super Socket> acceptSocket) {
         return Flowable.generate( //
                 new Consumer<Emitter<Flowable<byte[]>>>() {
                     @Override
                     public void accept(Emitter<Flowable<byte[]>> emitter) throws Exception {
-                        acceptConnection(timeoutMs, bufferSize, serverSocket, emitter, preAcceptAction,
-                                acceptSocket);
+                        acceptConnection(timeoutMs, bufferSize, serverSocket, emitter,
+                                preAcceptAction, acceptSocket);
                     }
                 });
     }
 
     private static void acceptConnection(long timeoutMs, int bufferSize, ServerSocket ss,
-            Emitter<Flowable<byte[]>> observer, Action preAcceptAction,
+            Emitter<Flowable<byte[]>> emitter, Action preAcceptAction,
             Predicate<? super Socket> acceptSocket) {
         Socket socket;
         while (true) {
@@ -90,15 +90,23 @@ public final class FlowableServerSocket {
                 if (!acceptSocket.test(socket)) {
                     closeQuietly(socket);
                 } else {
-                    observer.onNext(createSocketFlowable(socket, timeoutMs, bufferSize));
+                    emitter.onNext(createSocketFlowable(socket, timeoutMs, bufferSize));
                     break;
                 }
             } catch (SocketTimeoutException e) {
                 // timed out so will loop around again
             } catch (Throwable e) {
-                // unknown problem
-                observer.onError(e);
-                break;
+                // if the server socket has been closed then this is most likely
+                // an unsubscribe so we don't try to report an error which would
+                // just end up in RxJavaPlugins.onError as a stack trace in the
+                // console.
+                if (e instanceof SocketException && "Socket closed".equals(e.getMessage())) {
+                    break;
+                } else {
+                    // unknown problem
+                    emitter.onError(e);
+                    break;
+                }
             }
         }
     }

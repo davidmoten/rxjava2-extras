@@ -6,8 +6,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.reactivestreams.Subscription;
-
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.LongConsumer;
 
@@ -81,6 +79,7 @@ public final class Consumers {
     public static <T> Consumer<T> setAtomic(final AtomicReference<T> value) {
         return new Consumer<T>() {
 
+            @Override
             public void accept(T t) throws Exception {
                 value.set(t);
             }
@@ -94,7 +93,7 @@ public final class Consumers {
             public void accept(Object t) throws Exception {
                 value.decrementAndGet();
             }
-            
+
         };
     }
 
@@ -104,6 +103,7 @@ public final class Consumers {
             @Override
             public void accept(Object t) throws Exception {
                 value.set(true);
-            }};
+            }
+        };
     }
 }
