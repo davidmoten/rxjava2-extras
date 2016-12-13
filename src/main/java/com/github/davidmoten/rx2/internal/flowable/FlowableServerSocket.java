@@ -111,7 +111,8 @@ public final class FlowableServerSocket {
         }
     }
 
-    private static void closeQuietly(Socket socket) {
+    // visible for testing
+    static void closeQuietly(Socket socket) {
         try {
             socket.close();
         } catch (IOException e) {

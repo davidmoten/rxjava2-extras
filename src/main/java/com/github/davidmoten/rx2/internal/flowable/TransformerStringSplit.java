@@ -14,53 +14,60 @@ import io.reactivex.functions.Function3;
 
 public final class TransformerStringSplit {
 
-	public static <T> FlowableTransformer<String, String> split(final String pattern, final Pattern compiledPattern, final BackpressureStrategy backpressureStrategy, int batchSize) {
-		Callable<String> initialState = Callables.constant(null);
-		Function3<String, String, FlowableEmitter<String>, String> transition = new Function3<String, String, FlowableEmitter<String>, String>() {
+    private TransformerStringSplit() {
+        // prevent instantiation
+    }
 
-			@Override
-			public String apply(String leftOver, String s, FlowableEmitter<String> emitter) {
+    public static <T> FlowableTransformer<String, String> split(final String pattern,
+            final Pattern compiledPattern, final BackpressureStrategy backpressureStrategy,
+            int batchSize) {
+        Callable<String> initialState = Callables.constant(null);
+        Function3<String, String, FlowableEmitter<String>, String> transition = new Function3<String, String, FlowableEmitter<String>, String>() {
+
+            @Override
+            public String apply(String leftOver, String s, FlowableEmitter<String> emitter) {
                 // prepend leftover to the string before splitting
-			    if (leftOver != null) {
-			        s = leftOver + s;
-			    }
-			    
-				String[] parts;
-				if (compiledPattern != null) {
-					parts = compiledPattern.split(s, -1);
-				} else {
-					parts = s.split(pattern, -1);
-				}
+                if (leftOver != null) {
+                    s = leftOver + s;
+                }
 
-				// can emit all parts except the last part because it hasn't
-				// been terminated by the pattern/end-of-stream yet
-				for (int i = 0; i < parts.length - 1; i++) {
-					if (emitter.isCancelled()) {
-						// won't be used so can return null
-						return null;
-					}
-					emitter.onNext(parts[i]);
-				}
+                String[] parts;
+                if (compiledPattern != null) {
+                    parts = compiledPattern.split(s, -1);
+                } else {
+                    parts = s.split(pattern, -1);
+                }
 
-				// we have to assign the last part as leftOver because we
-				// don't know if it has been terminated yet
-				return parts[parts.length - 1];
-			}
-		};
+                // can emit all parts except the last part because it hasn't
+                // been terminated by the pattern/end-of-stream yet
+                for (int i = 0; i < parts.length - 1; i++) {
+                    if (emitter.isCancelled()) {
+                        // won't be used so can return null
+                        return null;
+                    }
+                    emitter.onNext(parts[i]);
+                }
 
-		BiPredicate<String, FlowableEmitter<String>> completion = new BiPredicate<String, FlowableEmitter<String>>() {
+                // we have to assign the last part as leftOver because we
+                // don't know if it has been terminated yet
+                return parts[parts.length - 1];
+            }
+        };
 
-			@Override
-			public boolean test(String leftOver, FlowableEmitter<String> emitter) {
-				if (leftOver != null && !emitter.isCancelled())
-					emitter.onNext(leftOver);
-				// TODO is this check needed?
-				if (!emitter.isCancelled())
-					emitter.onComplete();
-				return true;
-			}
-		};
-		return Transformers.stateMachine(initialState, transition, completion,backpressureStrategy, batchSize);
-	}
+        BiPredicate<String, FlowableEmitter<String>> completion = new BiPredicate<String, FlowableEmitter<String>>() {
+
+            @Override
+            public boolean test(String leftOver, FlowableEmitter<String> emitter) {
+                if (leftOver != null && !emitter.isCancelled())
+                    emitter.onNext(leftOver);
+                // TODO is this check needed?
+                if (!emitter.isCancelled())
+                    emitter.onComplete();
+                return true;
+            }
+        };
+        return Transformers.stateMachine(initialState, transition, completion, backpressureStrategy,
+                batchSize);
+    }
 
 }

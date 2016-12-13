@@ -8,6 +8,10 @@ import io.reactivex.functions.Function;
 
 public final class FlowableReverse {
 
+    private FlowableReverse() {
+        // prevent instantiation
+    }
+
     @SuppressWarnings("unchecked")
     public static <T> Flowable<T> reverse(Flowable<T> source) {
         return source.toList().toFlowable()

@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.github.davidmoten.junit.Asserts;
 import com.github.davidmoten.rx2.Bytes;
@@ -57,6 +58,12 @@ public final class FlowableServerSocketTest {
 
     private static final Scheduler clientScheduler = Schedulers
             .from(Executors.newFixedThreadPool(POOL_SIZE));
+
+    @Test
+    public void testCloseQuietly() {
+        Socket socket = Mockito.mock(Socket.class);
+        FlowableServerSocket.closeQuietly(socket);
+    }
 
     @Test
     public void serverSocketReadsTcpPushWhenBufferIsSmallerThanInput()
@@ -179,13 +186,13 @@ public final class FlowableServerSocketTest {
                                     .toFlowable() //
                                     .doOnNext(Consumers.setAtomic(result)) //
                                     .doOnNext(new Consumer<byte[]>() {
-                                        @Override
-                                        public void accept(byte[] bytes) {
-                                            System.out.println(Thread.currentThread().getName()
-                                                    + ": " + new String(bytes));
-                                        }
-                                    }) //
-                                    .onErrorResumeNext(Flowable.<byte[]>empty()) //
+                                @Override
+                                public void accept(byte[] bytes) {
+                                    System.out.println(Thread.currentThread().getName() + ": "
+                                            + new String(bytes));
+                                }
+                            }) //
+                                    .onErrorResumeNext(Flowable.<byte[]> empty()) //
                                     .subscribeOn(scheduler);
                         }
                     }) //
@@ -225,19 +232,18 @@ public final class FlowableServerSocketTest {
                                     .toFlowable() //
                                     .doOnNext(Consumers.setAtomic(result)) //
                                     .map(new Function<byte[], String>() {
-                                        @Override
-                                        public String apply(byte[] bytes) {
-                                            return new String(bytes, UTF_8);
-                                        }
-                                    }) //
+                                @Override
+                                public String apply(byte[] bytes) {
+                                    return new String(bytes, UTF_8);
+                                }
+                            }) //
                                     .doOnNext(new Consumer<String>() {
-                                        @Override
-                                        public void accept(String s) {
-                                            System.out.println(
-                                                    Thread.currentThread().getName() + ": " + s);
-                                        }
-                                    }) //
-                                    .onErrorResumeNext(Flowable.<String>empty()) //
+                                @Override
+                                public void accept(String s) {
+                                    System.out.println(Thread.currentThread().getName() + ": " + s);
+                                }
+                            }) //
+                                    .onErrorResumeNext(Flowable.<String> empty()) //
                                     .subscribeOn(scheduler);
                         }
                     }).subscribeOn(scheduler) //
@@ -348,7 +354,7 @@ public final class FlowableServerSocketTest {
                                         e.printStackTrace();
                                     }
                                 }
-                                return Flowable.<Object>just(1);
+                                return Flowable.<Object> just(1);
                             }
                         }) //
                                 .timeout(30, TimeUnit.SECONDS) //
@@ -390,13 +396,13 @@ public final class FlowableServerSocketTest {
                                     .toFlowable() //
                                     .doOnNext(Consumers.setAtomic(result)) //
                                     .doOnNext(new Consumer<byte[]>() {
-                                        @Override
-                                        public void accept(byte[] bytes) {
-                                            System.out.println(Thread.currentThread().getName()
-                                                    + ": " + new String(bytes));
-                                        }
-                                    }) //
-                                    .onErrorResumeNext(Flowable.<byte[]>empty()) //
+                                @Override
+                                public void accept(byte[] bytes) {
+                                    System.out.println(Thread.currentThread().getName() + ": "
+                                            + new String(bytes));
+                                }
+                            }) //
+                                    .onErrorResumeNext(Flowable.<byte[]> empty()) //
                                     .subscribeOn(scheduler);
                         }
                     }).subscribeOn(scheduler) //
@@ -465,14 +471,14 @@ public final class FlowableServerSocketTest {
                                 .to(Bytes.collect()) //
                                 .doAfterSuccess(new Consumer<byte[]>() {
 
-                                    @Override
-                                    public void accept(byte[] bytes) {
-                                        System.out.println(Thread.currentThread().getName() + ": "
-                                                + new String(bytes).trim());
-                                    }
-                                }) //
+                            @Override
+                            public void accept(byte[] bytes) {
+                                System.out.println(Thread.currentThread().getName() + ": "
+                                        + new String(bytes).trim());
+                            }
+                        }) //
                                 .toFlowable() //
-                                .onErrorResumeNext(Flowable.<byte[]>empty()) //
+                                .onErrorResumeNext(Flowable.<byte[]> empty()) //
                                 .subscribeOn(scheduler);
                     }
                 }).subscribeOn(scheduler) //
