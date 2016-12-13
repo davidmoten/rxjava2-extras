@@ -30,7 +30,7 @@ public final class FlowableServerSocket {
             Predicate<? super Socket> acceptSocket) {
         Function<ServerSocket, Flowable<Flowable<byte[]>>> FlowableFactory = createFlowableFactory(
                 timeoutMs, bufferSize, preAcceptAction, acceptSocket);
-        return Flowable.<Flowable<byte[]>, ServerSocket> using( //
+        return Flowable.<Flowable<byte[]>, ServerSocket>using( //
                 createServerSocketFactory(serverSocketFactory, acceptTimeoutMs), //
                 FlowableFactory, //
                 Consumers.close(), //
@@ -100,7 +100,9 @@ public final class FlowableServerSocket {
                 // an unsubscribe so we don't try to report an error which would
                 // just end up in RxJavaPlugins.onError as a stack trace in the
                 // console.
-                if (e instanceof SocketException && "Socket closed".equals(e.getMessage())) {
+                if (e instanceof SocketException && ("Socket closed".equals(e.getMessage())
+                        || "Socket operation on nonsocket: configureBlocking"
+                                .equals(e.getMessage()))) {
                     break;
                 } else {
                     // unknown problem
