@@ -82,19 +82,7 @@ public final class FlowableStringSplit extends Flowable<String> {
                 index = 0;
             }
             leftOver.append(t);
-            Matcher matcher = pattern.matcher(leftOver.subSequence(index, leftOver.length()));
-            if (matcher.find()) {
-                String s = leftOver.substring(0, matcher.start());
-                index = matcher.end();
-                if (index >= bufferSize) {
-                    // shrink the buffer once we reach bufferSize chars
-                    leftOver.delete(0, index);
-                }
-                queue.offer(NotificationLite.next(s));
-                drain();
-            } else {
-                request(1);
-            }
+            drain();
         }
 
         @Override
@@ -123,6 +111,19 @@ public final class FlowableStringSplit extends Flowable<String> {
                 long e = 0; // emitted
                 while (e != r) {
                     // TODO
+                    Matcher matcher = pattern.matcher(leftOver.subSequence(index, leftOver.length()));
+                    if (matcher.find()) {
+                        String s = leftOver.substring(0, matcher.start());
+                        index = matcher.end();
+                        if (index >= bufferSize) {
+                            // shrink the buffer once we reach bufferSize chars
+                            leftOver.delete(0, index);
+                        }
+                        queue.offer(NotificationLite.next(s));
+                        drain();
+                    } else {
+                        request(1);
+                    }
                 }
             }
         }
