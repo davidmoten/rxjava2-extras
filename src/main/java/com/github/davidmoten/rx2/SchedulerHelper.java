@@ -8,10 +8,14 @@ import io.reactivex.Scheduler.Worker;
 
 public final class SchedulerHelper {
 
+    private SchedulerHelper() {
+        // prevent instantiation
+    }
+
     public static Scheduler withThreadIdFromCallSite(Scheduler scheduler) {
         return new SchedulerWithId(scheduler, describeCallSite());
     }
-    
+
     public static Scheduler withThreadId(Scheduler scheduler, String id) {
         return new SchedulerWithId(scheduler, describeCallSite());
     }

@@ -6,6 +6,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
 
+import com.github.davidmoten.junit.Asserts;
+
 public class ActionsTest {
 
     @Test
@@ -13,6 +15,11 @@ public class ActionsTest {
         AtomicBoolean b = new AtomicBoolean();
         Actions.setToTrue(b).run();
         assertTrue(b.get());
+    }
+
+    @Test
+    public void testIsUtility() {
+        Asserts.assertIsUtilityClass(Actions.class);
     }
 
 }
