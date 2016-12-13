@@ -9,9 +9,6 @@ import com.github.davidmoten.guavamini.Preconditions;
 import io.reactivex.Flowable;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Action;
-import io.reactivex.internal.fuseable.ConditionalSubscriber;
-import io.reactivex.internal.subscribers.BasicFuseableConditionalSubscriber;
-import io.reactivex.internal.subscribers.BasicFuseableSubscriber;
 
 /**
  * Calls a consumer just before completion if the stream was empty.
@@ -40,7 +37,7 @@ public final class FlowableDoOnEmpty<T> extends Flowable<T> {
 
         private final Subscriber<? super T> actual;
         private final Action onEmpty;
-        //mutable state
+        // mutable state
         private boolean done;
         private boolean empty = true;
         private Subscription subscription;
@@ -49,7 +46,7 @@ public final class FlowableDoOnEmpty<T> extends Flowable<T> {
             this.actual = actual;
             this.onEmpty = onEmpty;
         }
-        
+
         @Override
         public void onSubscribe(Subscription subscription) {
             this.subscription = subscription;
@@ -73,7 +70,7 @@ public final class FlowableDoOnEmpty<T> extends Flowable<T> {
             done = true;
             actual.onComplete();
         }
-        
+
         @Override
         public void onNext(T t) {
             empty = false;
