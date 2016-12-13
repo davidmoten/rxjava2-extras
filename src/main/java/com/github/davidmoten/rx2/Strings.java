@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 import org.reactivestreams.Publisher;
 
 import com.github.davidmoten.guavamini.Preconditions;
+import com.github.davidmoten.rx2.internal.flowable.FlowableStringSplit;
 import com.github.davidmoten.rx2.internal.flowable.TransformerDecode;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStringSplit;
 
@@ -326,6 +327,10 @@ public final class Strings {
             }
 
         };
+    }
+    
+    public static <T> Flowable<String> split2(Flowable<String> source, Pattern pattern) {
+        return new FlowableStringSplit(source, pattern);
     }
 
 }
