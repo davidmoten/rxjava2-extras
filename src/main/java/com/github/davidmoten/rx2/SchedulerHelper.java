@@ -3,6 +3,8 @@ package com.github.davidmoten.rx2;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import com.github.davidmoten.rx2.internal.SchedulerWithId;
+
 import io.reactivex.Scheduler;
 import io.reactivex.Scheduler.Worker;
 

@@ -328,9 +328,20 @@ public final class Strings {
 
         };
     }
-    
-    public static <T> Flowable<String> split2(Flowable<String> source, Pattern pattern) {
-        return new FlowableStringSplit(source, pattern);
+
+    public static <T> FlowableTransformer<String, String> split2(final String token,
+            final int bufferSize) {
+        return new FlowableTransformer<String, String>() {
+
+            @Override
+            public Publisher<String> apply(Flowable<String> source) {
+                return new FlowableStringSplit(source, token, bufferSize);
+            }
+        };
+    }
+
+    public static <T> FlowableTransformer<String, String> split2(final String token) {
+        return split2(token, 8192);
     }
 
 }

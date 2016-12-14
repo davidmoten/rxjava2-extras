@@ -1,4 +1,4 @@
-package com.github.davidmoten.rx2;
+package com.github.davidmoten.rx2.internal;
 
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;

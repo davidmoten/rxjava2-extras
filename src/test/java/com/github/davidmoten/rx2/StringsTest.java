@@ -123,10 +123,28 @@ public class StringsTest {
                 .assertComplete();
     }
 
+    @Test(timeout = 5000)
+    public void testSplitEmpty2() {
+        Flowable.<String> empty() //
+                .compose(Strings.split2("\n", 16)) //
+                .test() //
+                .assertNoValues() //
+                .assertComplete();
+    }
+
     @Test
     public void testSplitNormal() {
         Flowable.just("boo:an", "d:you") //
                 .compose(Strings.split(":")) //
+                .test() //
+                .assertValues("boo", "and", "you") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSplitNormal2() {
+        Flowable.just("boo:an", "d:you") //
+                .compose(Strings.split2(":")) //
                 .test() //
                 .assertValues("boo", "and", "you") //
                 .assertComplete();
