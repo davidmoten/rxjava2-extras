@@ -170,7 +170,8 @@ public final class FlowableStringSplit extends Flowable<String> {
          */
         private boolean find() {
             boolean found = false;
-            // brute force search
+            // brute force search is efficient generally for a single pass and
+            // short token
             int i;
             for (i = searchIndex; i < leftOver.length() - token.length(); i++) {
                 int j = 0;
@@ -202,7 +203,7 @@ public final class FlowableStringSplit extends Flowable<String> {
                 return true;
             } else {
                 // emit nothing but adjust searchIndex to the right
-                searchIndex = Math.max(0, leftOver.length() - token.length() - 1);
+                searchIndex = Math.max(searchIndex, leftOver.length() - token.length() - 1);
                 return false;
             }
         }
