@@ -167,6 +167,15 @@ public class StringsTest {
                 .assertValues("", "", "boo", "and", "", "", "you", "", "") //
                 .assertComplete();
     }
+    
+    @Test
+    public void testSplitEmptyItemsAtBeginningMiddleAndEndProduceBlanks2() {
+        Flowable.just("::boo:an", "d:::you::") //
+                .compose(Strings.split2(":")) //
+                .test() //
+                .assertValues("", "", "boo", "and", "", "", "you", "", "") //
+                .assertComplete();
+    }
 
     @Test
     public void testSplitBlankProducesBlank() {

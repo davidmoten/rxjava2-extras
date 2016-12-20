@@ -152,8 +152,12 @@ public final class FlowableStringSplit extends Flowable<String> {
                         }
                     }
                 }
-                r = BackpressureHelper.produced(this, e);
-                if (r == 0 && wip.addAndGet(-missed) == 0) {
+                if (e > 0) {
+                    r = BackpressureHelper.produced(this, e);
+                    if (r == 0 && wip.addAndGet(-missed) == 0) {
+                        return;
+                    }
+                } else if (wip.addAndGet(-missed) == 0) {
                     return;
                 }
             }
@@ -198,7 +202,7 @@ public final class FlowableStringSplit extends Flowable<String> {
                 return true;
             } else {
                 // emit nothing but adjust searchIndex to the right
-                searchIndex = i;
+                searchIndex = Math.max(0, leftOver.length() - token.length() - 1);
                 return false;
             }
         }
