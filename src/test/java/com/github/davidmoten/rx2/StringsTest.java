@@ -176,7 +176,7 @@ public class StringsTest {
                 .assertValues("", "", "boo", "and", "", "", "you", "", "") //
                 .assertComplete();
     }
-
+    
     @Test
     public void testSplitBlankProducesBlank() {
         Flowable.just("") //
@@ -199,6 +199,15 @@ public class StringsTest {
     public void testSplitSeparatorOnlyProducesTwoBlanks() {
         Flowable.just(":") //
                 .compose(Strings.split(":")) //
+                .test() //
+                .assertValues("", "") //
+                .assertComplete();
+    }
+    
+    @Test
+    public void testSplitSeparatorOnlyProducesTwoBlanks2() {
+        Flowable.just(":") //
+                .compose(Strings.split2(":")) //
                 .test() //
                 .assertValues("", "") //
                 .assertComplete();
