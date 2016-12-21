@@ -58,7 +58,6 @@ public final class FlowableStringSplit extends Flowable<String> {
         public void onSubscribe(Subscription subscription) {
             this.parent = subscription;
             actual.onSubscribe(this);
-            System.out.println("subscribed");
         }
 
         @Override
@@ -68,7 +67,6 @@ public final class FlowableStringSplit extends Flowable<String> {
 
         @Override
         public void request(long n) {
-            System.out.println("requested " + n);
             if (SubscriptionHelper.validate(n)) {
                 BackpressureHelper.add(this, n);
                 if (once.compareAndSet(false, true)) {
@@ -86,7 +84,6 @@ public final class FlowableStringSplit extends Flowable<String> {
 
         @Override
         public void onNext(String t) {
-            System.out.println("onNext=" + t);
             queue.add(NotificationLite.next(t));
             drain();
         }
@@ -104,7 +101,6 @@ public final class FlowableStringSplit extends Flowable<String> {
         }
 
         private void drain() {
-            System.out.println("drain");
             if (wip.getAndIncrement() != 0) {
                 return;
             }
@@ -117,9 +113,7 @@ public final class FlowableStringSplit extends Flowable<String> {
                         e++;
                     } else {
                         Object o = queue.poll();
-                        System.out.println("polled " + o);
                         if (o == null) {
-                            System.out.println("requesting 1");
                             parent.request(1);
                             if (wip.addAndGet(-missed) == 0) {
                                 return;
@@ -129,7 +123,6 @@ public final class FlowableStringSplit extends Flowable<String> {
                                 String s = leftOver.substring(index, leftOver.length());
                                 leftOver = null;
                                 queue.clear();
-                                System.out.println("emitted " + s + " at completion");
                                 actual.onNext(s.toString());
                                 e++;
                             }
@@ -179,7 +172,6 @@ public final class FlowableStringSplit extends Flowable<String> {
                     index = 0;
                     searchIndex = 0;
                 }
-                System.out.println("emitting " + s);
                 actual.onNext(s);
                 return true;
             } else {
@@ -188,7 +180,6 @@ public final class FlowableStringSplit extends Flowable<String> {
                 return false;
             }
         }
-
     }
 
 }
