@@ -83,7 +83,7 @@ public final class FlowableStringSplit extends Flowable<String> {
                         parent.request(Long.MAX_VALUE);
                         unbounded = true;
                     } else {
-                        parent.request(1);
+                        parent.request(128);
                     }
                 }
                 drain();
