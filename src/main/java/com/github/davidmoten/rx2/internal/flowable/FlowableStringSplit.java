@@ -54,6 +54,7 @@ public final class FlowableStringSplit extends Flowable<String> {
         private int index;
         private int searchIndex;
         private Subscription parent;
+        private boolean unbounded;
 
         StringSplitSubscriber(Subscriber<? super String> actual, String searchFor, int bufferSize) {
             this.actual = actual;
@@ -80,6 +81,7 @@ public final class FlowableStringSplit extends Flowable<String> {
                 if (once.compareAndSet(false, true)) {
                     if (n == Long.MAX_VALUE) {
                         parent.request(Long.MAX_VALUE);
+                        unbounded = true;
                     } else {
                         parent.request(1);
                     }
@@ -123,7 +125,9 @@ public final class FlowableStringSplit extends Flowable<String> {
                     } else {
                         Object o = queue.poll();
                         if (o == null) {
-                            parent.request(1);
+                            if (!unbounded) {
+                                parent.request(1);
+                            }
                             break;
                         } else if (NotificationLite.isComplete(o)) {
                             if (leftOver != null) {
@@ -155,7 +159,7 @@ public final class FlowableStringSplit extends Flowable<String> {
                             return;
                         }
                         // otherwise loop again and make sure to refresh r
-                        r = get();
+                        // r = get();
                     }
                 } else if (wip.addAndGet(-missed) == 0) {
                     return;
