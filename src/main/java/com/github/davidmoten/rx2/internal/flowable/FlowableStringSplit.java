@@ -73,7 +73,7 @@ public final class FlowableStringSplit extends Flowable<String> {
                 BackpressureHelper.add(this, n);
                 if (once.compareAndSet(false, true)) {
                     if (n == Long.MAX_VALUE) {
-                        parent.request(n);
+                        parent.request(Long.MAX_VALUE);
                     } else {
                         parent.request(1);
                     }
@@ -142,7 +142,7 @@ public final class FlowableStringSplit extends Flowable<String> {
                             return;
                         } else {
                             if (leftOver == null) {
-                                leftOver = new StringBuilder();
+                                leftOver = new StringBuilder(bufferSize);
                             }
                             leftOver.append((String) o);
                         }
