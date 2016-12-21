@@ -35,7 +35,7 @@ public class StringsSplitTest {
     @Test(timeout = 5000)
     public void testSplitEmpty2() {
         Flowable.<String> empty() //
-                .compose(Strings.split2("\n", 16)) //
+                .compose(Strings.splitSimple("\n", 16)) //
                 .test() //
                 .assertNoValues() //
                 .assertComplete();
@@ -53,7 +53,7 @@ public class StringsSplitTest {
     @Test
     public void testSplitNormal2() {
         Flowable.just("boo:an", "d:you") //
-                .compose(Strings.split2(":")) //
+                .compose(Strings.splitSimple(":")) //
                 .test() //
                 .assertValues("boo", "and", "you") //
                 .assertComplete();
@@ -62,7 +62,7 @@ public class StringsSplitTest {
     @Test
     public void testSplitNormalSmallBuffer2() {
         Flowable.just("boo:an", "d:you") //
-                .compose(Strings.split2(":",2)) //
+                .compose(Strings.splitSimple(":",2)) //
                 .test() //
                 .assertValues("boo", "and", "you") //
                 .assertComplete();
@@ -89,7 +89,7 @@ public class StringsSplitTest {
     @Test
     public void testSplitEmptyItemsAtBeginningMiddleAndEndProduceBlanks2() {
         Flowable.just("::boo:an", "d:::you::") //
-                .compose(Strings.split2(":")) //
+                .compose(Strings.splitSimple(":")) //
                 .test() //
                 .assertValues("", "", "boo", "and", "", "", "you", "", "") //
                 .assertComplete();
@@ -107,7 +107,7 @@ public class StringsSplitTest {
     @Test
     public void testSplitBlankProducesBlank2() {
         Flowable.just("") //
-                .compose(Strings.split2(":")) //
+                .compose(Strings.splitSimple(":")) //
                 .test() //
                 .assertValues("") //
                 .assertComplete();
@@ -125,7 +125,7 @@ public class StringsSplitTest {
     @Test
     public void testSplitNoSeparatorProducesSingle2() {
         Flowable.just("and") //
-                .compose(Strings.split2(":")) //
+                .compose(Strings.splitSimple(":")) //
                 .test() //
                 .assertValues("and") //
                 .assertComplete();
@@ -143,7 +143,7 @@ public class StringsSplitTest {
     @Test
     public void testSplitSeparatorOnlyProducesTwoBlanks2() {
         Flowable.just(":") //
-                .compose(Strings.split2(":")) //
+                .compose(Strings.splitSimple(":")) //
                 .test() //
                 .assertValues("", "") //
                 .assertComplete();

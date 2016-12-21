@@ -329,7 +329,7 @@ public final class Strings {
         };
     }
 
-    public static <T> FlowableTransformer<String, String> split2(final String searchFor,
+    public static <T> FlowableTransformer<String, String> splitSimple(final String searchFor,
             final int bufferSize) {
         return new FlowableTransformer<String, String>() {
 
@@ -340,8 +340,8 @@ public final class Strings {
         };
     }
 
-    public static <T> FlowableTransformer<String, String> split2(final String searchFor) {
-        return split2(searchFor, 8192);
+    public static <T> FlowableTransformer<String, String> splitSimple(final String searchFor) {
+        return splitSimple(searchFor, 8192);
     }
 
 }

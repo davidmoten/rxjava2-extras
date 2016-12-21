@@ -41,12 +41,12 @@ public final class FlowableStringSplit extends Flowable<String> {
         // queue of notifications
         private final Queue<Object> queue = new ConcurrentLinkedQueue<Object>();
         private final AtomicInteger wip = new AtomicInteger();
+        private final AtomicBoolean once = new AtomicBoolean();
 
         private StringBuilder leftOver;
         private int index;
         private int searchIndex;
         private Subscription parent;
-        private final AtomicBoolean once = new AtomicBoolean();
 
         StringSplitSubscriber(Subscriber<? super String> actual, String searchFor, int bufferSize) {
             this.actual = actual;
