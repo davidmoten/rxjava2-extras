@@ -112,7 +112,7 @@ public final class FlowableStringSplit extends Flowable<String> {
             if (wip.getAndIncrement() != 0) {
                 return;
             }
-            int missed = wip.get();
+            int missed = 1;
             long r = get(); // requested
             while (true) {
                 long e = 0; // emitted
@@ -159,18 +159,12 @@ public final class FlowableStringSplit extends Flowable<String> {
                 }
                 if (e > 0) {
                     r = BackpressureHelper.produced(this, e);
-                    if (r == 0) {
-                        if (wip.addAndGet(-missed) == 0) {
-                            return;
-                        }
-                        // otherwise loop again and make sure to refresh r
-                        // r = get();
-                    }
-                } else if (wip.addAndGet(-missed) == 0) {
-                    return;
-                } else {
-                    r = get();
                 }
+                missed = wip.addAndGet(-missed);
+                if ( missed == 0) {
+                    return;
+                }
+                r = get();
             }
         }
 
@@ -200,7 +194,7 @@ public final class FlowableStringSplit extends Flowable<String> {
 
         private void updateIndexes(int i) {
             searchIndex = i + searchFor.length();
-            if (searchIndex > bufferSize - bufferSize/4) {
+            if (searchIndex > bufferSize - bufferSize / 4) {
                 // shrink leftOver
                 leftOver.delete(0, searchIndex);
                 index = 0;
