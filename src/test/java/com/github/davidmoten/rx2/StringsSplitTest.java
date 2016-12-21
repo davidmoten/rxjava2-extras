@@ -58,6 +58,15 @@ public class StringsSplitTest {
                 .assertValues("boo", "and", "you") //
                 .assertComplete();
     }
+    
+    @Test
+    public void testSplitNormalSmallBuffer2() {
+        Flowable.just("boo:an", "d:you") //
+                .compose(Strings.split2(":",2)) //
+                .test() //
+                .assertValues("boo", "and", "you") //
+                .assertComplete();
+    }
 
     @Test
     public void testSplitNormalWithPattern() {

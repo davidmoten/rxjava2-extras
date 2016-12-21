@@ -113,14 +113,9 @@ public final class FlowableStringSplit extends Flowable<String> {
             while (true) {
                 long e = 0; // emitted
                 while (e < r) {
-                    boolean found = false;
-                    if (leftOver != null) {
-                        found = find();
-                        if (found) {
-                            e++;
-                        }
-                    }
-                    if (!found) {
+                    if (find()) {
+                        e++;
+                    } else {
                         Object o = queue.poll();
                         System.out.println("polled " + o);
                         if (o == null) {
@@ -170,22 +165,10 @@ public final class FlowableStringSplit extends Flowable<String> {
          * @return true if and only if a value emitted
          */
         private boolean find() {
-            //TODO use String.indexOf because JVM may inline that call with more efficient code
-            boolean found = false;
-            // brute force search is efficient generally for a single pass and
-            // short token
-            int i;
-            for (i = searchIndex; i < leftOver.length() - token.length() + 1; i++) {
-                int j = 0;
-                while (j < token.length() && leftOver.charAt(i + j) == token.charAt(j)) {
-                    j++;
-                }
-                if (j == token.length()) {
-                    found = true;
-                    break;
-                }
-            }
-            if (found) {
+            if (leftOver == null)
+                return false;
+            int i = leftOver.indexOf(token, searchIndex);
+            if (i != -1) {
                 // emit and adjust indexes
                 String s = leftOver.substring(searchIndex, i);
                 searchIndex = i + token.length();
