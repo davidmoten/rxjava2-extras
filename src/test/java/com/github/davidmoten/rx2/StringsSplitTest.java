@@ -4,12 +4,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.regex.Pattern;
 
 import org.junit.Test;
 
 import io.reactivex.Flowable;
+import io.reactivex.subscribers.TestSubscriber;
 
 public class StringsSplitTest {
     @Test
@@ -33,7 +35,7 @@ public class StringsSplitTest {
     }
 
     @Test(timeout = 5000)
-    public void testSplitEmpty2() {
+    public void testSplitSimpleEmpty() {
         Flowable.<String> empty() //
                 .compose(Strings.splitSimple("\n", 16)) //
                 .test() //
@@ -51,19 +53,35 @@ public class StringsSplitTest {
     }
 
     @Test
-    public void testSplitNormal2() {
+    public void testSplitSimpleNormal() {
         Flowable.just("boo:an", "d:you") //
                 .compose(Strings.splitSimple(":")) //
                 .test() //
                 .assertValues("boo", "and", "you") //
                 .assertComplete();
     }
-    
+
     @Test
-    public void testSplitNormalSmallBuffer2() {
+    public void testSplitSimpleNormalSmallBuffer() {
         Flowable.just("boo:an", "d:you") //
-                .compose(Strings.splitSimple(":",2)) //
+                .compose(Strings.splitSimple(":", 2)) //
                 .test() //
+                .assertValues("boo", "and", "you") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSplitSimpleBackpressure() {
+        Flowable.just("boo:an", "d:you") //
+                .compose(Strings.splitSimple(":")) //
+                .test(0) //
+                .assertNoValues() //
+                .assertNotTerminated() //
+                .requestMore(1) //
+                .assertValue("boo") //
+                .requestMore(1) //
+                .assertValues("boo", "and") //
+                .requestMore(1)//
                 .assertValues("boo", "and", "you") //
                 .assertComplete();
     }
@@ -87,7 +105,7 @@ public class StringsSplitTest {
     }
 
     @Test
-    public void testSplitEmptyItemsAtBeginningMiddleAndEndProduceBlanks2() {
+    public void testSplitSimpleEmptyItemsAtBeginningMiddleAndEndProduceBlanks() {
         Flowable.just("::boo:an", "d:::you::") //
                 .compose(Strings.splitSimple(":")) //
                 .test() //
@@ -105,7 +123,7 @@ public class StringsSplitTest {
     }
 
     @Test
-    public void testSplitBlankProducesBlank2() {
+    public void testSplitSimpleBlankProducesBlank() {
         Flowable.just("") //
                 .compose(Strings.splitSimple(":")) //
                 .test() //
@@ -123,7 +141,7 @@ public class StringsSplitTest {
     }
 
     @Test
-    public void testSplitNoSeparatorProducesSingle2() {
+    public void testSplitSimpleNoSeparatorProducesSingle() {
         Flowable.just("and") //
                 .compose(Strings.splitSimple(":")) //
                 .test() //
@@ -141,12 +159,45 @@ public class StringsSplitTest {
     }
 
     @Test
-    public void testSplitSeparatorOnlyProducesTwoBlanks2() {
+    public void testSplitSimpleSeparatorOnlyProducesTwoBlanks() {
         Flowable.just(":") //
                 .compose(Strings.splitSimple(":")) //
                 .test() //
                 .assertValues("", "") //
                 .assertComplete();
+    }
+
+    @Test
+    public void testSplitSimpleError() {
+        Flowable.<String> error(new IOException()) //
+                .compose(Strings.splitSimple(":"))
+                .test() //
+                .assertNoValues() //
+                .assertError(IOException.class);
+    }
+    
+    @Test
+    public void testSplitSimpleNormalCancelled() {
+        TestSubscriber<String> ts = Flowable.just("boo:an", "d:you") //
+                .compose(Strings.splitSimple(":")) //
+                .test(2) //
+                .assertValues("boo", "and")
+                .assertNotTerminated();
+        ts.cancel();
+        ts.assertValueCount(2);
+        ts.assertNotTerminated();
+    }
+    
+    @Test
+    public void testSplitSimpleNormalCancelledEarly() {
+        TestSubscriber<String> ts = Flowable.just("boo:an", "d:you") //
+                .compose(Strings.splitSimple(":")) //
+                .test(1) //
+                .assertValues("boo")
+                .assertNotTerminated();
+        ts.cancel();
+        ts.assertValueCount(1);
+        ts.assertNotTerminated();
     }
 
 }

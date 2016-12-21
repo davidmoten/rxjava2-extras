@@ -9,6 +9,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
+import com.github.davidmoten.guavamini.Preconditions;
+import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
+
 import io.reactivex.Flowable;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
@@ -21,6 +24,9 @@ public final class FlowableStringSplit extends Flowable<String> {
     private final int bufferSize;
 
     public FlowableStringSplit(Flowable<String> source, String searchFor, int bufferSize) {
+        Preconditions.checkNotNull(source);
+        Preconditions.checkNotNull(searchFor);
+        Preconditions.checkArgument(bufferSize > 0);
         this.source = source;
         this.searchFor = searchFor;
         this.bufferSize = bufferSize;
@@ -32,7 +38,8 @@ public final class FlowableStringSplit extends Flowable<String> {
     }
 
     @SuppressWarnings("serial")
-    private static final class StringSplitSubscriber extends AtomicLong
+    @VisibleForTesting
+    static final class StringSplitSubscriber extends AtomicLong
             implements Subscriber<String>, Subscription {
 
         private final Subscriber<? super String> actual;
@@ -42,6 +49,8 @@ public final class FlowableStringSplit extends Flowable<String> {
         private final Queue<Object> queue = new ConcurrentLinkedQueue<Object>();
         private final AtomicInteger wip = new AtomicInteger();
         private final AtomicBoolean once = new AtomicBoolean();
+
+        private volatile boolean cancelled;
 
         private StringBuilder leftOver;
         private int index;
@@ -62,6 +71,7 @@ public final class FlowableStringSplit extends Flowable<String> {
 
         @Override
         public void cancel() {
+            cancelled = true;
             parent.cancel();
         }
 
@@ -108,16 +118,17 @@ public final class FlowableStringSplit extends Flowable<String> {
             long r = get(); // requested
             while (true) {
                 long e = 0; // emitted
-                while (e < r) {
+                while (e != r) {
+                    if (cancelled) {
+                        return;
+                    }
                     if (find()) {
                         e++;
                     } else {
                         Object o = queue.poll();
                         if (o == null) {
                             parent.request(1);
-                            if (wip.addAndGet(-missed) == 0) {
-                                return;
-                            }
+                            break;
                         } else if (NotificationLite.isComplete(o)) {
                             if (leftOver != null) {
                                 String s = leftOver.substring(index, leftOver.length());
@@ -143,11 +154,17 @@ public final class FlowableStringSplit extends Flowable<String> {
                 }
                 if (e > 0) {
                     r = BackpressureHelper.produced(this, e);
-                    if (r == 0 && wip.addAndGet(-missed) == 0) {
-                        return;
+                    if (r == 0) {
+                        if (wip.addAndGet(-missed) == 0) {
+                            return;
+                        }
+                        // otherwise loop again and make sure to refresh r
+                        r = get();
                     }
                 } else if (wip.addAndGet(-missed) == 0) {
                     return;
+                } else {
+                    r = get();
                 }
             }
         }
@@ -166,7 +183,7 @@ public final class FlowableStringSplit extends Flowable<String> {
                     // emit and adjust indexes
                     String s = leftOver.substring(searchIndex, i);
                     searchIndex = i + searchFor.length();
-                    if (searchIndex > bufferSize) {
+                    if (searchIndex > bufferSize << 1) {
                         // shrink leftOver
                         leftOver.delete(0, searchIndex);
                         index = 0;
