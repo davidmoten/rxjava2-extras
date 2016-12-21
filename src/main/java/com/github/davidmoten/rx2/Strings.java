@@ -341,7 +341,7 @@ public final class Strings {
     }
 
     public static <T> FlowableTransformer<String, String> splitSimple(final String searchFor) {
-        return splitSimple(searchFor, 8192);
+        return splitSimple(searchFor, 128);
     }
 
 }

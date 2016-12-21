@@ -1,7 +1,5 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -12,6 +10,8 @@ import org.reactivestreams.Subscription;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
+import io.reactivex.internal.fuseable.SimpleQueue;
+import io.reactivex.internal.queue.MpscLinkedQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 import io.reactivex.internal.util.NotificationLite;
@@ -44,7 +44,7 @@ public final class FlowableStringSplit extends Flowable<String> {
         private final String searchFor;
         private final int bufferSize;
         // queue of notifications
-        private final Queue<Object> queue = new ConcurrentLinkedQueue<Object>();
+        private final SimpleQueue<Object> queue = new MpscLinkedQueue<Object>();
         private final AtomicInteger wip = new AtomicInteger();
         private final AtomicBoolean once = new AtomicBoolean();
 
@@ -92,7 +92,7 @@ public final class FlowableStringSplit extends Flowable<String> {
 
         @Override
         public void onNext(String t) {
-            queue.add(NotificationLite.next(t));
+            queue.offer(NotificationLite.next(t));
             drain();
         }
 
@@ -123,7 +123,12 @@ public final class FlowableStringSplit extends Flowable<String> {
                     if (find()) {
                         e++;
                     } else {
-                        Object o = queue.poll();
+                        Object o = null;
+                        try {
+                            o = queue.poll();
+                        } catch (Exception e1) {
+                            o = NotificationLite.error(e1);
+                        }
                         if (o == null) {
                             if (!unbounded) {
                                 parent.request(1);
@@ -182,15 +187,7 @@ public final class FlowableStringSplit extends Flowable<String> {
                 if (i != -1) {
                     // emit and adjust indexes
                     String s = leftOver.substring(searchIndex, i);
-                    searchIndex = i + searchFor.length();
-                    if (searchIndex > bufferSize - bufferSize/4) {
-                        // shrink leftOver
-                        leftOver.delete(0, searchIndex);
-                        index = 0;
-                        searchIndex = 0;
-                    } else {
-                        index = searchIndex;
-                    }
+                    updateIndexes(i);
                     actual.onNext(s);
                     return true;
                 } else {
@@ -198,6 +195,18 @@ public final class FlowableStringSplit extends Flowable<String> {
                     searchIndex = Math.max(searchIndex, leftOver.length() - searchFor.length() - 1);
                     return false;
                 }
+            }
+        }
+
+        private void updateIndexes(int i) {
+            searchIndex = i + searchFor.length();
+            if (searchIndex > bufferSize - bufferSize/4) {
+                // shrink leftOver
+                leftOver.delete(0, searchIndex);
+                index = 0;
+                searchIndex = 0;
+            } else {
+                index = searchIndex;
             }
         }
     }
