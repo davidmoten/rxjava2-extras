@@ -6,11 +6,14 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
 
 import org.junit.Test;
 
 import io.reactivex.Flowable;
+import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.subscribers.TestSubscriber;
 
 public class StringsSplitTest {
@@ -170,34 +173,71 @@ public class StringsSplitTest {
     @Test
     public void testSplitSimpleError() {
         Flowable.<String> error(new IOException()) //
-                .compose(Strings.splitSimple(":"))
-                .test() //
+                .compose(Strings.splitSimple(":")).test() //
                 .assertNoValues() //
                 .assertError(IOException.class);
     }
-    
+
     @Test
     public void testSplitSimpleNormalCancelled() {
         TestSubscriber<String> ts = Flowable.just("boo:an", "d:you") //
                 .compose(Strings.splitSimple(":")) //
                 .test(2) //
-                .assertValues("boo", "and")
-                .assertNotTerminated();
+                .assertValues("boo", "and").assertNotTerminated();
         ts.cancel();
         ts.assertValueCount(2);
         ts.assertNotTerminated();
     }
-    
+
     @Test
     public void testSplitSimpleNormalCancelledEarly() {
         TestSubscriber<String> ts = Flowable.just("boo:an", "d:you") //
                 .compose(Strings.splitSimple(":")) //
                 .test(1) //
-                .assertValues("boo")
-                .assertNotTerminated();
+                .assertValues("boo").assertNotTerminated();
         ts.cancel();
         ts.assertValueCount(1);
         ts.assertNotTerminated();
+    }
+
+    @Test
+    public void testSplitSimpleNormalCancelledAtBeginning() {
+        TestSubscriber<String> ts = Flowable.just("boo:an", "d:you") //
+                .compose(Strings.splitSimple(":")) //
+                .test(0) //
+                .assertNoValues() //
+                .assertNotTerminated();
+        ts.cancel();
+        ts.requestMore(1);
+        ts.assertNoValues();
+        ts.assertNotTerminated();
+    }
+
+    @Test
+    public void testSplitSimpleNormalCancelledAtBegginning() {
+        try {
+            List<Throwable> list = new CopyOnWriteArrayList<Throwable>();
+            RxJavaPlugins.setErrorHandler(Consumers.addTo(list));
+            Flowable.just("boo:an", "d:you") //
+                    .compose(Strings.splitSimple(":")) //
+                    .test(-5) //
+                    .assertNoValues() //
+                    .assertNotTerminated();
+            assertEquals(1, list.size());
+            assertTrue(list.get(0) instanceof IllegalArgumentException);
+        } finally {
+            RxJavaPlugins.reset();
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSplitSimpleThrowsImmediatelyWhenBufferSizeIsZero() {
+        Strings.splitSimple(":", 0).apply(Flowable.just("boo"));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSplitSimpleThrowsImmediatelyWhenBufferSizeIsNegative() {
+        Strings.splitSimple(":", -1).apply(Flowable.just("boo"));
     }
 
 }

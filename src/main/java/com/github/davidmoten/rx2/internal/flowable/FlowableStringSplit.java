@@ -87,9 +87,7 @@ public final class FlowableStringSplit extends Flowable<String> {
                     }
                 }
                 drain();
-            } else {
-                throw new IllegalArgumentException("illegal request amount: " + n);
-            }
+            } 
         }
 
         @Override

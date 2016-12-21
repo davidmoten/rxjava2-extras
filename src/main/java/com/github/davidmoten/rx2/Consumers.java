@@ -106,4 +106,13 @@ public final class Consumers {
             }
         };
     }
+
+    public static <T> Consumer<T> addTo(final List<T> list) {
+        return new Consumer<T>() {
+
+            @Override
+            public void accept(T t) throws Exception {
+                list.add(t);
+            }};
+    }
 }
