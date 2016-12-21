@@ -183,7 +183,7 @@ public final class FlowableStringSplit extends Flowable<String> {
                     // emit and adjust indexes
                     String s = leftOver.substring(searchIndex, i);
                     searchIndex = i + searchFor.length();
-                    if (searchIndex > bufferSize << 1) {
+                    if (searchIndex > bufferSize - bufferSize/4) {
                         // shrink leftOver
                         leftOver.delete(0, searchIndex);
                         index = 0;
