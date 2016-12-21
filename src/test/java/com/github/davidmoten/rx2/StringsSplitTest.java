@@ -3,7 +3,6 @@ package com.github.davidmoten.rx2;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -15,7 +14,6 @@ import java.util.regex.Pattern;
 import org.junit.Test;
 
 import io.reactivex.Flowable;
-import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.subscribers.TestSubscriber;

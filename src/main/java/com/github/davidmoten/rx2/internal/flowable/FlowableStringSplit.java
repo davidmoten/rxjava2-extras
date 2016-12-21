@@ -10,7 +10,6 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
 import com.github.davidmoten.guavamini.Preconditions;
-import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
 
 import io.reactivex.Flowable;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;

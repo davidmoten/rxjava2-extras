@@ -2,17 +2,13 @@ package com.github.davidmoten.rx2;
 
 import static com.github.davidmoten.rx2.Strings.decode;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.util.Iterator;
-import java.util.regex.Pattern;
 
 import org.junit.Test;
 
