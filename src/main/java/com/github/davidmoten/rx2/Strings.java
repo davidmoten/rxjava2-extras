@@ -329,19 +329,19 @@ public final class Strings {
         };
     }
 
-    public static <T> FlowableTransformer<String, String> split2(final String token,
+    public static <T> FlowableTransformer<String, String> split2(final String searchFor,
             final int bufferSize) {
         return new FlowableTransformer<String, String>() {
 
             @Override
             public Publisher<String> apply(Flowable<String> source) {
-                return new FlowableStringSplit(source, token, bufferSize);
+                return new FlowableStringSplit(source, searchFor, bufferSize);
             }
         };
     }
 
-    public static <T> FlowableTransformer<String, String> split2(final String token) {
-        return split2(token, 8192);
+    public static <T> FlowableTransformer<String, String> split2(final String searchFor) {
+        return split2(searchFor, 8192);
     }
 
 }

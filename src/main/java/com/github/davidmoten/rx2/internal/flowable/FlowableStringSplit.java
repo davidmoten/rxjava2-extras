@@ -17,18 +17,18 @@ import io.reactivex.internal.util.NotificationLite;
 public final class FlowableStringSplit extends Flowable<String> {
 
     private final Flowable<String> source;
-    private final String token;
+    private final String searchFor;
     private final int bufferSize;
 
-    public FlowableStringSplit(Flowable<String> source, String token, int bufferSize) {
+    public FlowableStringSplit(Flowable<String> source, String searchFor, int bufferSize) {
         this.source = source;
-        this.token = token;
+        this.searchFor = searchFor;
         this.bufferSize = bufferSize;
     }
 
     @Override
     protected void subscribeActual(Subscriber<? super String> s) {
-        source.subscribe(new StringSplitSubscriber(s, token, bufferSize));
+        source.subscribe(new StringSplitSubscriber(s, searchFor, bufferSize));
     }
 
     @SuppressWarnings("serial")
@@ -36,7 +36,7 @@ public final class FlowableStringSplit extends Flowable<String> {
             implements Subscriber<String>, Subscription {
 
         private final Subscriber<? super String> actual;
-        private final String token;
+        private final String searchFor;
         private final int bufferSize;
         // queue of notifications
         private final Queue<Object> queue = new ConcurrentLinkedQueue<Object>();
@@ -48,9 +48,9 @@ public final class FlowableStringSplit extends Flowable<String> {
         private Subscription parent;
         private final AtomicBoolean once = new AtomicBoolean();
 
-        StringSplitSubscriber(Subscriber<? super String> actual, String token, int bufferSize) {
+        StringSplitSubscriber(Subscriber<? super String> actual, String searchFor, int bufferSize) {
             this.actual = actual;
-            this.token = token;
+            this.searchFor = searchFor;
             this.bufferSize = bufferSize;
         }
 
@@ -158,26 +158,29 @@ public final class FlowableStringSplit extends Flowable<String> {
          * @return true if and only if a value emitted
          */
         private boolean find() {
-            if (leftOver == null)
+            if (leftOver == null) {
                 return false;
-            int i = leftOver.indexOf(token, searchIndex);
-            if (i != -1) {
-                // emit and adjust indexes
-                String s = leftOver.substring(searchIndex, i);
-                searchIndex = i + token.length();
-                index = searchIndex;
-                if (index > bufferSize) {
-                    // shrink leftOver
-                    leftOver.delete(0, index);
-                    index = 0;
-                    searchIndex = 0;
-                }
-                actual.onNext(s);
-                return true;
             } else {
-                // emit nothing but adjust searchIndex to the right
-                searchIndex = Math.max(searchIndex, leftOver.length() - token.length() - 1);
-                return false;
+                int i = leftOver.indexOf(searchFor, searchIndex);
+                if (i != -1) {
+                    // emit and adjust indexes
+                    String s = leftOver.substring(searchIndex, i);
+                    searchIndex = i + searchFor.length();
+                    if (searchIndex > bufferSize) {
+                        // shrink leftOver
+                        leftOver.delete(0, searchIndex);
+                        index = 0;
+                        searchIndex = 0;
+                    } else {
+                        index = searchIndex;
+                    }
+                    actual.onNext(s);
+                    return true;
+                } else {
+                    // emit nothing but adjust searchIndex to the right
+                    searchIndex = Math.max(searchIndex, leftOver.length() - searchFor.length() - 1);
+                    return false;
+                }
             }
         }
     }
