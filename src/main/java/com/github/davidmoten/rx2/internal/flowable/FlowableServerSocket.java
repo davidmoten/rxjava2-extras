@@ -30,15 +30,17 @@ public final class FlowableServerSocket {
             Predicate<? super Socket> acceptSocket) {
         Function<ServerSocket, Flowable<Flowable<byte[]>>> FlowableFactory = createFlowableFactory(
                 timeoutMs, bufferSize, preAcceptAction, acceptSocket);
-        return Flowable.<Flowable<byte[]>, ServerSocket>using( //
+        return Flowable.<Flowable<byte[]>, ServerSocket> using( //
                 createServerSocketFactory(serverSocketFactory, acceptTimeoutMs), //
                 FlowableFactory, //
                 new Consumer<ServerSocket>() {
-                    //Note that in java 1.6, ServerSocket does not implement Closeable
+                    // Note that in java 1.6, ServerSocket does not implement
+                    // Closeable
                     @Override
                     public void accept(ServerSocket ss) throws Exception {
                         ss.close();
-                    }}, //
+                    }
+                }, //
                 true);
     }
 
