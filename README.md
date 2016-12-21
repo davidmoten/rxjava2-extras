@@ -47,6 +47,8 @@ Strings
 
 `split(String)`, `split(Pattern)`
 
+`splitSimple(String)`
+
 `trim`
 
 `strings`
