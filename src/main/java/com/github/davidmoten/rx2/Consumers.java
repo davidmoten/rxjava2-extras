@@ -37,15 +37,6 @@ public final class Consumers {
         };
     }
 
-    public static Consumer<Integer> setAtomic(final AtomicInteger value) {
-        return new Consumer<Integer>() {
-            @Override
-            public void accept(Integer t) throws Exception {
-                value.set(t);
-            }
-        };
-    }
-
     public static Consumer<Object> increment(final AtomicInteger value) {
         return new Consumer<Object>() {
             @Override
@@ -76,11 +67,20 @@ public final class Consumers {
         };
     }
 
-    public static <T> Consumer<T> setAtomic(final AtomicReference<T> value) {
+    public static <T> Consumer<T> set(final AtomicReference<T> value) {
         return new Consumer<T>() {
 
             @Override
             public void accept(T t) throws Exception {
+                value.set(t);
+            }
+        };
+    }
+    
+    public static Consumer<Integer> set(final AtomicInteger value) {
+        return new Consumer<Integer>() {
+            @Override
+            public void accept(Integer t) throws Exception {
                 value.set(t);
             }
         };

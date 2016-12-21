@@ -174,7 +174,7 @@ public final class FlowableServerSocketTest {
         try {
             int bufferSize = 4;
             AtomicInteger port = new AtomicInteger();
-            IO.serverSocketAutoAllocatePort(Consumers.setAtomic(port)) //
+            IO.serverSocketAutoAllocatePort(Consumers.set(port)) //
                     .readTimeoutMs(10000) //
                     .bufferSize(bufferSize) //
                     .create() //
@@ -184,7 +184,7 @@ public final class FlowableServerSocketTest {
                             return g //
                                     .firstOrError() //
                                     .toFlowable() //
-                                    .doOnNext(Consumers.setAtomic(result)) //
+                                    .doOnNext(Consumers.set(result)) //
                                     .doOnNext(new Consumer<byte[]>() {
                                 @Override
                                 public void accept(byte[] bytes) {
@@ -222,7 +222,7 @@ public final class FlowableServerSocketTest {
         AtomicInteger port = new AtomicInteger();
         try {
             int bufferSize = 4;
-            IO.serverSocketAutoAllocatePort(Consumers.setAtomic(port)) //
+            IO.serverSocketAutoAllocatePort(Consumers.set(port)) //
                     .readTimeoutMs(Integer.MAX_VALUE).bufferSize(bufferSize).create()
                     .flatMap(new Function<Flowable<byte[]>, Flowable<String>>() {
                         @Override
@@ -230,7 +230,7 @@ public final class FlowableServerSocketTest {
                             return g //
                                     .firstOrError() //
                                     .toFlowable() //
-                                    .doOnNext(Consumers.setAtomic(result)) //
+                                    .doOnNext(Consumers.set(result)) //
                                     .map(new Function<byte[], String>() {
                                 @Override
                                 public String apply(byte[] bytes) {
@@ -281,7 +281,7 @@ public final class FlowableServerSocketTest {
             final AtomicInteger port = new AtomicInteger();
             try {
                 int bufferSize = 4;
-                IO.serverSocketAutoAllocatePort(Consumers.setAtomic(port)) //
+                IO.serverSocketAutoAllocatePort(Consumers.set(port)) //
                         .readTimeoutMs(30000) //
                         .bufferSize(bufferSize) //
                         .create().flatMap(new Function<Flowable<byte[]>, Flowable<byte[]>>() {
@@ -384,7 +384,7 @@ public final class FlowableServerSocketTest {
         final AtomicReference<byte[]> result = new AtomicReference<byte[]>();
         AtomicInteger port = new AtomicInteger();
         try {
-            IO.serverSocketAutoAllocatePort(Consumers.setAtomic(port)) //
+            IO.serverSocketAutoAllocatePort(Consumers.set(port)) //
                     .readTimeoutMs(10000) //
                     .bufferSize(bufferSize) //
                     .create() //
@@ -394,7 +394,7 @@ public final class FlowableServerSocketTest {
                             return g //
                                     .to(Bytes.collect()) //
                                     .toFlowable() //
-                                    .doOnNext(Consumers.setAtomic(result)) //
+                                    .doOnNext(Consumers.set(result)) //
                                     .doOnNext(new Consumer<byte[]>() {
                                 @Override
                                 public void accept(byte[] bytes) {
@@ -438,7 +438,7 @@ public final class FlowableServerSocketTest {
         try {
             int bufferSize = 4;
             AtomicInteger port = new AtomicInteger();
-            IO.serverSocketAutoAllocatePort(Consumers.setAtomic(port)) //
+            IO.serverSocketAutoAllocatePort(Consumers.set(port)) //
                     .readTimeoutMs(10000) //
                     .acceptTimeoutMs(200) //
                     .bufferSize(bufferSize) //
