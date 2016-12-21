@@ -33,7 +33,7 @@ public final class FlowableServerSocket {
         return Flowable.<Flowable<byte[]>, ServerSocket>using( //
                 createServerSocketFactory(serverSocketFactory, acceptTimeoutMs), //
                 FlowableFactory, //
-                Consumers.close(), //
+                Consumers.<ServerSocket>close(), //
                 true);
     }
 
