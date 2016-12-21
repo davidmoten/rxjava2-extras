@@ -38,8 +38,7 @@ public final class FlowableStringSplit extends Flowable<String> {
     }
 
     @SuppressWarnings("serial")
-    @VisibleForTesting
-    static final class StringSplitSubscriber extends AtomicLong
+    private static final class StringSplitSubscriber extends AtomicLong
             implements Subscriber<String>, Subscription {
 
         private final Subscriber<? super String> actual;
@@ -87,7 +86,7 @@ public final class FlowableStringSplit extends Flowable<String> {
                     }
                 }
                 drain();
-            } 
+            }
         }
 
         @Override

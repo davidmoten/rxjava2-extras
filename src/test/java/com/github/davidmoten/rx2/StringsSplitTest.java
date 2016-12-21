@@ -3,16 +3,20 @@ package com.github.davidmoten.rx2;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import org.junit.Test;
 
 import io.reactivex.Flowable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.subscribers.TestSubscriber;
 
@@ -238,6 +242,21 @@ public class StringsSplitTest {
     @Test(expected = IllegalArgumentException.class)
     public void testSplitSimpleThrowsImmediatelyWhenBufferSizeIsNegative() {
         Strings.splitSimple(":", -1).apply(Flowable.just("boo"));
+    }
+
+    @Test
+    public void testSplitSimpleCancelledAfterFirstEmission() {
+        final AtomicReference<TestSubscriber<String>> s = new AtomicReference<TestSubscriber<String>>();
+        s.set(Flowable.just("boo:an", "d:you") //
+                .compose(Strings.splitSimple(":")) //
+                .doOnNext(new Consumer<String>() {
+                    @Override
+                    public void accept(String t) throws Exception {
+                        s.get().dispose();
+                    }
+                }) //
+                .test(0));
+        s.get().requestMore(3).assertNotTerminated();
     }
 
 }
