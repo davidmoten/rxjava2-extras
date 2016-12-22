@@ -9,6 +9,7 @@ import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
 public final class DelimitedStringLinkedList {
 
     private final String delimiter;
+    private final StringBuilder b = new StringBuilder();
 
     private Node head;
     private Node tail;
@@ -17,6 +18,7 @@ public final class DelimitedStringLinkedList {
     private int searchPosition;
     private int nextLength;
     private boolean added;
+    
 
     public DelimitedStringLinkedList(String delimiter) {
         this.delimiter = delimiter;
@@ -114,7 +116,8 @@ public final class DelimitedStringLinkedList {
                     // (node, position) is at next + 1
 
                     // extract string
-                    StringBuilder b = new StringBuilder(nextLength);
+                    b.setLength(0);
+                    b.ensureCapacity(nextLength);
                     Node n = head;
                     while (true) {
                         if (n == searchNode && n == head) {
