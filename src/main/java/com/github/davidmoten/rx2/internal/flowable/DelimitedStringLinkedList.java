@@ -6,7 +6,7 @@ import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
  * Enables a forward-only iteration of string values split by a delimiter across
  * a linked list of strings.
  */
-public final class StringSearchLinkedList {
+public final class DelimitedStringLinkedList {
 
     private final String delimiter;
 
@@ -16,8 +16,9 @@ public final class StringSearchLinkedList {
     private Node searchNode;
     private int searchPosition;
     private int nextLength;
+    private boolean added;
 
-    public StringSearchLinkedList(String delimiter) {
+    public DelimitedStringLinkedList(String delimiter) {
         this.delimiter = delimiter;
     }
 
@@ -42,7 +43,15 @@ public final class StringSearchLinkedList {
 
     }
 
+    public boolean addCalled() {
+        return added;
+    }
+
     public void add(String s) {
+        added = true;
+        if (s.length() == 0) {
+            return;
+        }
         if (head == null) {
             head = new Node(s, null);
             tail = head;
@@ -175,6 +184,14 @@ public final class StringSearchLinkedList {
             head = head.next;
             headPosition = 0;
         }
+    }
+
+    public void clear() {
+        head = null;
+        tail = null;
+        searchNode = null;
+        headPosition = 0;
+        searchPosition = 0;
     }
 
 }

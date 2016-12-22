@@ -5,17 +5,17 @@ import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
-public class StringSearchLinkedListTest {
+public class DelimitedStringLinkedListTest {
 
     @Test
     public void testEmpty() {
-        StringSearchLinkedList s = new StringSearchLinkedList(":");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList(":");
         assertNull(s.next());
     }
     
     @Test
     public void testNotEmptyNotFound() {
-        StringSearchLinkedList s = new StringSearchLinkedList(":");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList(":");
         s.add("boo");
         assertNull(s.next());
         assertEquals("boo",s.remaining());
@@ -23,7 +23,7 @@ public class StringSearchLinkedListTest {
     
     @Test
     public void testFindsFirst() {
-        StringSearchLinkedList s = new StringSearchLinkedList(":");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList(":");
         s.add("boo:and");
         assertEquals("boo",s.next());
         assertEquals(4, s.searchPosition());
@@ -33,7 +33,7 @@ public class StringSearchLinkedListTest {
     
     @Test
     public void testFindsFirstLongDelimiter() {
-        StringSearchLinkedList s = new StringSearchLinkedList("::");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList("::");
         s.add("boo::and");
         assertEquals("boo",s.next());
         assertEquals(5, s.searchPosition());
@@ -43,7 +43,7 @@ public class StringSearchLinkedListTest {
     
     @Test
     public void testFindsTwo() {
-        StringSearchLinkedList s = new StringSearchLinkedList(":");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList(":");
         s.add("boo:and:sue");
         assertEquals("boo",s.next());
         assertEquals("and",s.next());
@@ -53,7 +53,7 @@ public class StringSearchLinkedListTest {
     
     @Test
     public void testFindsTwoLongDelimiter() {
-        StringSearchLinkedList s = new StringSearchLinkedList("::");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList("::");
         s.add("boo::and::sue");
         assertEquals("boo",s.next());
         assertEquals("and",s.next());
@@ -63,7 +63,7 @@ public class StringSearchLinkedListTest {
     
     @Test
     public void testFindsThree() {
-        StringSearchLinkedList s = new StringSearchLinkedList(":");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList(":");
         s.add("boo:and:sue:me");
         assertEquals("boo",s.next());
         assertEquals("and",s.next());
@@ -74,7 +74,7 @@ public class StringSearchLinkedListTest {
     
     @Test
     public void testFindsOneAcrossTwoDelimiterStartsSecond() {
-        StringSearchLinkedList s = new StringSearchLinkedList(":");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList(":");
         s.add("boo");
         s.add(":and");
         assertEquals("boo",s.next());
@@ -84,7 +84,7 @@ public class StringSearchLinkedListTest {
     
     @Test
     public void testFindsOneAcrossTwoDelimiterEndsFirst() {
-        StringSearchLinkedList s = new StringSearchLinkedList(":");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList(":");
         s.add("boo:");
         s.add("and");
         assertEquals("boo",s.next());
@@ -94,7 +94,7 @@ public class StringSearchLinkedListTest {
     
     @Test
     public void testFindsOneAcrossTwoDelimiterEndsFirstLongDelimiter() {
-        StringSearchLinkedList s = new StringSearchLinkedList("::");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList("::");
         s.add("boo::");
         s.add("and");
         assertEquals("boo",s.next());
@@ -104,7 +104,7 @@ public class StringSearchLinkedListTest {
     
     @Test
     public void testFindsOneAcrossTwoDelimiterSplitAcrossTwo() {
-        StringSearchLinkedList s = new StringSearchLinkedList("::");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList("::");
         s.add("boo:");
         assertNull(s.next());
         assertEquals("boo:", s.remaining());
@@ -112,7 +112,7 @@ public class StringSearchLinkedListTest {
     
     @Test
     public void testFindsOneEndsWithDelimiter() {
-        StringSearchLinkedList s = new StringSearchLinkedList(":");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList(":");
         s.add("boo:");
         assertEquals("boo",s.next());
         assertNull(s.next());
@@ -121,7 +121,7 @@ public class StringSearchLinkedListTest {
     
     @Test
     public void testFindsOneAcrossTwoEndsWithDelimiter() {
-        StringSearchLinkedList s = new StringSearchLinkedList(":");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList(":");
         s.add("boo");
         s.add(":");
         assertEquals("boo",s.next());
@@ -131,7 +131,7 @@ public class StringSearchLinkedListTest {
     
     @Test
     public void testFindsNoneBecauseOnlyPartialMatchToDelimiter() {
-        StringSearchLinkedList s = new StringSearchLinkedList("::");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList("::");
         s.add("boo:");
         s.add("and");
         assertNull(s.next());
@@ -139,7 +139,7 @@ public class StringSearchLinkedListTest {
     
     @Test
     public void testFindsOneAcrossTwoDelimiterMiddleFirst() {
-        StringSearchLinkedList s = new StringSearchLinkedList(":");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList(":");
         s.add("boo:a");
         s.add("nd");
         assertEquals("boo",s.next());
@@ -150,7 +150,7 @@ public class StringSearchLinkedListTest {
     
     @Test
     public void testFindsOneAcrossTwoDelimiterMiddleSecond() {
-        StringSearchLinkedList s = new StringSearchLinkedList(":");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList(":");
         s.add("bo");
         s.add("o:and");
         assertEquals("boo",s.next());
@@ -160,7 +160,7 @@ public class StringSearchLinkedListTest {
     
     @Test
     public void testFindsOneAcrossThree() {
-        StringSearchLinkedList s = new StringSearchLinkedList(":");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList(":");
         s.add("bo");
         s.add("o");
         s.add(":and");
@@ -171,7 +171,7 @@ public class StringSearchLinkedListTest {
     
     @Test
     public void testFindsOneAcrossFour() {
-        StringSearchLinkedList s = new StringSearchLinkedList(":");
+        DelimitedStringLinkedList s = new DelimitedStringLinkedList(":");
         s.add("bo");
         s.add("o");
         s.add(":");

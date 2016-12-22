@@ -19,21 +19,21 @@ import io.reactivex.internal.util.NotificationLite;
 public final class FlowableStringSplit extends Flowable<String> {
 
     private final Flowable<String> source;
-    private final String searchFor;
+    private final String delimiter;
     private final int bufferSize;
 
-    public FlowableStringSplit(Flowable<String> source, String searchFor, int bufferSize) {
+    public FlowableStringSplit(Flowable<String> source, String delimiter, int bufferSize) {
         Preconditions.checkNotNull(source);
-        Preconditions.checkNotNull(searchFor);
+        Preconditions.checkNotNull(delimiter);
         Preconditions.checkArgument(bufferSize > 0);
         this.source = source;
-        this.searchFor = searchFor;
+        this.delimiter = delimiter;
         this.bufferSize = bufferSize;
     }
 
     @Override
     protected void subscribeActual(Subscriber<? super String> s) {
-        source.subscribe(new StringSplitSubscriber(s, searchFor, bufferSize));
+        source.subscribe(new StringSplitSubscriber(s, delimiter, bufferSize));
     }
 
     @SuppressWarnings("serial")
@@ -41,25 +41,19 @@ public final class FlowableStringSplit extends Flowable<String> {
             implements Subscriber<String>, Subscription {
 
         private final Subscriber<? super String> actual;
-        private final String searchFor;
-        private final int bufferSize;
         // queue of notifications
         private final SimpleQueue<Object> queue = new MpscLinkedQueue<Object>();
         private final AtomicInteger wip = new AtomicInteger();
         private final AtomicBoolean once = new AtomicBoolean();
 
+        private final DelimitedStringLinkedList ss;
         private volatile boolean cancelled;
-
-        private StringBuilder leftOver;
-        private int index;
-        private int searchIndex;
         private Subscription parent;
         private boolean unbounded;
 
-        StringSplitSubscriber(Subscriber<? super String> actual, String searchFor, int bufferSize) {
+        StringSplitSubscriber(Subscriber<? super String> actual, String delimiter, int bufferSize) {
             this.actual = actual;
-            this.searchFor = searchFor;
-            this.bufferSize = bufferSize;
+            this.ss = new DelimitedStringLinkedList(delimiter);
         }
 
         @Override
@@ -135,25 +129,27 @@ public final class FlowableStringSplit extends Flowable<String> {
                             }
                             break;
                         } else if (NotificationLite.isComplete(o)) {
-                            if (leftOver != null) {
-                                String s = leftOver.substring(index, leftOver.length());
-                                leftOver = null;
+                            String remaining = ss.remaining();
+                            if (remaining != null) {
+                                ss.clear();
                                 queue.clear();
-                                actual.onNext(s.toString());
+                                actual.onNext(remaining);
+                                e++;
+                            } else if (ss.addCalled()) {
+                                ss.clear();
+                                queue.clear();
+                                actual.onNext("");
                                 e++;
                             }
                             actual.onComplete();
                             return;
                         } else if (NotificationLite.isError(o)) {
-                            leftOver = null;
+                            ss.clear();
                             queue.clear();
                             actual.onError(NotificationLite.getError(o));
                             return;
                         } else {
-                            if (leftOver == null) {
-                                leftOver = new StringBuilder(bufferSize);
-                            }
-                            leftOver.append((String) o);
+                            ss.add((String) o);
                         }
                     }
                 }
@@ -161,7 +157,7 @@ public final class FlowableStringSplit extends Flowable<String> {
                     r = BackpressureHelper.produced(this, e);
                 }
                 missed = wip.addAndGet(-missed);
-                if ( missed == 0) {
+                if (missed == 0) {
                     return;
                 }
                 r = get();
@@ -174,33 +170,15 @@ public final class FlowableStringSplit extends Flowable<String> {
          * @return true if and only if a value emitted
          */
         private boolean find() {
-            if (leftOver == null) {
+            if (ss == null) {
                 return false;
-            } else {
-                int i = leftOver.indexOf(searchFor, searchIndex);
-                if (i != -1) {
-                    // emit and adjust indexes
-                    String s = leftOver.substring(searchIndex, i);
-                    updateIndexes(i);
-                    actual.onNext(s);
-                    return true;
-                } else {
-                    // emit nothing but adjust searchIndex to the right
-                    searchIndex = Math.max(searchIndex, leftOver.length() - searchFor.length() - 1);
-                    return false;
-                }
             }
-        }
-
-        private void updateIndexes(int i) {
-            searchIndex = i + searchFor.length();
-            if (searchIndex > bufferSize - bufferSize / 4) {
-                // shrink leftOver
-                leftOver.delete(0, searchIndex);
-                index = 0;
-                searchIndex = 0;
+            String s = ss.next();
+            if (s != null) {
+                actual.onNext(s);
+                return true;
             } else {
-                index = searchIndex;
+                return false;
             }
         }
     }
