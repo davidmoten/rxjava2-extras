@@ -18,6 +18,7 @@ public class StringSearchLinkedListTest {
         StringSearchLinkedList s = new StringSearchLinkedList(":");
         s.add("boo");
         assertNull(s.next());
+        assertEquals("boo",s.remaining());
     }
     
     @Test
@@ -27,6 +28,7 @@ public class StringSearchLinkedListTest {
         assertEquals("boo",s.next());
         assertEquals(4, s.searchPosition());
         assertNull(s.next());
+        assertEquals("and", s.remaining());
     }
     
     @Test
@@ -36,6 +38,7 @@ public class StringSearchLinkedListTest {
         assertEquals("boo",s.next());
         assertEquals(5, s.searchPosition());
         assertNull(s.next());
+        assertEquals("and", s.remaining());
     }
     
     @Test
@@ -45,6 +48,7 @@ public class StringSearchLinkedListTest {
         assertEquals("boo",s.next());
         assertEquals("and",s.next());
         assertNull(s.next());
+        assertEquals("sue", s.remaining());
     }
     
     @Test
@@ -54,6 +58,7 @@ public class StringSearchLinkedListTest {
         assertEquals("boo",s.next());
         assertEquals("and",s.next());
         assertNull(s.next());
+        assertEquals("sue", s.remaining());
     }
     
     @Test
@@ -64,6 +69,7 @@ public class StringSearchLinkedListTest {
         assertEquals("and",s.next());
         assertEquals("sue",s.next());
         assertNull(s.next());
+        assertEquals("me", s.remaining());
     }
     
     @Test
@@ -73,6 +79,7 @@ public class StringSearchLinkedListTest {
         s.add(":and");
         assertEquals("boo",s.next());
         assertNull(s.next());
+        assertEquals("and", s.remaining());
     }
     
     @Test
@@ -82,6 +89,7 @@ public class StringSearchLinkedListTest {
         s.add("and");
         assertEquals("boo",s.next());
         assertNull(s.next());
+        assertEquals("and", s.remaining());
     }
     
     @Test
@@ -91,6 +99,7 @@ public class StringSearchLinkedListTest {
         s.add("and");
         assertEquals("boo",s.next());
         assertNull(s.next());
+        assertEquals("and", s.remaining());
     }
     
     @Test
@@ -98,6 +107,7 @@ public class StringSearchLinkedListTest {
         StringSearchLinkedList s = new StringSearchLinkedList("::");
         s.add("boo:");
         assertNull(s.next());
+        assertEquals("boo:", s.remaining());
     }
     
     @Test
@@ -106,6 +116,7 @@ public class StringSearchLinkedListTest {
         s.add("boo:");
         assertEquals("boo",s.next());
         assertNull(s.next());
+        assertNull(s.remaining());
     }
     
     @Test
@@ -115,6 +126,7 @@ public class StringSearchLinkedListTest {
         s.add(":");
         assertEquals("boo",s.next());
         assertNull(s.next());
+        assertNull(s.remaining());
     }
     
     @Test
@@ -131,7 +143,9 @@ public class StringSearchLinkedListTest {
         s.add("boo:a");
         s.add("nd");
         assertEquals("boo",s.next());
+        assertEquals(4, s.searchPosition());
         assertNull(s.next());
+        assertEquals("and", s.remaining());
     }
     
     @Test
@@ -141,6 +155,7 @@ public class StringSearchLinkedListTest {
         s.add("o:and");
         assertEquals("boo",s.next());
         assertNull(s.next());
+        assertEquals("and", s.remaining());
     }
     
     @Test
@@ -151,6 +166,7 @@ public class StringSearchLinkedListTest {
         s.add(":and");
         assertEquals("boo",s.next());
         assertNull(s.next());
+        assertEquals("and", s.remaining());
     }
     
     @Test
@@ -162,6 +178,7 @@ public class StringSearchLinkedListTest {
         s.add("and");
         assertEquals("boo",s.next());
         assertNull(s.next());
+        assertEquals("and", s.remaining());
     }
     
 }

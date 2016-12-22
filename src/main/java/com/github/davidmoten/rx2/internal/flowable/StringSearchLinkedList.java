@@ -20,7 +20,7 @@ public final class StringSearchLinkedList {
     public StringSearchLinkedList(String delimiter) {
         this.delimiter = delimiter;
     }
-   
+
     @VisibleForTesting
     int searchPosition() {
         return searchPosition;
@@ -58,6 +58,24 @@ public final class StringSearchLinkedList {
                 searchNode = node;
                 searchPosition = 0;
             }
+        }
+    }
+
+    public String remaining() {
+        if (head == null) {
+            return null;
+        } else {
+            StringBuilder b = new StringBuilder();
+            Node n = head;
+            do {
+                if (n == head) {
+                    b.append(n.value.substring(headPosition, n.value.length()));
+                } else {
+                    b.append(n.value);
+                }
+                n = n.next;
+            } while (n != null);
+            return b.toString();
         }
     }
 
@@ -106,7 +124,7 @@ public final class StringSearchLinkedList {
                     }
                     // reset nodes and positions
                     nextLength = 0;
-                    if (pos == nd.value.length() - 1) {
+                    if (pos == nd.value.length()) {
                         if (tail == nd) {
                             tail = nd.next;
                         }
