@@ -11,7 +11,7 @@ import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
 import io.reactivex.internal.fuseable.SimpleQueue;
-import io.reactivex.internal.queue.MpscLinkedQueue;
+import io.reactivex.internal.queue.SpscArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 import io.reactivex.internal.util.NotificationLite;
@@ -40,7 +40,7 @@ public final class FlowableStringSplitSimple extends Flowable<String> {
 
         private final Subscriber<? super String> actual;
         // queue of notifications
-        private final SimpleQueue<Object> queue = new MpscLinkedQueue<Object>();
+        private final SimpleQueue<Object> queue = new SpscArrayQueue<Object>(16);
         private final AtomicInteger wip = new AtomicInteger();
         private final AtomicBoolean once = new AtomicBoolean();
 
