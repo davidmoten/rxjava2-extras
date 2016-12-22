@@ -152,7 +152,7 @@ public final class FlowableStringSplitSimple extends Flowable<String> {
                     }
                 }
                 if (e > 0) {
-                    r = BackpressureHelper.produced(this, e);
+                    BackpressureHelper.produced(this, e);
                 }
                 missed = wip.addAndGet(-missed);
                 if (missed == 0) {
