@@ -144,7 +144,7 @@ public final class FlowableStringSplitSimple extends Flowable<String> {
                             } else {
                                 checkCancelled = false;
                             }
-                            if (checkCancelled && !cancelled) {
+                            if (!checkCancelled || !cancelled) {
                                 actual.onComplete();
                             }
                             return;
