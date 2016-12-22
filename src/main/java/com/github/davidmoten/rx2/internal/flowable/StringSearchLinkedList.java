@@ -1,6 +1,12 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
-public class StringSearchLinkedList {
+import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
+
+/**
+ * Enables a forward-only iteration of string values split by a delimiter across
+ * a linked list of strings.
+ */
+public final class StringSearchLinkedList {
 
     private final String delimiter;
 
@@ -14,20 +20,13 @@ public class StringSearchLinkedList {
     public StringSearchLinkedList(String delimiter) {
         this.delimiter = delimiter;
     }
-
-    int headPosition() {
-        return headPosition;
-    }
-
+   
+    @VisibleForTesting
     int searchPosition() {
         return searchPosition;
     }
 
-    int nextLength() {
-        return nextLength;
-    }
-
-    private static class Node {
+    private static final class Node {
         final String value;
         Node next;
 
@@ -35,6 +34,12 @@ public class StringSearchLinkedList {
             this.value = value;
             this.next = next;
         }
+
+        @Override
+        public String toString() {
+            return "Node [value=" + value + ", next=" + next + "]";
+        }
+
     }
 
     public void add(String s) {
@@ -48,6 +53,7 @@ public class StringSearchLinkedList {
         } else {
             Node node = new Node(s, null);
             tail.next = node;
+            tail = node;
             if (searchNode == null) {
                 searchNode = node;
                 searchPosition = 0;
@@ -130,6 +136,9 @@ public class StringSearchLinkedList {
                     searchNode = null;
                     searchPosition = 0;
                     break;
+                } else {
+                    searchNode = searchNode.next;
+                    searchPosition = 0;
                 }
             }
         }
@@ -140,6 +149,12 @@ public class StringSearchLinkedList {
         if (head.next == null) {
             tail = null;
             head = null;
+            headPosition = 0;
+        } else {
+            if (tail == head) {
+                tail = head.next;
+            }
+            head = head.next;
             headPosition = 0;
         }
     }
