@@ -18,7 +18,6 @@ public final class DelimitedStringLinkedList {
     private int searchPosition;
     private int nextLength;
     private boolean added;
-    
 
     public DelimitedStringLinkedList(String delimiter) {
         this.delimiter = delimiter;
@@ -75,7 +74,7 @@ public final class DelimitedStringLinkedList {
         if (head == null) {
             return null;
         } else {
-            StringBuilder b = new StringBuilder();
+            b.setLength(0);
             Node n = head;
             do {
                 if (n == head) {
@@ -113,52 +112,12 @@ public final class DelimitedStringLinkedList {
                 if (found) {
                     // at this point (nd, pos) is the location of the end of
                     // next + delimiter
-                    // (node, position) is at next + 1
+                    // (searchNode, searchPosition) is at next + 1
 
-                    // extract string
-                    b.setLength(0);
-                    b.ensureCapacity(nextLength);
-                    Node n = head;
-                    while (true) {
-                        if (n == searchNode && n == head) {
-                            b.append(n.value.substring(headPosition, searchPosition));
-                            break;
-                        } else if (n == head) {
-                            b.append(n.value.substring(headPosition, n.value.length()));
-                        } else if (n == searchNode) {
-                            b.append(n.value.substring(0, searchPosition));
-                            break;
-                        } else {
-                            b.append(n.value);
-                        }
-                        n = n.next;
-                    }
-                    if (nextLength != b.length()) {
-                        throw new RuntimeException("unexpected");
-                    }
+                    String result = extractFromHeadPositionToSearchPosition();
                     // reset nodes and positions
-                    nextLength = 0;
-                    if (pos == nd.value.length()) {
-                        if (tail == nd) {
-                            tail = nd.next;
-                        }
-                        head = nd.next;
-                        headPosition = 0;
-                        searchPosition = 0;
-                        searchNode = head;
-                    } else {
-                        head = nd;
-                        headPosition = pos;
-                        if (headPosition == head.value.length()) {
-                            dropFirst();
-                        }
-                        searchNode = head;
-                        searchPosition = headPosition;
-                    }
-                    return b.toString();
-                } else {
-                    // advance to next position
-
+                    resetPositionsAfterExtract(nd, pos);
+                    return result;
                 }
             }
             nextLength++;
@@ -177,6 +136,53 @@ public final class DelimitedStringLinkedList {
         return null;
     }
 
+    private String extractFromHeadPositionToSearchPosition() {
+        // reuse StringBuilder
+        b.setLength(0);
+        b.ensureCapacity(nextLength);
+        Node n = head;
+        while (true) {
+            if (n == searchNode && n == head) {
+                b.append(n.value.substring(headPosition, searchPosition));
+                break;
+            } else if (n == head) {
+                b.append(n.value.substring(headPosition, n.value.length()));
+            } else if (n == searchNode) {
+                b.append(n.value.substring(0, searchPosition));
+                break;
+            } else {
+                b.append(n.value);
+            }
+            n = n.next;
+        }
+        if (nextLength != b.length()) {
+            throw new RuntimeException("unexpected");
+        }
+        return b.toString();
+    }
+
+    private void resetPositionsAfterExtract(Node nd, int pos) {
+        nextLength = 0;
+        if (pos == nd.value.length()) {
+            if (tail == nd) {
+                tail = nd.next;
+            }
+            // TODO might need GC Nepotism protection
+            head = nd.next;
+            headPosition = 0;
+            searchPosition = 0;
+            searchNode = head;
+        } else {
+            head = nd;
+            headPosition = pos;
+            if (headPosition == head.value.length()) {
+                dropFirst();
+            }
+            searchNode = head;
+            searchPosition = headPosition;
+        }
+    }
+
     private void dropFirst() {
         if (head.next == null) {
             tail = null;
@@ -186,7 +192,9 @@ public final class DelimitedStringLinkedList {
             if (tail == head) {
                 tail = head.next;
             }
+            Node h = head;
             head = head.next;
+            h.next = null; // GC Nepotism protection?
             headPosition = 0;
         }
     }

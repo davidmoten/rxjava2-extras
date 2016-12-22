@@ -2,6 +2,8 @@ package com.github.davidmoten.rx2;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
@@ -17,7 +19,17 @@ public class ConsumersTest {
 
     @Test
     public void testPrintStackTrace() throws Exception {
-        Consumers.printStackTrace().accept(new RuntimeException());
+        PrintStream err = System.err;
+        try {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            System.setErr(new PrintStream(bytes));
+            Consumers.printStackTrace().accept(new RuntimeException());
+            String message = new String(bytes.toByteArray());
+            assertTrue(message.startsWith("java.lang.RuntimeException"));
+            assertTrue(message.contains("ConsumersTest.testPrintStackTrace"));
+        } finally {
+            System.setErr(err);
+        }
     }
 
     @Test
