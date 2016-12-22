@@ -330,9 +330,30 @@ public final class Strings {
         };
     }
 
+    /**
+     * Splits on a string delimiter (not a pattern!). Is a bit slower than other
+     * implementations on some benchmarks but requests minimally from upstream
+     * and is potentially much faster when the stream is significantly truncated
+     * (for example by downstream {@code .take(), .takeUntil(), elementAt()}.
+     * 
+     * <pre>
+     * Benchmark                                  Mode  Cnt       Score       Error  Units
+     * Benchmarks.splitRxJavaString_1.1.1        thrpt   10     994.966 ±    31.636  ops/s
+     * Benchmarks.splitRxJavaStringTake5_1.1.1   thrpt   10    1048.727 ±    42.856  ops/s
+     * Benchmarks.splitSimple                    thrpt   10     545.829 ±    12.769  ops/s
+     * Benchmarks.splitSimpleTake5               thrpt   10  918297.260 ± 11128.222  ops/s
+     * Benchmarks.splitStandard                  thrpt   10     691.939 ±    17.369  ops/s
+     * Benchmarks.splitStandardTake5             thrpt   10    1207.069 ±    38.710  ops/s
+     * Benchmarks.splitStandardWithPattern       thrpt   10     627.801 ±    15.755  ops/s
+     * Benchmarks.splitStandardWithPatternTake5  thrpt   10     979.351 ±    75.366  ops/s
+     * </pre>
+     * 
+     * @param delimiter
+     *            string delimiter
+     * @return stream split by delimiter
+     */
     @Experimental
-    public static <T> FlowableTransformer<String, String> splitSimple(final String delimiter
-            ) {
+    public static <T> FlowableTransformer<String, String> splitSimple(final String delimiter) {
         return new FlowableTransformer<String, String>() {
 
             @Override
