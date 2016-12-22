@@ -63,6 +63,14 @@ Bytes
 
 `unzip(File)`, `unzip(InputStream)`
 
+RetryWhen
+------------
+Builder for `.retryWhen()`
+
+IO
+-------------
+`serverSocket(port)` 
+
 Transformers
 ---------------------------
 `doOnEmpty`
@@ -72,6 +80,12 @@ Transformers
 `reverse`
 
 `stateMachine`
+
+SchedulerHelper
+----------------
+`blockUntilWorkFinished`
+
+`withThreadId`
 
 Actions
 --------------------
