@@ -15,38 +15,38 @@ import rx.observables.StringObservable;
 public class Benchmarks {
 
     static final String lines = create(10000, 100);
+    static final Flowable<String> source = Flowable.just(lines, lines, lines, lines, lines);
 
     @Benchmark
     public String splitStandardTake5() {
-        return Flowable.just(lines).compose(Strings.split("\n")).take(5).blockingLast();
+        return source.compose(Strings.split("\n")).take(5).blockingLast();
     }
 
     @Benchmark
     public String splitStandardWithPatternTake5() {
-        return Flowable.just(lines).compose(Strings.split(Pattern.compile("\n"))).take(5).blockingLast();
+        return source.compose(Strings.split(Pattern.compile("\n"))).take(5).blockingLast();
     }
 
     @Benchmark
     public String splitSimpleTake5() {
-        return Flowable.just(lines).compose(Strings.splitSimple("\n")).take(5).blockingLast();
+        return source.compose(Strings.splitSimple("\n")).take(5).blockingLast();
     }
 
     @Benchmark
     public String splitStandard() {
-        return Flowable.just(lines).compose(Strings.split("\n")).blockingLast();
+        return source.compose(Strings.split("\n")).blockingLast();
     }
 
     @Benchmark
     public String splitStandardWithPattern() {
-        return Flowable.just(lines).compose(Strings.split(Pattern.compile("\n"))).blockingLast();
+        return source.compose(Strings.split(Pattern.compile("\n"))).blockingLast();
     }
 
     @Benchmark
     public String splitSimple() {
-        return Flowable.just(lines).compose(Strings.splitSimple("\n")).blockingLast();
+        return source.compose(Strings.splitSimple("\n")).blockingLast();
     }
-    
-    
+
     @Benchmark
     public String splitRxJavaStringTake5() {
         return Observable.just(lines).compose(new Transformer<String, String>() {
@@ -66,7 +66,7 @@ public class Benchmarks {
             }
         }).last().toBlocking().last();
     }
-    
+
     private static String create(int lines, int lineLength) {
         StringBuilder s = new StringBuilder(lines * lineLength);
         for (int i = 0; i < lines; i++) {
@@ -80,7 +80,7 @@ public class Benchmarks {
 
     public static void main(String[] args) {
         while (true) {
-            Flowable.just(lines).compose(Strings.splitSimple("\n")).blockingLast();
+            source.compose(Strings.splitSimple("\n")).blockingLast();
         }
     }
 }

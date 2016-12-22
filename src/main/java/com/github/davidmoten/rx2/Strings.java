@@ -339,14 +339,14 @@ public final class Strings {
      * 
      * <pre>
      * Benchmark                                  Mode  Cnt       Score       Error  Units
-     * Benchmarks.splitRxJavaString_1.1.1        thrpt   10     994.966 ±    31.636  ops/s
-     * Benchmarks.splitRxJavaStringTake5_1.1.1   thrpt   10    1048.727 ±    42.856  ops/s
-     * Benchmarks.splitSimple                    thrpt   10     545.829 ±    12.769  ops/s
-     * Benchmarks.splitSimpleTake5               thrpt   10  918297.260 ± 11128.222  ops/s
-     * Benchmarks.splitStandard                  thrpt   10     691.939 ±    17.369  ops/s
-     * Benchmarks.splitStandardTake5             thrpt   10    1207.069 ±    38.710  ops/s
-     * Benchmarks.splitStandardWithPattern       thrpt   10     627.801 ±    15.755  ops/s
-     * Benchmarks.splitStandardWithPatternTake5  thrpt   10     979.351 ±    75.366  ops/s
+     * Benchmarks.splitRxJavaString              thrpt   10     983.128 ±    23.833  ops/s
+     * Benchmarks.splitRxJavaStringTake5         thrpt   10    1033.090 ±    33.083  ops/s
+     * Benchmarks.splitSimple                    thrpt   10     113.727 ±     2.122  ops/s
+     * Benchmarks.splitSimpleTake5               thrpt   10  867527.265 ± 27168.498  ops/s
+     * Benchmarks.splitStandard                  thrpt   10     108.880 ±     4.428  ops/s
+     * Benchmarks.splitStandardTake5             thrpt   10    1217.798 ±    44.237  ops/s
+     * Benchmarks.splitStandardWithPattern       thrpt   10     102.882 ±     5.083  ops/s
+     * Benchmarks.splitStandardWithPatternTake5  thrpt   10    1054.024 ±    27.906  ops/s
      * </pre>
      * 
      * @param delimiter
