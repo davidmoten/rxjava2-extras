@@ -28,6 +28,7 @@ import io.reactivex.Emitter;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableTransformer;
 import io.reactivex.Maybe;
+import io.reactivex.annotations.Beta;
 import io.reactivex.annotations.Experimental;
 import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
@@ -353,6 +354,7 @@ public final class Strings {
      * @return stream split by delimiter
      */
     @Experimental
+    @Beta
     public static <T> FlowableTransformer<String, String> splitSimple(final String delimiter) {
         return new FlowableTransformer<String, String>() {
 
