@@ -332,10 +332,11 @@ public final class Strings {
     }
 
     /**
-     * Splits on a string delimiter (not a pattern!). Is a bit slower than other
-     * implementations on some benchmarks but requests minimally from upstream
-     * and is potentially much faster when the stream is significantly truncated
-     * (for example by downstream {@code .take(), .takeUntil(), elementAt()}.
+     * Splits on a string delimiter (not a pattern!). Is slower than
+     * RxJavaString 1.1.1 implementation on benchmarks below but requests
+     * minimally from upstream and is potentially much faster when the stream is
+     * significantly truncated (for example by downstream
+     * {@code .take(), .takeUntil(), elementAt()}.
      * 
      * <pre>
      * Benchmark                                  Mode  Cnt       Score       Error  Units
