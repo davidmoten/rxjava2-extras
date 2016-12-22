@@ -24,7 +24,7 @@ public final class FlowableStringSplitSimple extends Flowable<String> {
     public FlowableStringSplitSimple(Flowable<String> source, String delimiter) {
         Preconditions.checkNotNull(source);
         Preconditions.checkNotNull(delimiter);
-        Preconditions.checkArgument(delimiter.length()>0);
+        Preconditions.checkArgument(delimiter.length() > 0);
         this.source = source;
         this.delimiter = delimiter;
     }
@@ -128,18 +128,25 @@ public final class FlowableStringSplitSimple extends Flowable<String> {
                             break;
                         } else if (NotificationLite.isComplete(o)) {
                             String remaining = ss.remaining();
+                            final boolean checkCancelled;
                             if (remaining != null) {
                                 ss.clear();
                                 queue.clear();
                                 actual.onNext(remaining);
                                 e++;
+                                checkCancelled = true;
                             } else if (ss.addCalled()) {
                                 ss.clear();
                                 queue.clear();
                                 actual.onNext("");
                                 e++;
+                                checkCancelled = true;
+                            } else {
+                                checkCancelled = false;
                             }
-                            actual.onComplete();
+                            if (checkCancelled && !cancelled) {
+                                actual.onComplete();
+                            }
                             return;
                         } else if (NotificationLite.isError(o)) {
                             ss.clear();
