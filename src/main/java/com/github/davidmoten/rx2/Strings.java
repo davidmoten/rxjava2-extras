@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 import org.reactivestreams.Publisher;
 
 import com.github.davidmoten.guavamini.Preconditions;
-import com.github.davidmoten.rx2.internal.flowable.FlowableStringSplit;
+import com.github.davidmoten.rx2.internal.flowable.FlowableStringSplitSimple;
 import com.github.davidmoten.rx2.internal.flowable.TransformerDecode;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStringSplit;
 
@@ -28,6 +28,7 @@ import io.reactivex.Emitter;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableTransformer;
 import io.reactivex.Maybe;
+import io.reactivex.annotations.Experimental;
 import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
@@ -329,19 +330,16 @@ public final class Strings {
         };
     }
 
-    public static <T> FlowableTransformer<String, String> splitSimple(final String searchFor,
-            final int bufferSize) {
+    @Experimental
+    public static <T> FlowableTransformer<String, String> splitSimple(final String delimiter
+            ) {
         return new FlowableTransformer<String, String>() {
 
             @Override
             public Publisher<String> apply(Flowable<String> source) {
-                return new FlowableStringSplit(source, searchFor, bufferSize);
+                return new FlowableStringSplitSimple(source, delimiter);
             }
         };
-    }
-
-    public static <T> FlowableTransformer<String, String> splitSimple(final String searchFor) {
-        return splitSimple(searchFor, 128);
     }
 
 }

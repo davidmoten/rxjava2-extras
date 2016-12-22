@@ -14,7 +14,7 @@ import rx.observables.StringObservable;
 @State(Scope.Benchmark)
 public class Benchmarks {
 
-    private static final String lines = create(10000, 100);
+    static final String lines = create(10000, 100);
 
     @Benchmark
     public String splitStandardTake5() {

@@ -40,7 +40,6 @@ public final class DelimitedStringLinkedList {
         public String toString() {
             return "Node [value=" + value + ", next=" + next + "]";
         }
-
     }
 
     public boolean addCalled() {
@@ -130,6 +129,9 @@ public final class DelimitedStringLinkedList {
                             b.append(n.value);
                         }
                         n = n.next;
+                    }
+                    if (nextLength != b.length()) {
+                        throw new RuntimeException("unexpected");
                     }
                     // reset nodes and positions
                     nextLength = 0;

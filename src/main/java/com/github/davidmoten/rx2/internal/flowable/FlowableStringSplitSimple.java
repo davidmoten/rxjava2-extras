@@ -16,24 +16,22 @@ import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 import io.reactivex.internal.util.NotificationLite;
 
-public final class FlowableStringSplit extends Flowable<String> {
+public final class FlowableStringSplitSimple extends Flowable<String> {
 
     private final Flowable<String> source;
     private final String delimiter;
-    private final int bufferSize;
 
-    public FlowableStringSplit(Flowable<String> source, String delimiter, int bufferSize) {
+    public FlowableStringSplitSimple(Flowable<String> source, String delimiter) {
         Preconditions.checkNotNull(source);
         Preconditions.checkNotNull(delimiter);
-        Preconditions.checkArgument(bufferSize > 0);
+        Preconditions.checkArgument(delimiter.length()>0);
         this.source = source;
         this.delimiter = delimiter;
-        this.bufferSize = bufferSize;
     }
 
     @Override
     protected void subscribeActual(Subscriber<? super String> s) {
-        source.subscribe(new StringSplitSubscriber(s, delimiter, bufferSize));
+        source.subscribe(new StringSplitSubscriber(s, delimiter));
     }
 
     @SuppressWarnings("serial")
@@ -51,7 +49,7 @@ public final class FlowableStringSplit extends Flowable<String> {
         private Subscription parent;
         private boolean unbounded;
 
-        StringSplitSubscriber(Subscriber<? super String> actual, String delimiter, int bufferSize) {
+        StringSplitSubscriber(Subscriber<? super String> actual, String delimiter) {
             this.actual = actual;
             this.ss = new DelimitedStringLinkedList(delimiter);
         }
@@ -77,7 +75,7 @@ public final class FlowableStringSplit extends Flowable<String> {
                         parent.request(Long.MAX_VALUE);
                         unbounded = true;
                     } else {
-                        parent.request(128);
+                        parent.request(1);
                     }
                 }
                 drain();
@@ -107,8 +105,8 @@ public final class FlowableStringSplit extends Flowable<String> {
                 return;
             }
             int missed = 1;
-            long r = get(); // requested
             while (true) {
+                long r = get(); // requested
                 long e = 0; // emitted
                 while (e != r) {
                     if (cancelled) {
@@ -160,7 +158,6 @@ public final class FlowableStringSplit extends Flowable<String> {
                 if (missed == 0) {
                     return;
                 }
-                r = get();
             }
         }
 

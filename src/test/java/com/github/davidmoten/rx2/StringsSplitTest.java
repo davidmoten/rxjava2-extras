@@ -42,7 +42,7 @@ public class StringsSplitTest {
     @Test(timeout = 5000)
     public void testSplitSimpleEmpty() {
         Flowable.<String> empty() //
-                .compose(Strings.splitSimple("\n", 16)) //
+                .compose(Strings.splitSimple("\n")) //
                 .test() //
                 .assertNoValues() //
                 .assertComplete();
@@ -61,15 +61,6 @@ public class StringsSplitTest {
     public void testSplitSimpleNormal() {
         Flowable.just("boo:an", "d:you") //
                 .compose(Strings.splitSimple(":")) //
-                .test() //
-                .assertValues("boo", "and", "you") //
-                .assertComplete();
-    }
-
-    @Test
-    public void testSplitSimpleNormalSmallBuffer() {
-        Flowable.just("boo:an", "d:you") //
-                .compose(Strings.splitSimple(":", 2)) //
                 .test() //
                 .assertValues("boo", "and", "you") //
                 .assertComplete();
@@ -232,16 +223,6 @@ public class StringsSplitTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testSplitSimpleThrowsImmediatelyWhenBufferSizeIsZero() {
-        Strings.splitSimple(":", 0).apply(Flowable.just("boo"));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testSplitSimpleThrowsImmediatelyWhenBufferSizeIsNegative() {
-        Strings.splitSimple(":", -1).apply(Flowable.just("boo"));
-    }
-
     @Test
     public void testSplitSimpleCancelledAfterFirstEmission() {
         final AtomicReference<TestSubscriber<String>> s = new AtomicReference<TestSubscriber<String>>();
@@ -257,4 +238,9 @@ public class StringsSplitTest {
         s.get().requestMore(3).assertNotTerminated();
     }
 
+    @Test
+    public void testLong() {
+        Flowable.just(Benchmarks.lines).compose(Strings.splitSimple("\n")).blockingLast();
+    }
+    
 }
