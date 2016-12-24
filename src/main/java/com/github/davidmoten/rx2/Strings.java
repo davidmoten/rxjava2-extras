@@ -332,7 +332,7 @@ public final class Strings {
     }
 
     /**
-     * Splits on a string delimiter (not a pattern!). Is slower than
+     * Splits on a string delimiter, not a pattern. Is slower than
      * RxJavaString 1.1.1 implementation on benchmarks below but requests
      * minimally from upstream and is potentially much faster when the stream is
      * significantly truncated (for example by downstream
