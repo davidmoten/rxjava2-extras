@@ -81,6 +81,8 @@ Transformers
 
 `stateMachine`
 
+`match`, `matchWith`
+
 SchedulerHelper
 ----------------
 `blockUntilWorkFinished`
