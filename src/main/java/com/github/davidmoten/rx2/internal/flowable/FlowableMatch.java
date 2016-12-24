@@ -14,24 +14,24 @@ import org.reactivestreams.Subscription;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
+import io.reactivex.functions.BiFunction;
+import io.reactivex.functions.Function;
 import io.reactivex.internal.fuseable.SimpleQueue;
 import io.reactivex.internal.queue.MpscLinkedQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
-import rx.functions.Func1;
-import rx.functions.Func2;
 import rx.internal.operators.BackpressureUtils;
 
 public class FlowableMatch<A, B, K, C> extends Flowable<C> {
 
     private final Flowable<A> a;
     private final Flowable<B> b;
-    private final Func1<? super A, ? extends K> aKey;
-    private final Func1<? super B, ? extends K> bKey;
-    private final Func2<? super A, ? super B, C> combiner;
+    private final Function<? super A, ? extends K> aKey;
+    private final Function<? super B, ? extends K> bKey;
+    private final BiFunction<? super A, ? super B, C> combiner;
     private final long requestSize;
 
-    public FlowableMatch(Flowable<A> a, Flowable<B> b, Func1<? super A, ? extends K> aKey,
-            Func1<? super B, ? extends K> bKey, Func2<? super A, ? super B, C> combiner,
+    public FlowableMatch(Flowable<A> a, Flowable<B> b, Function<? super A, ? extends K> aKey,
+            Function<? super B, ? extends K> bKey, BiFunction<? super A, ? super B, C> combiner,
             long requestSize) {
         Preconditions.checkNotNull(a, "a should not be null");
         Preconditions.checkNotNull(b, "b should not be null");
@@ -66,9 +66,9 @@ public class FlowableMatch<A, B, K, C> extends Flowable<C> {
         private final Map<K, Queue<B>> bs = new HashMap<K, Queue<B>>();
         private final Flowable<A> a;
         private final Flowable<B> b;
-        private final Func1<? super A, ? extends K> aKey;
-        private final Func1<? super B, ? extends K> bKey;
-        private final Func2<? super A, ? super B, C> combiner;
+        private final Function<? super A, ? extends K> aKey;
+        private final Function<? super B, ? extends K> bKey;
+        private final BiFunction<? super A, ? super B, C> combiner;
         private final long requestSize;
         private final SimpleQueue<Object> queue;
         private final Subscriber<? super C> child;
@@ -91,8 +91,8 @@ public class FlowableMatch<A, B, K, C> extends Flowable<C> {
 
         private volatile boolean cancelled = false;
 
-        MatchCoordinator(Flowable<A> a, Flowable<B> b, Func1<? super A, ? extends K> aKey,
-                Func1<? super B, ? extends K> bKey, Func2<? super A, ? super B, C> combiner,
+        MatchCoordinator(Flowable<A> a, Flowable<B> b, Function<? super A, ? extends K> aKey,
+                Function<? super B, ? extends K> bKey, BiFunction<? super A, ? super B, C> combiner,
                 long requestSize, Subscriber<? super C> child) {
             this.a = a;
             this.b = b;
@@ -212,7 +212,7 @@ public class FlowableMatch<A, B, K, C> extends Flowable<C> {
                 A a = (A) value;
                 K key;
                 try {
-                    key = aKey.call(a);
+                    key = aKey.apply(a);
                 } catch (Throwable e) {
                     clear();
                     child.onError(e);
@@ -228,7 +228,7 @@ public class FlowableMatch<A, B, K, C> extends Flowable<C> {
                     B b = poll(bs, q, key);
                     C c;
                     try {
-                        c = combiner.call(a, b);
+                        c = combiner.apply(a, b);
                     } catch (Throwable e) {
                         clear();
                         child.onError(e);
@@ -253,7 +253,7 @@ public class FlowableMatch<A, B, K, C> extends Flowable<C> {
                 B b = (B) value;
                 K key;
                 try {
-                    key = bKey.call(b);
+                    key = bKey.apply(b);
                 } catch (Throwable e) {
                     clear();
                     child.onError(e);
@@ -269,7 +269,7 @@ public class FlowableMatch<A, B, K, C> extends Flowable<C> {
                     A a = poll(as, q, key);
                     C c;
                     try {
-                        c = combiner.call(a, b);
+                        c = combiner.apply(a, b);
                     } catch (Throwable e) {
                         clear();
                         child.onError(e);
