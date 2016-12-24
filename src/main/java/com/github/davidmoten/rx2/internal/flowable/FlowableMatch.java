@@ -14,6 +14,7 @@ import org.reactivestreams.Subscription;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
+import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Function;
 import io.reactivex.internal.fuseable.SimpleQueue;
@@ -146,11 +147,12 @@ public class FlowableMatch<A, B, K, C> extends Flowable<C> {
                     if (cancelled) {
                         return;
                     }
-                    // note will not return null
+                    // note no null values on the queue
                     Object v;
                     try {
                         v = queue.poll();
                     } catch (Exception e) {
+                        Exceptions.throwIfFatal(e);
                         clear();
                         child.onError(e);
                         return;
