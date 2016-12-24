@@ -115,4 +115,13 @@ public final class Consumers {
                 list.add(t);
             }};
     }
+
+    public static <T> Consumer<T> println() {
+        // TODO make holder
+        return new Consumer<T>() {
+            @Override
+            public void accept(T t) throws Exception {
+                System.out.println(t);
+            }};
+    }
 }

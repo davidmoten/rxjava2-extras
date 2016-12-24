@@ -15,6 +15,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
 import com.github.davidmoten.rx2.Actions;
+import com.github.davidmoten.rx2.Consumers;
 import com.github.davidmoten.rx2.Flowables;
 import com.github.davidmoten.rx2.Functions;
 import com.github.davidmoten.rx2.Transformers;
@@ -163,31 +164,34 @@ public class FlowableMatchTest {
         Flowable<Integer> b = Flowable.just(3, 4, 5, 6, 7).doOnCancel(Actions.setToTrue(unsubB));
         final List<Integer> list = new ArrayList<Integer>();
         final AtomicBoolean terminal = new AtomicBoolean();
-        matchThem(a, b).subscribe(new Subscriber<Integer>() {
+        matchThem(a, b) //
+                .doOnTerminate(Actions.setToTrue(terminal)) //
+                .doOnNext(Consumers.println())
+                .subscribe(new Subscriber<Integer>() {
 
-            private Subscription s;
+                    private Subscription s;
 
-            @Override
-            public void onSubscribe(Subscription s) {
-                this.s = s;
-            }
-            
-            @Override
-            public void onComplete() {
-                terminal.set(true);
-            }
+                    @Override
+                    public void onSubscribe(Subscription s) {
+                        this.s = s;
+                        s.request(Long.MAX_VALUE);
+                    }
 
-            @Override
-            public void onError(Throwable e) {
-                terminal.set(true);
-            }
+                    @Override
+                    public void onComplete() {
+                    }
 
-            @Override
-            public void onNext(Integer t) {
-                list.add(t);
-                s.cancel();
-            }
-        });
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(Integer t) {
+                        list.add(t);
+                        s.cancel();
+                    }
+                });
         assertFalse(terminal.get());
         assertEquals(Arrays.asList(5), list);
         assertTrue(unsubA.get());
