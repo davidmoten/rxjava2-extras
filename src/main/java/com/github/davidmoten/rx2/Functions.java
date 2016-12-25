@@ -2,7 +2,6 @@ package com.github.davidmoten.rx2;
 
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Function;
-import rx.functions.Func1;
 
 public final class Functions {
 

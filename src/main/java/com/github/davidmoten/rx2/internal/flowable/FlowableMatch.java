@@ -20,7 +20,7 @@ import io.reactivex.functions.Function;
 import io.reactivex.internal.fuseable.SimpleQueue;
 import io.reactivex.internal.queue.MpscLinkedQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
-import rx.internal.operators.BackpressureUtils;
+import io.reactivex.internal.util.BackpressureHelper;
 
 public class FlowableMatch<A, B, K, C> extends Flowable<C> {
 
@@ -114,8 +114,8 @@ public class FlowableMatch<A, B, K, C> extends Flowable<C> {
 
         @Override
         public void request(long n) {
-            if (BackpressureUtils.validate(n)) {
-                BackpressureUtils.getAndAddRequest(requested, n);
+            if (SubscriptionHelper.validate(n)) {
+                BackpressureHelper.add(requested, n);
                 drain();
             }
         }
@@ -193,7 +193,7 @@ public class FlowableMatch<A, B, K, C> extends Flowable<C> {
                 }
                 if (emitted > 0) {
                     // reduce requested by emitted
-                    BackpressureUtils.produced(requested, emitted);
+                    BackpressureHelper.produced(requested, emitted);
                 }
                 missed = this.addAndGet(-missed);
                 if (missed == 0) {
