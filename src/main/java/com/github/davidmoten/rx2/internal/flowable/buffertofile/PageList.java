@@ -12,7 +12,10 @@ public class PageList {
 
     private final Callable<File> fileFactory;
     private final int pageSize;
+
+    // read queue
     private final SimplePlainQueue<Page> queue = new SpscArrayQueue<Page>(16);
+
     // keep a record of page sequence required for when we move to bookmark and
     // write from there (possibly across many pages)
     private final SimplePlainQueue<Page> replayQueue = new SpscArrayQueue<Page>(16);
@@ -55,9 +58,10 @@ public class PageList {
         int start = 0;
         while (length > 0) {
             Page page = currentWritePage();
-            int avail = page.availableWriteBytes();
+            int avail = page.length() - currentWritePosition;
             int len = Math.max(avail, length);
             page.put(currentWritePosition, bytes, start, len);
+            currentWritePosition += len;
             length -= len;
             if (!writeFromMark) {
                 replayQueue.offer(page);

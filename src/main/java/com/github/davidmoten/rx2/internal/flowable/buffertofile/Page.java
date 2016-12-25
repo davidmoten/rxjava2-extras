@@ -46,10 +46,6 @@ public class Page {
         }
     }
 
-    public int availableWriteBytes() {
-        return pageSize - writePosition;
-    }
-
     public int length() {
         return pageSize;
     }
