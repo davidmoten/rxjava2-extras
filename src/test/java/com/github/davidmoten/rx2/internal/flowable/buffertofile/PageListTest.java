@@ -20,10 +20,37 @@ public class PageListTest {
     };
 
     @Test
-    public void testPut() {
+    public void testPutOneAndReadLessThanPageSize() {
         PageList p = new PageList(factory, 8);
         p.put(1);
         assertEquals(1, p.read());
+    }
+
+    @Test
+    public void testPutTwoAndReadLessThanPageSize() {
+        PageList p = new PageList(factory, 12);
+        p.put(1);
+        p.put(2);
+        assertEquals(1, p.read());
+        assertEquals(2, p.read());
+    }
+    
+    @Test
+    public void testPutTwoAndReadEqualsPageSize() {
+        PageList p = new PageList(factory, 8);
+        p.put(1);
+        p.put(2);
+        assertEquals(1, p.read());
+        assertEquals(2, p.read());
+    }
+    
+    @Test
+    public void testPutTwoAndReadMoreThanPageSize() {
+        PageList p = new PageList(factory, 5);
+        p.put(1);
+        p.put(2);
+        assertEquals(1, p.read());
+        assertEquals(2, p.read());
     }
 
 }

@@ -33,7 +33,7 @@ public class PageList {
     private int readPosition;
 
     public PageList(Callable<File> fileFactory, int pageSize) {
-        Preconditions.checkArgument(pageSize >= 8);
+        Preconditions.checkArgument(pageSize >= 4);
         this.fileFactory = fileFactory;
         this.pageSize = pageSize;
     }
@@ -80,7 +80,7 @@ public class PageList {
         if (writeFromMark && currentWritePosition == pageSize) {
             currentWritePage = replayQueue.poll();
             currentWritePosition = 0;
-        } else if (currentWritePage == null) {
+        } else if (currentWritePage == null || currentWritePosition == pageSize) {
             File file;
             try {
                 file = fileFactory.call();
