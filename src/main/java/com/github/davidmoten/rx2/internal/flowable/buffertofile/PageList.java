@@ -59,9 +59,10 @@ public class PageList {
         while (length > 0) {
             Page page = currentWritePage();
             int avail = page.length() - currentWritePosition;
-            int len = Math.max(avail, length);
+            int len = Math.min(avail, length);
             page.put(currentWritePosition, bytes, start, len);
             currentWritePosition += len;
+            start += len;
             length -= len;
             if (!writeFromMark) {
                 replayQueue.offer(page);
@@ -94,25 +95,35 @@ public class PageList {
         return currentWritePage;
     }
 
+    public int read() {
+        byte[] bytes = read(4);
+        return byteArrayToInt(bytes);
+    }
+
     public byte[] read(int length) {
-        int len = 0;
+        int len = length;
         byte[] result = new byte[length];
-        while (len < length) {
+        while (len > 0) {
             if (readPage == null || readPosition == pageSize) {
                 readPage = queue.poll();
                 readPosition = 0;
             }
             int avail = readPage.length() - readPosition;
             int count = Math.min(avail, len);
-            readPage.read(result, len, readPosition, count);
+            readPage.read(result, length - len, readPosition, count);
             readPosition += count;
-            len += count;
+            len -= count;
         }
         return result;
     }
 
     private static final byte[] intToByteArray(int value) {
-        return new byte[] { (byte) (value >>> 24), (byte) (value >>> 16), (byte) (value >>> 8),
+        return new byte[] { (byte) (value >> 24), (byte) (value >> 16), (byte) (value >> 8),
                 (byte) value };
+    }
+
+    private static int byteArrayToInt(byte[] bytes) {
+        return bytes[0] << 24 | (bytes[1] & 0xFF) << 16 | (bytes[2] & 0xFF) << 8
+                | (bytes[3] & 0xFF);
     }
 }
