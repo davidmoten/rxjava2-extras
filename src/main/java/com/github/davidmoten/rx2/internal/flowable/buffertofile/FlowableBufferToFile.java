@@ -71,14 +71,17 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
 
         @Override
         public void onSubscribe(Subscription parent) {
-            this.parent = parent;
+            if (SubscriptionHelper.validate(this.parent, parent)) {
+                this.parent = parent;
+                child.onSubscribe(this);
+                parent.request(Long.MAX_VALUE);
+            }
         }
 
         @Override
         public void request(long n) {
             if (SubscriptionHelper.validate(n)) {
                 BackpressureHelper.add(requested, n);
-                parent.request(Long.MAX_VALUE);
                 drain();
             }
         }
