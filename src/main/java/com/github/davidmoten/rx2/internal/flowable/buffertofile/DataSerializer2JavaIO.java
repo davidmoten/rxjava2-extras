@@ -19,7 +19,7 @@ public class DataSerializer2JavaIO<T extends Serializable> implements DataSerial
     }
 
     @Override
-    public T deserialize(InputStream is) throws ClassNotFoundException, IOException {
+    public T deserialize(InputStream is, int length) throws ClassNotFoundException, IOException {
         ObjectInputStream ois = null;
         try {
             ois = new ObjectInputStream(is);

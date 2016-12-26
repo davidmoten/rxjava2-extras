@@ -8,5 +8,5 @@ public interface DataSerializer2<T> {
 
     void serialize(T t, OutputStream os) throws IOException;
     
-    T deserialize(InputStream is) throws IOException, ClassNotFoundException;
+    T deserialize(InputStream is, int length) throws IOException, ClassNotFoundException;
 }

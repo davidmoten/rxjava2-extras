@@ -1,10 +1,13 @@
 package com.github.davidmoten.rx2;
 
 import java.io.Closeable;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
+import org.junit.Assert;
 
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.LongConsumer;
@@ -76,7 +79,7 @@ public final class Consumers {
             }
         };
     }
-    
+
     public static Consumer<Integer> set(final AtomicInteger value) {
         return new Consumer<Integer>() {
             @Override
@@ -113,7 +116,8 @@ public final class Consumers {
             @Override
             public void accept(T t) throws Exception {
                 list.add(t);
-            }};
+            }
+        };
     }
 
     public static <T> Consumer<T> println() {
@@ -122,6 +126,23 @@ public final class Consumers {
             @Override
             public void accept(T t) throws Exception {
                 System.out.println(t);
-            }};
+            }
+        };
+    }
+
+    public static Consumer<byte[]> assertBytesEquals(final byte[] expected) {
+        // TODO make holder
+        return new Consumer<byte[]>() {
+
+            @Override
+            public void accept(byte[] array) throws Exception {
+                if (!Arrays.equals(expected, array)) {
+                    // TODO use custom exception
+                    throw new RuntimeException("arrays not equal: expected="
+                            + Arrays.toString(expected) + ",actual=" + Arrays.toString(array));
+                }
+            }
+
+        };
     }
 }

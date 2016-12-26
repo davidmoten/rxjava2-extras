@@ -97,8 +97,8 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
             try {
                 ByteArrayOutputStreamNoCopyUnsynchronized bytes = new ByteArrayOutputStreamNoCopyUnsynchronized();
                 serializer.serialize(t, bytes);
-                System.out.println("onNext "+ Util.getHex(bytes.toByteArrayNoCopy()));
-                queue.offer(bytes.toByteArrayNoCopy());
+                System.out.println("onNext "+ Util.getHex(bytes.toByteArray()));
+                queue.offer(bytes.toByteArray());
             } catch (Throwable e) {
                 Exceptions.throwIfFatal(e);
                 onError(e);
@@ -165,7 +165,7 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
                         if (bytes != null) {
                             System.out.println("read "+ Util.getHex(bytes));
                             InputStream is = new ByteArrayInputStream(bytes);
-                            t = serializer.deserialize(is);
+                            t = serializer.deserialize(is, bytes.length);
                             // TODO emit error if null?
                         }
                     } catch (Throwable err) {

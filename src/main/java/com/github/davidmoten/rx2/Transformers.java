@@ -131,4 +131,10 @@ public final class Transformers<T> {
         return onBackpressureBufferToFile(TEMP_DIRECTORY_FILE_FACTORY, pageSize,
                 DataSerializers2.<T>javaIO(), Schedulers.computation());
     }
+    
+    public static <T extends Serializable> FlowableTransformer<T, T> onBackpressureBufferToFile(
+            final int pageSize, DataSerializer2<T> serializer) {
+        return onBackpressureBufferToFile(TEMP_DIRECTORY_FILE_FACTORY, pageSize,
+                serializer, Schedulers.computation());
+    }
 }
