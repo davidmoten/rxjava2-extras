@@ -152,10 +152,26 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
                         child.onError(error);
                         return;
                     }
-                    byte[] bytes = queue.poll();
-                    if (bytes != null) {
-                        InputStream is = new ByteArrayInputStream(bytes);
-                        T t = serializer.deserialize(is);
+                    T t = null;
+                    try {
+                        byte[] bytes = queue.poll();
+                        if (bytes != null) {
+                            InputStream is = new ByteArrayInputStream(bytes);
+                            t = serializer.deserialize(is);
+                            // TODO emit error if null?
+                        }
+                    } catch (Throwable err) {
+                        // TODO fatal errors action?
+                        Exceptions.throwIfFatal(err);
+                        worker.dispose();
+                        child.onError(err);
+                        return;
+                    }
+                    if (t != null) {
+                        child.onNext(t);
+                        e++;
+                    } else {
+                        break;
                     }
                 }
                 if (e > 0) {

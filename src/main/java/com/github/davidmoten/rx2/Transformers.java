@@ -1,5 +1,6 @@
 package com.github.davidmoten.rx2;
 
+import java.io.File;
 import java.util.concurrent.Callable;
 
 import org.reactivestreams.Publisher;
@@ -9,6 +10,7 @@ import com.github.davidmoten.rx2.internal.flowable.FlowableMapLast;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMatch;
 import com.github.davidmoten.rx2.internal.flowable.FlowableReverse;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStateMachine;
+import com.github.davidmoten.rx2.internal.flowable.buffertofile.DataSerializer2;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -96,6 +98,11 @@ public final class Transformers<T> {
             final Function<? super A, K> aKey, final Function<? super B, K> bKey,
             final BiFunction<? super A, ? super B, C> combiner) {
         return matchWith(b, aKey, bKey, combiner, 128);
+    }
+
+    public static <T> FlowableTransformer<T,T> onBackpressureBufferToFile(Callable<File> fileFactory,
+            int pageSize, DataSerializer2 serializer) {
+        return null;
     }
 
 }
