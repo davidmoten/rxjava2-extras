@@ -13,7 +13,7 @@ public class MMapQueue {
         this.pages = new PageList(fileFactory, pageSize);
     }
 
-    public void put(byte[] bytes) {
+    public void offer(byte[] bytes) {
         pages.mark();
         pages.put(0);
         pages.put(bytes);
@@ -27,8 +27,8 @@ public class MMapQueue {
         pages.clearMark();
         pages.moveToEnd();
     }
-
-    public byte[] get() {
+    
+    public byte[] poll() {
         int length;
         try {
             lock.lock();

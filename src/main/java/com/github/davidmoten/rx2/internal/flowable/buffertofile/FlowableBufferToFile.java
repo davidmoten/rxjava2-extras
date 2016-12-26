@@ -1,8 +1,8 @@
 package com.github.davidmoten.rx2.internal.flowable.buffertofile;
 
-import java.io.DataOutput;
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
+import java.io.InputStream;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -10,24 +10,25 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
-import com.github.davidmoten.rx2.buffertofile.DataSerializer;
+import com.github.davidmoten.util.ByteArrayOutputStreamNoCopyUnsynchronized;
 
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
 import io.reactivex.Scheduler.Worker;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
+import rx.exceptions.Exceptions;
 
 public class FlowableBufferToFile<T> extends Flowable<T> {
 
     private final Flowable<T> source;
     private final Callable<File> fileFactory;
     private final int pageSize;
-    private final DataSerializer<T> serializer;
+    private final DataSerializer2<T> serializer;
     private final Scheduler scheduler;
 
     public FlowableBufferToFile(Flowable<T> source, Callable<File> fileFactory, int pageSize,
-            DataSerializer<T> serializer, Scheduler scheduler) {
+            DataSerializer2<T> serializer, Scheduler scheduler) {
         this.source = source;
         this.fileFactory = fileFactory;
         this.pageSize = pageSize;
@@ -47,7 +48,7 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
 
         private final Subscriber<? super T> child;
         private final MMapQueue queue;
-        private final DataSerializer<T> serializer;
+        private final DataSerializer2<T> serializer;
         private final Worker worker;
         private final AtomicLong requested = new AtomicLong();
 
@@ -60,7 +61,7 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
         private Throwable error;
 
         BufferToFileSubscriber(Subscriber<? super T> child, MMapQueue queue,
-                DataSerializer<T> serializer, Worker worker) {
+                DataSerializer2<T> serializer, Worker worker) {
             this.child = child;
             this.queue = queue;
             this.serializer = serializer;
@@ -87,6 +88,16 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
 
         @Override
         public void onNext(T t) {
+            try {
+                ByteArrayOutputStreamNoCopyUnsynchronized bytes = new ByteArrayOutputStreamNoCopyUnsynchronized();
+                serializer.serialize(t, bytes);
+                queue.offer(bytes.toByteArrayNoCopy());
+            } catch (Throwable e) {
+                Exceptions.throwIfFatal(e);
+                onError(e);
+                return;
+            }
+            drain();
         }
 
         @Override
@@ -127,7 +138,34 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
         }
 
         private void drainNow() {
-
+            int missed = 1;
+            while (true) {
+                long r = requested.get();
+                long e = 0;
+                while (e != r) {
+                    if (cancelled) {
+                        return;
+                    }
+                    if (error != null) {
+                        // TODO other dispose actions?
+                        worker.dispose();
+                        child.onError(error);
+                        return;
+                    }
+                    byte[] bytes = queue.poll();
+                    if (bytes != null) {
+                        InputStream is = new ByteArrayInputStream(bytes);
+                        T t = serializer.deserialize(is);
+                    }
+                }
+                if (e > 0) {
+                    BackpressureHelper.produced(requested, e);
+                }
+                missed = addAndGet(-missed);
+                if (missed == 0) {
+                    return;
+                }
+            }
         }
     }
 
