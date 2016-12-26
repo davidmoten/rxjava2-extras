@@ -53,7 +53,6 @@ public class Page {
     public void put(int position, byte[] bytes, int start, int length) {
         bb.position(position);
         bb.put(bytes, start, length);
-        bb.putInt(5);
     }
 
     public void get(byte[] dst, int offset, int readPosition, int length) {
