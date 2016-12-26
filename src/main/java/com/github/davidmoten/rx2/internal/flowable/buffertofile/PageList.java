@@ -20,17 +20,18 @@ public class PageList {
     // write from there (possibly across many pages)
     private final SimplePlainQueue<Page> replayQueue = new SpscArrayQueue<Page>(16);
 
-    private boolean writeFromMark;
-    private int markWritePosition; // replayQueue has start page
+    boolean marked;
+    boolean writingFromMark;
+    int markWritePosition; // replayQueue has start page
 
-    private int writePosition;
-    private Page writePage;
+    int writePosition;
+    Page writePage;
 
-    private Page currentWritePage;
-    private int currentWritePosition;
+    Page currentWritePage;
+    int currentWritePosition;
 
-    private Page readPage;
-    private int readPosition;
+    Page readPage;
+    int readPosition;
 
     public PageList(Callable<File> fileFactory, int pageSize) {
         Preconditions.checkArgument(pageSize >= 4);
@@ -38,8 +39,10 @@ public class PageList {
         this.pageSize = pageSize;
     }
 
-    public void markWritePosition() {
-        replayQueue.offer(currentWritePage);
+    public void mark() {
+        marked = true;
+        replayQueue.clear();
+        replayQueue.offer(currentWritePage());
         markWritePosition = writePosition;
     }
 
@@ -47,8 +50,13 @@ public class PageList {
         put(intToByteArray(value));
     }
 
+    public void clearMark() {
+        marked = false;
+        replayQueue.clear();
+    }
+    
     public void moveWritePositionToEnd() {
-        writeFromMark = false;
+        writingFromMark = false;
         currentWritePage = writePage;
         currentWritePosition = writePosition;
     }
@@ -57,6 +65,7 @@ public class PageList {
         int length = bytes.length;
         int start = 0;
         while (length > 0) {
+            Page before = currentWritePage;
             Page page = currentWritePage();
             int avail = page.length() - currentWritePosition;
             int len = Math.min(avail, length);
@@ -64,20 +73,23 @@ public class PageList {
             currentWritePosition += len;
             start += len;
             length -= len;
-            if (!writeFromMark) {
+            if (marked && before != page) {
                 replayQueue.offer(page);
+            } 
+            if (!this.writingFromMark) {
+                writePosition = currentWritePosition;
             }
         }
     }
 
-    public void moveWritePositionToMark() {
-        writeFromMark = true;
+    public void moveToMark() {
+        writingFromMark = true;
         currentWritePage = replayQueue.poll();
         currentWritePosition = markWritePosition;
     }
 
     private Page currentWritePage() {
-        if (writeFromMark && currentWritePosition == pageSize) {
+        if (writingFromMark && currentWritePosition == pageSize) {
             currentWritePage = replayQueue.poll();
             currentWritePosition = 0;
         } else if (currentWritePage == null || currentWritePosition == pageSize) {
@@ -95,12 +107,12 @@ public class PageList {
         return currentWritePage;
     }
 
-    public int read() {
-        byte[] bytes = read(4);
+    public int get() {
+        byte[] bytes = get(4);
         return byteArrayToInt(bytes);
     }
 
-    public byte[] read(int length) {
+    public byte[] get(int length) {
         int len = length;
         byte[] result = new byte[length];
         while (len > 0) {
@@ -110,7 +122,7 @@ public class PageList {
             }
             int avail = readPage.length() - readPosition;
             int count = Math.min(avail, len);
-            readPage.read(result, length - len, readPosition, count);
+            readPage.get(result, length - len, readPosition, count);
             readPosition += count;
             len -= count;
         }

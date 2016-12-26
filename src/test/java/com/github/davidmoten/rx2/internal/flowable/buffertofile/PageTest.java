@@ -13,10 +13,10 @@ public class PageTest {
         byte[] bytes = new byte[] { 0, 1, 2, 3 };
         page.put(0, bytes, 0, bytes.length);
         byte[] a = new byte[4];
-        page.read(a, 0, 0, 4);
+        page.get(a, 0, 0, 4);
         Assert.assertArrayEquals(bytes, a);
         a = new byte[2];
-        page.read(a, 0, 2, 2);
+        page.get(a, 0, 2, 2);
         Assert.assertArrayEquals(new byte[] { 2, 3 }, a);
     }
 

@@ -55,7 +55,7 @@ public class Page {
         bb.put(bytes, start, length);
     }
 
-    public void read(byte[] dst, int offset, int readPosition, int length) {
+    public void get(byte[] dst, int offset, int readPosition, int length) {
         if (readBb == null) {
             readBb = (MappedByteBuffer) bb.duplicate();
         }
