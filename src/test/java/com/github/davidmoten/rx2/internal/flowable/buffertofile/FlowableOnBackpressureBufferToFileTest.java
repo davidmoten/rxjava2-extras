@@ -15,7 +15,7 @@ public class FlowableOnBackpressureBufferToFileTest {
         Flowable.just(1, 2, 3) //
                 .compose(Transformers.<Integer>onBackpressureBufferToFile(1000000)) //
                 .test() //
-                .awaitDone(5, TimeUnit.SECONDS) //
+                .awaitDone(5000000000L, TimeUnit.SECONDS) //
                 .assertValues(1, 2, 3)//
                 .assertComplete();
     }

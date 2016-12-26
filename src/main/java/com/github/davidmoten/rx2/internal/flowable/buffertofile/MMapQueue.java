@@ -14,6 +14,7 @@ public class MMapQueue {
     }
 
     public void offer(byte[] bytes) {
+        System.out.println("writing "+ bytes.length + " bytes");
         pages.mark();
         pages.put(0);
         pages.put(bytes);
@@ -29,6 +30,7 @@ public class MMapQueue {
     }
     
     public byte[] poll() {
+        System.out.println("reading");
         int length;
         try {
             lock.lock();
