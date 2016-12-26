@@ -92,7 +92,8 @@ public class PageList {
         if (writingFromMark && currentWritePosition == pageSize) {
             currentWritePage = replayQueue.poll();
             currentWritePosition = 0;
-        } else if (currentWritePage == null || currentWritePosition == pageSize) {
+        }
+        if (currentWritePage == null || currentWritePosition == pageSize) {
             File file;
             try {
                 file = fileFactory.call();

@@ -30,7 +30,18 @@ public class FlowableOnBackpressureBufferToFileTest {
                 .doOnNext(Consumers.assertBytesEquals(bytes)) //
                 .doOnError(Consumers.printStackTrace()) //
                 .test() //
-                .awaitDone(5000000000L, TimeUnit.SECONDS) //
+                .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertComplete();
+    }
+    
+    @Test
+    public void testManyIntegers() {
+        int n = 1000000;
+        Flowable.range(1, n) //
+        .compose(Transformers.<Integer>onBackpressureBufferToFile(1000000)) //
+        .test() //
+        .awaitDone(500L, TimeUnit.SECONDS) //
+        .assertValueCount(n)//
+        .assertComplete();
     }
 }
