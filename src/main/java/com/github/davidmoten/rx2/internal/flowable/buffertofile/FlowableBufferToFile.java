@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
+import com.github.davidmoten.rx2.buffertofile.DataSerializer2;
 import com.github.davidmoten.util.ByteArrayOutputStreamNoCopyUnsynchronized;
 
 import io.reactivex.Flowable;
@@ -77,6 +78,7 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
         public void request(long n) {
             if (SubscriptionHelper.validate(n)) {
                 BackpressureHelper.add(requested, n);
+                parent.request(Long.MAX_VALUE);
                 drain();
             }
         }
@@ -84,6 +86,7 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
         @Override
         public void cancel() {
             cancelled = true;
+            parent.cancel();
         }
 
         @Override
@@ -170,6 +173,9 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
                     if (t != null) {
                         child.onNext(t);
                         e++;
+                    } else if (done) {
+                        child.onComplete();
+                        return;
                     } else {
                         break;
                     }
