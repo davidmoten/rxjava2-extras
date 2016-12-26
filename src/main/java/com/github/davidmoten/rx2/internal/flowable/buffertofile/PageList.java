@@ -54,8 +54,8 @@ public class PageList {
         marked = false;
         replayQueue.clear();
     }
-    
-    public void moveWritePositionToEnd() {
+
+    public void moveToEnd() {
         writingFromMark = false;
         currentWritePage = writePage;
         currentWritePosition = writePosition;
@@ -75,7 +75,7 @@ public class PageList {
             length -= len;
             if (marked && before != page) {
                 replayQueue.offer(page);
-            } 
+            }
             if (!this.writingFromMark) {
                 writePosition = currentWritePosition;
             }
@@ -109,8 +109,14 @@ public class PageList {
 
     public int get() {
         byte[] bytes = get(4);
-        return byteArrayToInt(bytes);
+        if (bytes.length == 0) {
+            return 0;
+        } else {
+            return byteArrayToInt(bytes);
+        }
     }
+
+    private static final byte[] EMPTY = new byte[0];
 
     public byte[] get(int length) {
         int len = length;
@@ -118,6 +124,9 @@ public class PageList {
         while (len > 0) {
             if (readPage == null || readPosition == pageSize) {
                 readPage = queue.poll();
+                if (readPage == null) {
+                    return EMPTY;
+                }
                 readPosition = 0;
             }
             int avail = readPage.length() - readPosition;

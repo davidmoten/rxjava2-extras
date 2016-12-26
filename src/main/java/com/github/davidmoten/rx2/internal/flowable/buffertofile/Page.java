@@ -12,10 +12,9 @@ import java.nio.channels.FileChannel;
 public class Page {
 
     private final int pageSize;
-    private int writePosition;
     private final MappedByteBuffer bb;
     // initiated on demand, is for single consumer so should be initiated only
-    // once despite visibility
+    // once despite visibility effects
     private MappedByteBuffer readBb;
 
     public Page(File file, int pageSize) {
@@ -49,10 +48,12 @@ public class Page {
     public int length() {
         return pageSize;
     }
+    
 
     public void put(int position, byte[] bytes, int start, int length) {
         bb.position(position);
         bb.put(bytes, start, length);
+        bb.putInt(5);
     }
 
     public void get(byte[] dst, int offset, int readPosition, int length) {

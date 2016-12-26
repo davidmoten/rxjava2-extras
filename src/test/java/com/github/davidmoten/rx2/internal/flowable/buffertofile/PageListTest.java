@@ -95,7 +95,7 @@ public class PageListTest {
         p.put(1);
         p.moveToMark();
         p.put(2);
-        p.moveWritePositionToEnd();
+        p.moveToEnd();
         p.clearMark();
         p.put(3);
         assertEquals(2, p.get());
@@ -112,7 +112,7 @@ public class PageListTest {
         p.moveToMark();
         p.put(4);
         p.clearMark();
-        p.moveWritePositionToEnd();
+        p.moveToEnd();
         p.put(5);
         assertEquals(1, p.get());
     }
