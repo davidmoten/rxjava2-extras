@@ -11,11 +11,13 @@ import com.github.davidmoten.rx2.internal.flowable.FlowableMatch;
 import com.github.davidmoten.rx2.internal.flowable.FlowableReverse;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStateMachine;
 import com.github.davidmoten.rx2.internal.flowable.buffertofile.DataSerializer2;
+import com.github.davidmoten.rx2.internal.flowable.buffertofile.FlowableBufferToFile;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableTransformer;
+import io.reactivex.Scheduler;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.BiPredicate;
@@ -100,9 +102,18 @@ public final class Transformers<T> {
         return matchWith(b, aKey, bKey, combiner, 128);
     }
 
-    public static <T> FlowableTransformer<T,T> onBackpressureBufferToFile(Callable<File> fileFactory,
-            int pageSize, DataSerializer2 serializer) {
-        return null;
+    public static <T> FlowableTransformer<T, T> onBackpressureBufferToFile(
+            final Callable<File> fileFactory, final int pageSize, final DataSerializer2<T> serializer,
+            final Scheduler scheduler) {
+        return new FlowableTransformer<T, T>() {
+
+            @Override
+            public Publisher<T> apply(Flowable<T> source) {
+                return new FlowableBufferToFile<T>(source, fileFactory, pageSize, serializer,
+                        scheduler);
+            }
+
+        };
     }
 
 }
