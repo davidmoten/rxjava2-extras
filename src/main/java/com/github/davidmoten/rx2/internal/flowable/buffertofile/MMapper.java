@@ -2,6 +2,7 @@ package com.github.davidmoten.rx2.internal.flowable.buffertofile;
 
 import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 
@@ -16,8 +17,9 @@ public class MMapper {
     private static final Method unmmap;
     private static final int BYTE_ARRAY_OFFSET;
 
-    private long addr, size;
     private final String filename;
+    private final long size;
+    private long addr;
 
     static {
         try {
@@ -49,29 +51,44 @@ public class MMapper {
 
     // Given that the location and size have been set, map that location
     // for the given length and set this.addr to the returned offset
-    private void mapAndSetOffset() throws Exception {
-        final RandomAccessFile backingFile = new RandomAccessFile(this.filename, "rw");
-        backingFile.setLength(this.size);
+    private void mapAndSetOffset() {
+        try {
+            final RandomAccessFile backingFile = new RandomAccessFile(this.filename, "rw");
+            backingFile.setLength(this.size);
+            final FileChannel ch = backingFile.getChannel();
+            this.addr = (Long) mmap.invoke(ch, 1, 0L, this.size);
 
-        final FileChannel ch = backingFile.getChannel();
-        this.addr = (Long) mmap.invoke(ch, 1, 0L, this.size);
-
-        ch.close();
-        backingFile.close();
+            ch.close();
+            backingFile.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public MMapper(final String filename, long len) throws Exception {
+    public MMapper(final String filename, long len) {
         this.filename = filename;
         this.size = roundTo4096(len);
         mapAndSetOffset();
     }
 
-    // Callers should synchronize to avoid calls in the middle of this, but
-    // it is undesirable to synchronize w/ all access methods.
-    public void remap(long nLen) throws Exception {
-        unmmap.invoke(null, addr, this.size);
-        this.size = roundTo4096(nLen);
-        mapAndSetOffset();
+//    // Callers should synchronize to avoid calls in the middle of this, but
+//    // it is undesirable to synchronize w/ all access methods.
+//    public void remap(long nLen) throws Exception {
+//        unmmap.invoke(null, addr, this.size);
+//        this.size = roundTo4096(nLen);
+//        mapAndSetOffset();
+//    }
+
+    public void close() {
+        try {
+            unmmap.invoke(null, addr, this.size);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public int getInt(long pos) {
@@ -99,11 +116,11 @@ public class MMapper {
     }
 
     // May want to have offset & length within data as well, for both of these
-    public void getBytes(long pos, byte[] data) {
-        unsafe.copyMemory(null, pos + addr, data, BYTE_ARRAY_OFFSET, data.length);
+    public void getBytes(long pos, byte[] data, long offset, long length) {
+        unsafe.copyMemory(null, pos + addr, data, BYTE_ARRAY_OFFSET + offset, length);
     }
 
-    public void setBytes(long pos, byte[] data) {
-        unsafe.copyMemory(data, BYTE_ARRAY_OFFSET, null, pos + addr, data.length);
+    public void putBytes(long pos, byte[] data, long offset, long length) {
+        unsafe.copyMemory(data, BYTE_ARRAY_OFFSET + offset, null, pos + addr, length);
     }
 }
