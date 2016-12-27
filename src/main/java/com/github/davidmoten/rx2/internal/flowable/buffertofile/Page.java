@@ -6,13 +6,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
 public class Page {
 
     private final int pageSize;
-    private final MappedByteBuffer bb;
     // initiated on demand, is for single consumer so should be initiated only
     // once despite visibility effects
     private MappedByteBuffer readBb;
@@ -48,7 +49,6 @@ public class Page {
     public int length() {
         return pageSize;
     }
-    
 
     public void put(int position, byte[] bytes, int start, int length) {
         bb.position(position);
@@ -61,6 +61,55 @@ public class Page {
         }
         readBb.position(readPosition);
         readBb.get(dst, offset, length);
+    }
+
+    public void close() {
+        unmap(bb);
+    }
+    
+    private static void unmap(MappedByteBuffer buffer) {
+        Cleaner.clean(buffer);
+    }
+
+    /**
+     * Helper class allowing to clean direct buffers.
+     */
+    private static class Cleaner {
+        public static final boolean CLEAN_SUPPORTED;
+        private static final Method directBufferCleaner;
+        private static final Method directBufferCleanerClean;
+
+        static {
+            Method directBufferCleanerX = null;
+            Method directBufferCleanerCleanX = null;
+            boolean v;
+            try {
+                directBufferCleanerX = Class.forName("java.nio.DirectByteBuffer")
+                        .getMethod("cleaner");
+                directBufferCleanerX.setAccessible(true);
+                directBufferCleanerCleanX = Class.forName("sun.misc.Cleaner").getMethod("clean");
+                directBufferCleanerCleanX.setAccessible(true);
+                v = true;
+            } catch (Exception e) {
+                v = false;
+            }
+            CLEAN_SUPPORTED = v;
+            directBufferCleaner = directBufferCleanerX;
+            directBufferCleanerClean = directBufferCleanerCleanX;
+        }
+
+        public static void clean(ByteBuffer buffer) {
+            if (buffer == null)
+                return;
+            if (CLEAN_SUPPORTED && buffer.isDirect()) {
+                try {
+                    Object cleaner = directBufferCleaner.invoke(buffer);
+                    directBufferCleanerClean.invoke(cleaner);
+                } catch (Exception e) {
+                    // silently ignore exception
+                }
+            }
+        }
     }
 
 }

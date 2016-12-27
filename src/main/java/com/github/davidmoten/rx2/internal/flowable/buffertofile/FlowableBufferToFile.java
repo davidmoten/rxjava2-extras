@@ -97,7 +97,8 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
             try {
                 ByteArrayOutputStreamNoCopyUnsynchronized bytes = new ByteArrayOutputStreamNoCopyUnsynchronized();
                 serializer.serialize(t, bytes);
-//                System.out.println("onNext "+ Util.getHex(bytes.toByteArray()));
+                // System.out.println("onNext "+
+                // Util.getHex(bytes.toByteArray()));
                 queue.offer(bytes.toByteArray());
             } catch (Throwable e) {
                 Exceptions.throwIfFatal(e);
@@ -156,6 +157,7 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
                     if (error != null) {
                         // TODO other dispose actions?
                         worker.dispose();
+                        cancel();
                         child.onError(error);
                         return;
                     }
@@ -163,7 +165,7 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
                     try {
                         byte[] bytes = queue.poll();
                         if (bytes != null) {
-//                            System.out.println("read "+ Util.getHex(bytes));
+                            // System.out.println("read "+ Util.getHex(bytes));
                             InputStream is = new ByteArrayInputStream(bytes);
                             t = serializer.deserialize(is, bytes.length);
                             // TODO emit error if null?
@@ -172,6 +174,7 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
                         // TODO fatal errors action?
                         Exceptions.throwIfFatal(err);
                         worker.dispose();
+                        cancel();
                         child.onError(err);
                         return;
                     }
@@ -179,6 +182,8 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
                         child.onNext(t);
                         e++;
                     } else if (done) {
+                        worker.dispose();
+                        cancel();
                         child.onComplete();
                         return;
                     } else {

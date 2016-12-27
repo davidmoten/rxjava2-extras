@@ -124,11 +124,14 @@ public class PageList {
         byte[] result = new byte[length];
         while (len > 0) {
             if (readPage == null || readPosition == pageSize) {
+                if (readPage != null) {
+                    readPage.close();
+                }
                 readPage = queue.poll();
+                readPosition = 0;
                 if (readPage == null) {
                     return EMPTY;
                 }
-                readPosition = 0;
             }
             int avail = readPage.length() - readPosition;
             int count = Math.min(avail, len);

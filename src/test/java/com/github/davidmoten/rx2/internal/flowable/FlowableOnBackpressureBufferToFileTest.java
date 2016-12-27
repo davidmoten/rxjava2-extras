@@ -36,9 +36,9 @@ public class FlowableOnBackpressureBufferToFileTest {
     
     @Test
     public void testManyIntegers() {
-        int n = 1000000;
+        int n = 1000;
         Flowable.range(1, n) //
-        .compose(Transformers.<Integer>onBackpressureBufferToFile(1000000)) //
+        .compose(Transformers.<Integer>onBackpressureBufferToFile(10000)) //
         .test() //
         .awaitDone(500L, TimeUnit.SECONDS) //
         .assertValueCount(n)//
