@@ -21,7 +21,7 @@ public class PageList {
     // keep a record of page sequence required for when we move to bookmark and
     // write from there (possibly across many pages)
     // TODO use non-concurrent queue
-    private final SimplePlainQueue<Page> replayWriteQueue = new SpscArrayQueue<Page>(2);
+    private final SimplePlainQueue<Page> replayQueue = new SpscArrayQueue<Page>(2);
 
     // keep a record of page sequence required for when we move to bookmark and
     // write from there (possibly across many pages)
@@ -46,14 +46,14 @@ public class PageList {
 
     public void markForWrite() {
         writeMarked = true;
-        replayWriteQueue.clear();
-        replayWriteQueue.offer(currentWritePage());
+        replayQueue.clear();
+        replayQueue.offer(currentWritePage());
         markWritePosition = writePosition;
     }
 
     public void moveToWriteMark() {
         writingFromMark = true;
-        currentWritePage = replayWriteQueue.poll();
+        currentWritePage = replayQueue.poll();
         currentWritePosition = markWritePosition;
     }
 
@@ -65,7 +65,7 @@ public class PageList {
 
     public void clearWriteMark() {
         writeMarked = false;
-        replayWriteQueue.clear();
+        replayQueue.clear();
     }
 
     public void putInt(int value) {
@@ -85,7 +85,7 @@ public class PageList {
             start += len;
             length -= len;
             if (writeMarked && !writingFromMark && before != page) {
-                replayWriteQueue.offer(page);
+                replayQueue.offer(page);
             }
             if (!this.writingFromMark) {
                 writePosition = currentWritePosition;
@@ -106,7 +106,7 @@ public class PageList {
 
     private Page currentWritePage() {
         if (writingFromMark && currentWritePosition == pageSize) {
-            currentWritePage = replayWriteQueue.poll();
+            currentWritePage = replayQueue.poll();
             currentWritePosition = 0;
         }
         if (currentWritePage == null || currentWritePosition == pageSize) {
@@ -170,9 +170,11 @@ public class PageList {
                 | (bytes[3] & 0xFF);
     }
 
+    private static final byte[] a = new byte[1];
+
     public void putByte(byte b) {
-        // TODO reuse mutable single item array
-        put(new byte[] { b });
+        a[0] = b;
+        put(a);
     }
 
     public byte getByte() {
