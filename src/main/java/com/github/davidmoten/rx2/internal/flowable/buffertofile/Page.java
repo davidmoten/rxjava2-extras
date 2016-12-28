@@ -27,10 +27,18 @@ public class Page {
         mm.getBytes(readPosition, dst, offset, length);
     }
 
+    public void putIntOrdered(int writePosition, int value) {
+        mm.putOrderedInt(writePosition, value);
+    }
+    
+    public void putInt(int writePosition, int value) {
+        mm.putInt(writePosition, value);
+    }
+
     public void close() {
         mm.close();
     }
-    
+
     private static void unmap(MappedByteBuffer buffer) {
         Cleaner.clean(buffer);
     }
@@ -74,6 +82,10 @@ public class Page {
                 }
             }
         }
+    }
+
+    public int getIntVolatile(int readPosition) {
+        return mm.getIntVolatile(readPosition);
     }
 
 }

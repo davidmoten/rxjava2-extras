@@ -18,18 +18,21 @@ public class MMapQueue {
     private static final int SIZE_MESSAGE_TYPE_FIELD = 1;
     private static final int HEADER_BYTES = SIZE_MESSAGE_SIZE_FIELD + SIZE_MESSAGE_TYPE_FIELD
             + SIZE_PADDING_SIZE_FIELD + SIZE_MESSAGE_SIZE_FIELD;
+    private static final int ALIGN_BYTES = 4;
 
+    @SuppressWarnings("restriction")
     public void offer(byte[] bytes) {
 //        System.out.println("writing " + bytes.length + " bytes");
-        int rem = bytes.length % 4;
+        int rem = (bytes.length + SIZE_PADDING_SIZE_FIELD) % ALIGN_BYTES;
         final int padding;
         if (rem == 0) {
             padding = 0;
         } else {
-            padding = 4 - rem;
+            padding = ALIGN_BYTES - rem;
         }
         pages.markForWrite();
         pages.putInt(0);// messageSize
+        UnsafeAccess.unsafe().storeFence();
         pages.putByte((byte) padding);
         if (padding > 0) {
             pages.put(new byte[padding]);
@@ -39,7 +42,7 @@ public class MMapQueue {
         lock.lock();
         try {
             // TODO ordered put
-            pages.putInt(bytes.length);
+            pages.putIntOrdered(bytes.length);
         } finally {
             lock.unlock();
         }
@@ -53,7 +56,7 @@ public class MMapQueue {
         try {
             lock.lock();
             // TODO volatile read
-            length = pages.getPositiveInt();
+            length = pages.getPositiveIntVolatile();
         } finally {
             lock.unlock();
         }

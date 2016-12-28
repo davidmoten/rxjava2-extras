@@ -21,7 +21,7 @@ public class PageList {
     // keep a record of page sequence required for when we move to bookmark and
     // write from there (possibly across many pages)
     // TODO use non-concurrent queue
-    private final SimplePlainQueue<Page> replayWriteQueue = new SpscArrayQueue<Page>(16);
+    private final SimplePlainQueue<Page> replayWriteQueue = new SpscArrayQueue<Page>(2);
 
     // keep a record of page sequence required for when we move to bookmark and
     // write from there (possibly across many pages)
@@ -84,12 +84,23 @@ public class PageList {
             currentWritePosition += len;
             start += len;
             length -= len;
-            if (writeMarked && before != page) {
+            if (writeMarked && !writingFromMark && before != page) {
                 replayWriteQueue.offer(page);
             }
             if (!this.writingFromMark) {
                 writePosition = currentWritePosition;
             }
+        }
+    }
+
+    public void putIntOrdered(int value) {
+        // if there is any space at all in current page then it will be enough
+        // for 4 bytes because we pad all offerings to the queue
+        Page page = currentWritePage();
+        page.putInt(currentWritePosition, value);
+        currentWritePosition += 4;
+        if (!this.writingFromMark) {
+            writePosition = currentWritePosition;
         }
     }
 
@@ -159,10 +170,6 @@ public class PageList {
                 | (bytes[3] & 0xFF);
     }
 
-    public void putOrdered(int length) {
-        putInt(length);
-    }
-
     public void putByte(byte b) {
         // TODO reuse mutable single item array
         put(new byte[] { b });
@@ -173,7 +180,17 @@ public class PageList {
     }
 
     public void moveReadPosition(int forward) {
-        readPosition+=forward;
+        readPosition += forward;
+    }
+
+    public int getPositiveIntVolatile() {
+        if (readPage() == null) {
+            return -1;
+        } else {
+            int result = readPage.getIntVolatile(readPosition);
+            readPosition += 4;
+            return result;
+        }
     }
 
 }

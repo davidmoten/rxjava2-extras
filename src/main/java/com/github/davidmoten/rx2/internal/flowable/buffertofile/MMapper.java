@@ -23,13 +23,9 @@ public class MMapper {
 
     static {
         try {
-            Field singleoneInstanceField = Unsafe.class.getDeclaredField("theUnsafe");
-            singleoneInstanceField.setAccessible(true);
-            unsafe = (Unsafe) singleoneInstanceField.get(null);
-
+            unsafe = UnsafeAccess.unsafe();
             mmap = getMethod(FileChannelImpl.class, "map0", int.class, long.class, long.class);
             unmmap = getMethod(FileChannelImpl.class, "unmap0", long.class, long.class);
-
             BYTE_ARRAY_OFFSET = unsafe.arrayBaseOffset(byte[].class);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -111,8 +107,8 @@ public class MMapper {
         unsafe.putOrderedInt(null, pos + addr, val);
     }
 
-    public void getIntVolatile(long pos) {
-        unsafe.getIntVolatile(null, pos + addr);
+    public int getIntVolatile(long pos) {
+        return unsafe.getIntVolatile(null, pos + addr);
     }
 
     // May want to have offset & length within data as well, for both of these
@@ -122,5 +118,9 @@ public class MMapper {
 
     public void putBytes(long pos, byte[] data, long offset, long length) {
         unsafe.copyMemory(data, BYTE_ARRAY_OFFSET + offset, null, pos + addr, length);
+    }
+    
+    public void storeFence() {
+        unsafe.storeFence();
     }
 }
