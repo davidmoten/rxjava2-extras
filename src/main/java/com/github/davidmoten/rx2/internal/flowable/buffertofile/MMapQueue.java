@@ -39,12 +39,12 @@ public class MMapQueue {
         }
         pages.put(bytes);
         pages.moveToWriteMark();
-        lock.lock();
         try {
+//            lock.lock();
             // TODO ordered put
             pages.putIntOrdered(bytes.length);
         } finally {
-            lock.unlock();
+//            lock.unlock();
         }
         pages.clearWriteMark();
         pages.moveWriteToEnd();
@@ -54,11 +54,11 @@ public class MMapQueue {
 //        System.out.println("reading");
         int length;
         try {
-            lock.lock();
+//            lock.lock();
             // TODO volatile read
             length = pages.getPositiveIntVolatile();
         } finally {
-            lock.unlock();
+//            lock.unlock();
         }
         if (length == 0) {
             pages.moveReadPosition(-4);

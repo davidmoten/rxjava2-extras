@@ -21,7 +21,6 @@ public class FlowableOnBackpressureBufferToFileTest {
                 .assertValues(1, 2, 3)//
                 .assertComplete();
     }
-    
 
     @Test
     public void testByteArrayLengthOne() {
@@ -53,9 +52,10 @@ public class FlowableOnBackpressureBufferToFileTest {
     public void testManyIntegers() {
         int n = 10000;
         Flowable.range(1, n) //
-                .compose(Transformers.<Integer>onBackpressureBufferToFile(10000)) //
+                .compose(Transformers.<Integer>onBackpressureBufferToFile(100000)) //
+                .doOnNext(Consumers.println()) //
                 .test() //
-                .awaitDone(500L, TimeUnit.SECONDS) //
+                .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertValueCount(n)//
                 .assertComplete();
     }
