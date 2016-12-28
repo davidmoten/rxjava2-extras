@@ -21,27 +21,42 @@ public class FlowableOnBackpressureBufferToFileTest {
                 .assertValues(1, 2, 3)//
                 .assertComplete();
     }
+    
+
+    @Test
+    public void testByteArrayLengthOne() {
+        byte[] bytes = new byte[] { 3 };
+        Flowable.just(bytes) //
+                .compose(Transformers.<byte[]>onBackpressureBufferToFile(1000000,
+                        new DataSerializer2Bytes())) //
+                .doOnNext(Consumers.assertBytesEquals(bytes)) //
+                .doOnError(Consumers.printStackTrace()) //
+                .test() //
+                .awaitDone(500000000L, TimeUnit.SECONDS) //
+                .assertComplete();
+    }
 
     @Test
     public void testByteArrays() {
-        byte[] bytes = new byte[] {1,2,3};
+        byte[] bytes = new byte[] { 1, 2, 3 };
         Flowable.just(bytes) //
-                .compose(Transformers.<byte[]>onBackpressureBufferToFile(1000000, new DataSerializer2Bytes())) //
+                .compose(Transformers.<byte[]>onBackpressureBufferToFile(1000000,
+                        new DataSerializer2Bytes())) //
                 .doOnNext(Consumers.assertBytesEquals(bytes)) //
                 .doOnError(Consumers.printStackTrace()) //
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testManyIntegers() {
-        int n = 1000;
+        int n = 10000;
         Flowable.range(1, n) //
-        .compose(Transformers.<Integer>onBackpressureBufferToFile(10000)) //
-        .test() //
-        .awaitDone(500L, TimeUnit.SECONDS) //
-        .assertValueCount(n)//
-        .assertComplete();
+                .compose(Transformers.<Integer>onBackpressureBufferToFile(10000)) //
+                .test() //
+                .awaitDone(500L, TimeUnit.SECONDS) //
+                .assertValueCount(n)//
+                .assertComplete();
     }
 }

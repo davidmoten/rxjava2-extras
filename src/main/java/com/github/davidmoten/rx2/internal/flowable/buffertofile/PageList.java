@@ -10,6 +10,8 @@ import io.reactivex.internal.queue.SpscArrayQueue;
 
 public class PageList {
 
+    private static final byte[] EMPTY = new byte[0];
+
     private final Callable<File> fileFactory;
     private final int pageSize;
 
@@ -18,17 +20,20 @@ public class PageList {
 
     // keep a record of page sequence required for when we move to bookmark and
     // write from there (possibly across many pages)
-    private final SimplePlainQueue<Page> replayQueue = new SpscArrayQueue<Page>(16);
+    // TODO use non-concurrent queue
+    private final SimplePlainQueue<Page> replayWriteQueue = new SpscArrayQueue<Page>(16);
 
-    boolean marked;
+    // keep a record of page sequence required for when we move to bookmark and
+    // write from there (possibly across many pages)
+    boolean writeMarked;
     boolean writingFromMark;
     int markWritePosition; // replayQueue has start page
 
-    int writePosition;
-    Page writePage;
-
     Page currentWritePage;
     int currentWritePosition;
+
+    Page writePage;
+    int writePosition;
 
     Page readPage;
     int readPosition;
@@ -39,26 +44,32 @@ public class PageList {
         this.pageSize = pageSize;
     }
 
-    public void mark() {
-        marked = true;
-        replayQueue.clear();
-        replayQueue.offer(currentWritePage());
+    public void markForWrite() {
+        writeMarked = true;
+        replayWriteQueue.clear();
+        replayWriteQueue.offer(currentWritePage());
         markWritePosition = writePosition;
     }
 
-    public void put(int value) {
-        put(intToByteArray(value));
+    public void moveToWriteMark() {
+        writingFromMark = true;
+        currentWritePage = replayWriteQueue.poll();
+        currentWritePosition = markWritePosition;
     }
 
-    public void clearMark() {
-        marked = false;
-        replayQueue.clear();
-    }
-
-    public void moveToEnd() {
+    public void moveWriteToEnd() {
         writingFromMark = false;
         currentWritePage = writePage;
         currentWritePosition = writePosition;
+    }
+
+    public void clearWriteMark() {
+        writeMarked = false;
+        replayWriteQueue.clear();
+    }
+
+    public void putInt(int value) {
+        put(intToByteArray(value));
     }
 
     public void put(byte[] bytes) {
@@ -73,8 +84,8 @@ public class PageList {
             currentWritePosition += len;
             start += len;
             length -= len;
-            if (marked && before != page) {
-                replayQueue.offer(page);
+            if (writeMarked && before != page) {
+                replayWriteQueue.offer(page);
             }
             if (!this.writingFromMark) {
                 writePosition = currentWritePosition;
@@ -82,15 +93,9 @@ public class PageList {
         }
     }
 
-    public void moveToMark() {
-        writingFromMark = true;
-        currentWritePage = replayQueue.poll();
-        currentWritePosition = markWritePosition;
-    }
-
     private Page currentWritePage() {
         if (writingFromMark && currentWritePosition == pageSize) {
-            currentWritePage = replayQueue.poll();
+            currentWritePage = replayWriteQueue.poll();
             currentWritePosition = 0;
         }
         if (currentWritePage == null || currentWritePosition == pageSize) {
@@ -108,30 +113,21 @@ public class PageList {
         return currentWritePage;
     }
 
-    public int get() {
+    public int getPositiveInt() {
         byte[] bytes = get(4);
         if (bytes.length == 0) {
-            return 0;
+            return -1;
         } else {
             return byteArrayToInt(bytes);
         }
     }
 
-    private static final byte[] EMPTY = new byte[0];
-
     public byte[] get(int length) {
         int len = length;
         byte[] result = new byte[length];
         while (len > 0) {
-            if (readPage == null || readPosition == pageSize) {
-                if (readPage != null) {
-                    readPage.close();
-                }
-                readPage = queue.poll();
-                readPosition = 0;
-                if (readPage == null) {
-                    return EMPTY;
-                }
+            if (readPage() == null) {
+                return EMPTY;
             }
             int avail = readPage.length() - readPosition;
             int count = Math.min(avail, len);
@@ -140,6 +136,17 @@ public class PageList {
             len -= count;
         }
         return result;
+    }
+
+    private Page readPage() {
+        if (readPage == null || readPosition >= pageSize) {
+            if (readPage != null) {
+                readPage.close();
+            }
+            readPage = queue.poll();
+            readPosition = readPosition % pageSize;
+        }
+        return readPage;
     }
 
     private static final byte[] intToByteArray(int value) {
@@ -151,4 +158,22 @@ public class PageList {
         return bytes[0] << 24 | (bytes[1] & 0xFF) << 16 | (bytes[2] & 0xFF) << 8
                 | (bytes[3] & 0xFF);
     }
+
+    public void putOrdered(int length) {
+        putInt(length);
+    }
+
+    public void putByte(byte b) {
+        // TODO reuse mutable single item array
+        put(new byte[] { b });
+    }
+
+    public byte getByte() {
+        return get(1)[0];
+    }
+
+    public void moveReadPosition(int forward) {
+        readPosition+=forward;
+    }
+
 }
