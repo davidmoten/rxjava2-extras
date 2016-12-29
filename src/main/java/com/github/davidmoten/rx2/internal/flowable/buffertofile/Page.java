@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 public class Page {
 
-    private static final boolean debug = false;
+    private static final boolean debug = true;
 
     private final int pageSize;
     private MMapper mm;

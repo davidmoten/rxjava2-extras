@@ -3,6 +3,8 @@ package com.github.davidmoten.rx2.internal.flowable.buffertofile;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -22,6 +24,8 @@ import rx.exceptions.Exceptions;
 
 public class FlowableBufferToFile<T> extends Flowable<T> {
 
+    private static final byte[] COMPLETED = new byte[] { 92, 41, -99, 85, -103, -76, 11, -21, 43,
+            -30, -92, 12, -114, 84, -88, 127 };
     private final Flowable<T> source;
     private final Callable<File> fileFactory;
     private final int pageSize;
@@ -169,9 +173,8 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
                         byte[] bytes = queue.poll();
                         if (bytes != null) {
                             // System.out.println("read "+ Util.getHex(bytes));
-                            // System.out.println(Thread.currentThread().getName()
-                            // + ": polled "
-                            // + bytes.length + " bytes");
+                            System.out.println(Thread.currentThread().getName() + ": polled "
+                                    + bytes.length + " bytes");
                             InputStream is = new ByteArrayInputStream(bytes);
                             t = serializer.deserialize(is, bytes.length);
                             // TODO emit error if null?

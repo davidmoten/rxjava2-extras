@@ -68,14 +68,15 @@ public class FlowableOnBackpressureBufferToFileTest {
 
     @Test
     public void testManyIntegers() {
-        int n = 2000;
+        int n = 200;
         Flowable.range(1, n) //
-                .compose(Transformers.<Integer>onBackpressureBufferToFile(1000)) //
+                .compose(Transformers.<Integer>onBackpressureBufferToFile(100)) //
                 .doOnNext(Consumers.println()) //
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertNoErrors() //
+                .assertComplete() //
                 .assertValueCount(n)//
-                .assertComplete();
+        ;
     }
 }
