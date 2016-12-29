@@ -154,6 +154,9 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
                     if (cancelled) {
                         return;
                     }
+                    // for visibility purposes must read error after reading
+                    // done
+                    boolean isDone = done;
                     if (error != null) {
                         // TODO other dispose actions?
                         worker.dispose();
@@ -184,7 +187,7 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
                     if (t != null) {
                         child.onNext(t);
                         e++;
-                    } else if (done) {
+                    } else if (isDone) {
                         worker.dispose();
                         cancel();
                         child.onComplete();

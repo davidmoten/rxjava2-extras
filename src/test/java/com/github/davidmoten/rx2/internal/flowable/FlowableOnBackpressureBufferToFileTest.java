@@ -70,7 +70,7 @@ public class FlowableOnBackpressureBufferToFileTest {
     public void testManyIntegers() {
         int n = 2000;
         Flowable.range(1, n) //
-                .compose(Transformers.<Integer>onBackpressureBufferToFile(8)) //
+                .compose(Transformers.<Integer>onBackpressureBufferToFile(1000)) //
                 .doOnNext(Consumers.println()) //
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
