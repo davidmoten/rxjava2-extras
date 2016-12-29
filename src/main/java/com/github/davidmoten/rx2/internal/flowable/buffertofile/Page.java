@@ -4,8 +4,11 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
+import java.util.Arrays;
 
 public class Page {
+
+    private static final boolean debug = false;
 
     private final int pageSize;
     private MMapper mm;
@@ -20,19 +23,38 @@ public class Page {
     }
 
     public void put(int position, byte[] bytes, int start, int length) {
+        if (debug)
+            System.out.println("put at " + this.hashCode() + ":" + position + " of "
+                    + Arrays.toString(Arrays.copyOfRange(bytes, start, start + length)));
         mm.putBytes(position, bytes, start, length);
     }
 
+    public void putIntOrdered(int writePosition, int value) {
+        if (debug)
+        System.out.println(
+                "putIntOrdered at " + this.hashCode() + ":" + writePosition + " of " + value);
+        mm.putOrderedInt(writePosition, value);
+    }
+
+    public void putInt(int writePosition, int value) {
+        if (debug)
+        System.out.println("putInt at " + this.hashCode() + ":" + writePosition + " of " + value);
+        mm.putInt(writePosition, value);
+    }
+
     public void get(byte[] dst, int offset, int readPosition, int length) {
+        if (debug)
+        System.out.println(
+                "getting at " + this.hashCode() + ":" + readPosition + " length=" + length);
         mm.getBytes(readPosition, dst, offset, length);
     }
 
-    public void putIntOrdered(int writePosition, int value) {
-        mm.putOrderedInt(writePosition, value);
-    }
-    
-    public void putInt(int writePosition, int value) {
-        mm.putInt(writePosition, value);
+    public int getIntVolatile(int readPosition) {
+        int n = mm.getIntVolatile(readPosition);
+        if (debug)
+        System.out.println(
+                "getting int volatile at " + this.hashCode() + ":" + readPosition + "=" + n);
+        return n;
     }
 
     public void close() {
@@ -82,10 +104,6 @@ public class Page {
                 }
             }
         }
-    }
-
-    public int getIntVolatile(int readPosition) {
-        return mm.getIntVolatile(readPosition);
     }
 
 }

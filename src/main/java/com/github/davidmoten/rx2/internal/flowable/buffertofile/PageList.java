@@ -85,7 +85,7 @@ public class PageList {
             start += len;
             length -= len;
             if (writeMarked && !writingFromMark && before != page) {
-                replayQueue.offer(page);
+                replayQueue.offer(before);
             }
             if (!this.writingFromMark) {
                 writePosition = currentWritePosition;
@@ -96,9 +96,13 @@ public class PageList {
     public void putIntOrdered(int value) {
         // if there is any space at all in current page then it will be enough
         // for 4 bytes because we pad all offerings to the queue
+        Page before = currentWritePage;
         Page page = currentWritePage();
-        page.putInt(currentWritePosition, value);
+        page.putIntOrdered(currentWritePosition, value);
         currentWritePosition += 4;
+        if (writeMarked && !writingFromMark && before != page) {
+            replayQueue.offer(before);
+        }
         if (!this.writingFromMark) {
             writePosition = currentWritePosition;
         }
