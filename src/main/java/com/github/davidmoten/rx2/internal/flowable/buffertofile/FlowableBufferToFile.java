@@ -166,6 +166,9 @@ public class FlowableBufferToFile<T> extends Flowable<T> {
                         byte[] bytes = queue.poll();
                         if (bytes != null) {
                             // System.out.println("read "+ Util.getHex(bytes));
+                            // System.out.println(Thread.currentThread().getName()
+                            // + ": polled "
+                            // + bytes.length + " bytes");
                             InputStream is = new ByteArrayInputStream(bytes);
                             t = serializer.deserialize(is, bytes.length);
                             // TODO emit error if null?

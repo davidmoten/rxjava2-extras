@@ -22,7 +22,7 @@ public class MMapQueue {
 
     @SuppressWarnings("restriction")
     public void offer(byte[] bytes) {
-//        System.out.println("writing " + bytes.length + " bytes");
+        // System.out.println("writing " + bytes.length + " bytes");
         int rem = (bytes.length + SIZE_PADDING_SIZE_FIELD) % ALIGN_BYTES;
         final int padding;
         if (rem == 0) {
@@ -40,25 +40,25 @@ public class MMapQueue {
         pages.put(bytes);
         pages.moveToWriteMark();
         try {
-//            lock.lock();
+            // lock.lock();
             // TODO ordered put
             pages.putIntOrdered(bytes.length);
         } finally {
-//            lock.unlock();
+            // lock.unlock();
         }
         pages.clearWriteMark();
         pages.moveWriteToEnd();
     }
 
     public byte[] poll() {
-//        System.out.println("reading");
+        // System.out.println("reading");
         int length;
         try {
-//            lock.lock();
+            // lock.lock();
             // TODO volatile read
             length = pages.getPositiveIntVolatile();
         } finally {
-//            lock.unlock();
+            // lock.unlock();
         }
         if (length == 0) {
             pages.moveReadPosition(-4);
@@ -70,7 +70,12 @@ public class MMapQueue {
             if (padding > 0) {
                 pages.moveReadPosition(padding);
             }
-            return pages.get(length);
+            byte[] result = pages.get(length);
+            if (result.length == 0) {
+                return null;
+            } else {
+                return result;
+            }
         }
     }
 
