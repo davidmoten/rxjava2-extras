@@ -1,31 +1,25 @@
 package com.github.davidmoten.rx2;
 
 import java.io.File;
-import java.io.Serializable;
 import java.util.concurrent.Callable;
 
 import org.reactivestreams.Publisher;
 
-import com.github.davidmoten.rx2.buffertofile.DataSerializer2;
-import com.github.davidmoten.rx2.buffertofile.DataSerializers2;
 import com.github.davidmoten.rx2.internal.flowable.FlowableDoOnEmpty;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMapLast;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMatch;
 import com.github.davidmoten.rx2.internal.flowable.FlowableReverse;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStateMachine;
-import com.github.davidmoten.rx2.internal.flowable.buffertofile.FlowableBufferToFile;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableTransformer;
-import io.reactivex.Scheduler;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.BiPredicate;
 import io.reactivex.functions.Function;
 import io.reactivex.functions.Function3;
-import io.reactivex.schedulers.Schedulers;
 
 public final class Transformers<T> {
 
@@ -112,29 +106,4 @@ public final class Transformers<T> {
         return matchWith(b, aKey, bKey, combiner, 128);
     }
 
-    public static <T> FlowableTransformer<T, T> onBackpressureBufferToFile(
-            final Callable<File> fileFactory, final int pageSize,
-            final DataSerializer2<T> serializer, final Scheduler scheduler) {
-        return new FlowableTransformer<T, T>() {
-
-            @Override
-            public Publisher<T> apply(Flowable<T> source) {
-                return new FlowableBufferToFile<T>(source, fileFactory, pageSize, serializer,
-                        scheduler);
-            }
-
-        };
-    }
-
-    public static <T extends Serializable> FlowableTransformer<T, T> onBackpressureBufferToFile(
-            final int pageSize) {
-        return onBackpressureBufferToFile(TEMP_DIRECTORY_FILE_FACTORY, pageSize,
-                DataSerializers2.<T>javaIO(), Schedulers.computation());
-    }
-    
-    public static <T extends Serializable> FlowableTransformer<T, T> onBackpressureBufferToFile(
-            final int pageSize, DataSerializer2<T> serializer) {
-        return onBackpressureBufferToFile(TEMP_DIRECTORY_FILE_FACTORY, pageSize,
-                serializer, Schedulers.computation());
-    }
-}
+   }
