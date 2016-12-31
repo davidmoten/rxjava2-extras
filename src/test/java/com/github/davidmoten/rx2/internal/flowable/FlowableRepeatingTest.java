@@ -29,7 +29,7 @@ public class FlowableRepeatingTest {
 
     @Test
     public void testRepeatingWithCount() {
-        Flowables.repeating(1, 3) //
+        Flowables.repeat(1, 3) //
                 .test() //
                 .assertValues(1, 1, 1) //
                 .assertComplete();

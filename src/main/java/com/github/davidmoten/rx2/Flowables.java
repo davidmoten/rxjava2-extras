@@ -29,7 +29,7 @@ public final class Flowables {
         return new FlowableRepeating<T>(t, -1);
     }
     
-    public static <T> Flowable<T> repeating(T t, int count) {
+    public static <T> Flowable<T> repeat(T t, int count) {
         return new FlowableRepeating<T>(t, count);
     }
 
