@@ -9,33 +9,33 @@ import io.reactivex.Flowable;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 
-public final class FlowableRepeating<T> extends Flowable<T> {
+public final class FlowableRepeat<T> extends Flowable<T> {
 
     private final T value;
-    private final int count;
+    private final long count;
 
-    public FlowableRepeating(T value, int count) {
+    public FlowableRepeat(T value, long count) {
         this.value = value;
         this.count = count;
     }
 
     @Override
     protected void subscribeActual(org.reactivestreams.Subscriber<? super T> child) {
-        RepeatingSubscription<T> sub = new RepeatingSubscription<T>(child, value, count);
+        RepeatSubscription<T> sub = new RepeatSubscription<T>(child, value, count);
         child.onSubscribe(sub);
     }
 
     @SuppressWarnings("serial")
-    private static class RepeatingSubscription<T> extends AtomicLong implements Subscription {
+    private static class RepeatSubscription<T> extends AtomicLong implements Subscription {
 
         private final Subscriber<? super T> child;
         private final T value;
-        private final int count;
+        private final long count;
 
         private volatile boolean cancelled;
-        private int counter;
+        private long counter;
 
-        public RepeatingSubscription(Subscriber<? super T> child, T value, int count) {
+        public RepeatSubscription(Subscriber<? super T> child, T value, long count) {
             this.child = child;
             this.value = value;
             this.count = count;

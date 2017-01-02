@@ -13,12 +13,12 @@ public class FlowableRepeatingTest {
     @Test
     public void testRepeatingTwo() {
         assertEquals(Arrays.asList(1000, 1000),
-                Flowables.repeating(1000).take(2).toList().blockingGet());
+                Flowables.repeat(1000).take(2).toList().blockingGet());
     }
 
     @Test
     public void testRepeatingZero() {
-        Flowables.repeating(1000) //
+        Flowables.repeat(1000) //
                 .test(0) //
                 .assertNoValues() //
                 .assertNotComplete() //

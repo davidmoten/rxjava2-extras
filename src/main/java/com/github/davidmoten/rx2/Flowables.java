@@ -1,7 +1,7 @@
 package com.github.davidmoten.rx2;
 
 import com.github.davidmoten.rx2.internal.flowable.FlowableMatch;
-import com.github.davidmoten.rx2.internal.flowable.FlowableRepeating;
+import com.github.davidmoten.rx2.internal.flowable.FlowableRepeat;
 
 import io.reactivex.Flowable;
 import io.reactivex.functions.BiFunction;
@@ -25,12 +25,12 @@ public final class Flowables {
         return match(a, b, aKey, bKey, combiner, 128);
     }
     
-    public static <T> Flowable<T> repeating(T t) {
-        return new FlowableRepeating<T>(t, -1);
+    public static <T> Flowable<T> repeat(T t) {
+        return new FlowableRepeat<T>(t, -1);
     }
     
-    public static <T> Flowable<T> repeat(T t, int count) {
-        return new FlowableRepeating<T>(t, count);
+    public static <T> Flowable<T> repeat(T t, long count) {
+        return new FlowableRepeat<T>(t, count);
     }
 
 
