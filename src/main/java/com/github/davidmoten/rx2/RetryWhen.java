@@ -176,7 +176,7 @@ public final class RetryWhen {
         return new Builder().scheduler(scheduler);
     }
 
-    public Builder action(Consumer<? super ErrorAndDuration> action) {
+    public static Builder action(Consumer<? super ErrorAndDuration> action) {
         return new Builder().action(action);
     }
 
