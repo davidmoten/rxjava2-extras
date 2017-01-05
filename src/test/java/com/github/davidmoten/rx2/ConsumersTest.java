@@ -44,4 +44,13 @@ public class ConsumersTest {
         assertTrue(b.get());
     }
 
+    @Test
+    public void testArraysEqualDoesNotThrow() throws Exception {
+        Consumers.assertBytesEquals(new byte[] { 1, 2, 3 }).accept(new byte[] { 1, 2, 3 });
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testArraysNotEqualThrows() throws Exception {
+        Consumers.assertBytesEquals(new byte[] { 1, 2, 4 }).accept(new byte[] { 1, 2, 3 });
+    }
 }

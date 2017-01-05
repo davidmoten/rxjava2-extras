@@ -128,4 +128,19 @@ public final class Consumers {
         };
     }
 
+    public static Consumer<byte[]> assertBytesEquals(final byte[] expected) {
+        // TODO make holder
+        return new Consumer<byte[]>() {
+
+            @Override
+            public void accept(byte[] array) throws Exception {
+                if (!Arrays.equals(expected, array)) {
+                    // TODO use custom exception
+                    throw new RuntimeException("arrays not equal: expected="
+                            + Arrays.toString(expected) + ",actual=" + Arrays.toString(array));
+                }
+            }
+
+        };
+    }
 }
