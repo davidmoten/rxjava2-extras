@@ -79,8 +79,9 @@ public final class Bytes {
                 true);
     }
 
-    private static class InputStreamCloseHolder {
-        private static final Consumer<InputStream> INSTANCE = new Consumer<InputStream>() {
+    private static enum InputStreamCloseHolder {
+        ;
+        static final Consumer<InputStream> INSTANCE = new Consumer<InputStream>() {
 
             @Override
             public void accept(InputStream is) throws IOException {

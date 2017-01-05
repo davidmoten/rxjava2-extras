@@ -28,20 +28,23 @@ public final class Actions {
             public void run() throws Exception {
                 throw e;
             }
-            
+
         };
     }
 
     public static Action doNothing() {
-        //TODO make holder
-        return new Action() {
+        // TODO make holder
+        return DoNothingHolder.DO_NOTHING;
+    }
+
+    private static enum DoNothingHolder {
+        ;
+        static final Action DO_NOTHING = new Action() {
             @Override
             public void run() throws Exception {
                 // do nothing!
             }
         };
     }
-
-
 
 }
