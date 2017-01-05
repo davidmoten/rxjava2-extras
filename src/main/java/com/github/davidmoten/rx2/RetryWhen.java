@@ -35,6 +35,10 @@ import io.reactivex.schedulers.Schedulers;
  */
 public final class RetryWhen {
 
+    private RetryWhen() {
+        // prevent instantiation
+    }
+    
     private static final long NO_MORE_DELAYS = -1;
 
     private static Function<Flowable<? extends Throwable>, Flowable<Object>> notificationHandler(

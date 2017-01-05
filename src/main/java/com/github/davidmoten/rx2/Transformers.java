@@ -23,13 +23,6 @@ import io.reactivex.functions.Function3;
 
 public final class Transformers<T> {
 
-    private static final Callable<File> TEMP_DIRECTORY_FILE_FACTORY = new Callable<File>() {
-        @Override
-        public File call() throws Exception {
-            return File.createTempFile("bufferToFile", ".obj");
-        }
-    };
-
     private Transformers() {
         // prevent instantiation
     }
