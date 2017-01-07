@@ -1,6 +1,5 @@
 package com.github.davidmoten.rx2;
 
-import java.io.File;
 import java.util.concurrent.Callable;
 
 import org.reactivestreams.Publisher;
