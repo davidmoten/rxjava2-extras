@@ -352,6 +352,7 @@ public final class Strings {
      * 
      * @param delimiter
      *            string delimiter
+     * @param <T> type being streamed
      * @return stream split by delimiter
      */
     @Experimental

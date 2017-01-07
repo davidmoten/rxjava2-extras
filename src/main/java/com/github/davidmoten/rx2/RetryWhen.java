@@ -18,8 +18,8 @@ import io.reactivex.internal.functions.Functions;
 import io.reactivex.schedulers.Schedulers;
 
 /**
- * Provides builder for the {@link Func1} parameter of
- * {@link Flowable#retryWhen(Func1)}. For example:
+ * Provides builder for the {@link Function} parameter of
+ * {@link Flowable#retryWhen(Function)}. For example:
  * 
  * <pre>
  * o.retryWhen(RetryWhen.maxRetries(4).delay(10, TimeUnit.SECONDS).action(log).build());
