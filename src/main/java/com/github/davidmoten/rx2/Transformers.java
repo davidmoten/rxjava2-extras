@@ -26,13 +26,12 @@ public final class Transformers<T> {
         // prevent instantiation
     }
 
-    public static <State, In, Out> FlowableTransformer<In, Out> stateMachine(
-            Callable<? extends State> initialState,
+    public static <State, In, Out> FlowableTransformer<In, Out> stateMachine(Callable<? extends State> initialState,
             Function3<? super State, ? super In, ? super FlowableEmitter<Out>, ? extends State> transition,
             BiPredicate<? super State, ? super FlowableEmitter<Out>> completion,
             BackpressureStrategy backpressureStrategy, int requestBatchSize) {
-        return TransformerStateMachine.create(initialState, transition, completion,
-                backpressureStrategy, requestBatchSize);
+        return TransformerStateMachine.create(initialState, transition, completion, backpressureStrategy,
+                requestBatchSize);
     }
 
     public static StateMachine.Builder stateMachine() {
@@ -61,8 +60,7 @@ public final class Transformers<T> {
         };
     }
 
-    public static <T> FlowableTransformer<T, T> mapLast(
-            final Function<? super T, ? extends T> function) {
+    public static <T> FlowableTransformer<T, T> mapLast(final Function<? super T, ? extends T> function) {
         return new FlowableTransformer<T, T>() {
 
             @Override
@@ -74,9 +72,8 @@ public final class Transformers<T> {
 
     }
 
-    public static <A, B, K, C> Flowable<C> match(Flowable<A> a, Flowable<B> b,
-            Function<? super A, K> aKey, Function<? super B, K> bKey,
-            BiFunction<? super A, ? super B, C> combiner, int requestSize) {
+    public static <A, B, K, C> Flowable<C> match(Flowable<A> a, Flowable<B> b, Function<? super A, K> aKey,
+            Function<? super B, K> bKey, BiFunction<? super A, ? super B, C> combiner, int requestSize) {
         return new FlowableMatch<A, B, K, C>(a, b, aKey, bKey, combiner, requestSize);
     }
 
@@ -98,4 +95,4 @@ public final class Transformers<T> {
         return matchWith(b, aKey, bKey, combiner, 128);
     }
 
-   }
+}
