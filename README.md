@@ -11,8 +11,10 @@ Features
 ----------
 * [`Strings`](#strings) - create/manipulate streams of `String`, conversions to and from
 * [`Bytes`](#bytes) - create/manipulate streams of `byte[]`
-* [`StateMachine`](#transformers) - a more expressive form of `scan` that can emit multiple events for each source event
-* [`Transformers`](#transformers)
+* [`StateMachine`](#flowabletransformers) - a more expressive form of `scan` that can emit multiple events for each source event
+* [`onBackpressureBufferToFile`](#onbackpressurebuffertofile) - high throughput with memory-mapped files
+* [`FlowableTransformers`](#flowabletransformers)
+* [`ObservableTransformers`](#observabletransformers)
 * supports Java 1.6+
 
 Status: *released to Maven Central*
@@ -85,6 +87,10 @@ FlowableTransformers
 
 `onBackpressureBufferToFile`
 
+ObservableTransformers
+---------------------------
+`onBackpressureBufferToFile`
+
 SchedulerHelper
 ----------------
 `blockUntilWorkFinished`
@@ -133,8 +139,8 @@ Predicates
 `alwaysTrue`
 
 
-##FlowableTransformers.onBackpressureBufferToFile
-With this operator you can offload as stream's emissions to disk to reduce memory pressure when you have a fast producer + slow consumer (or just to minimize memory usage).
+##onBackpressureBufferToFile
+With this operator you can offload a stream's emissions to disk to reduce memory pressure when you have a fast producer + slow consumer (or just to minimize memory usage).
 
 <img src="https://raw.githubusercontent.com/davidmoten/rxjava-extras/master/src/docs/onBackpressureBufferToFile.png" />
 
@@ -164,8 +170,8 @@ Flowable<String> source =
 This example does the same as above but more concisely and uses standard java IO serialization (normally it will be more efficient to write your own `DataSerializer`):
 
 ```java
-Observable<String> source = 
-  Observable
+Flowable<String> source = 
+  Flowable
     .just("a", "b", "c")
     .compose(FlowableTransformers.<String>onBackpressureBufferToFile());
 ```
@@ -177,13 +183,19 @@ An example with a custom serializer:
 DataSerializer<String> serializer = new DataSerializer<String>() {
 
     @Override
-    public void serialize(DataOutput output, String s) throws IOException {
+    public void serialize(String s, DataOutput out) throws IOException {
         output.writeUTF(s);
     }
 
     @Override
-    public String deserialize(DataInput input, int availableBytes) throws IOException {
+    public String deserialize(DataInput in) throws IOException {
         return input.readUTF();
+    }
+    
+    @Override
+    public int capacity() {
+        //dynamic
+        return 0;
     }
 };
 Flowable
@@ -212,7 +224,7 @@ There are some inbuilt `DataSerializer` implementations:
 
 * `DataSerializers.utf8()`
 * `DataSerializers.string(Charset)`
-* `DataSerializers.byteArray()`
+* `DataSerializers.bytes()`
 * `DataSerializers.javaIO()` - uses standard java serialization (`ObjectOutputStream` and such)
 
 Using default java serialization you can buffer array lists of integers to a file like so:
@@ -238,6 +250,6 @@ Flowable.just(1, 2, 3, 4)
 ###Performance
 Throughput is increased dramatically by using memory-mapped files. 
 
-*rxjava2-extras8* can push through 800MB/s using 1K messages compared to *rxjava-extras* 43MB/s. My 2016 2 core HP Spectre laptop with SSD pushes through up to 1.5GB/s.
+*rxjava2-extras* can push through 800MB/s using 1K messages compared to *rxjava-extras* 43MB/s. My 2016 2 core i5 HP Spectre laptop with SSD pushes through up to 1.5GB/s.
 
-Smaller messages mean more read/write/cancellation-check contention but still on my laptop I am seeing 6 million 40B messages per second.
+Smaller messages mean more contention but still on my laptop I am seeing 6 million 40B messages per second.
