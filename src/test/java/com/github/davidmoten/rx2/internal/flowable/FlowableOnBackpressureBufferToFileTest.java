@@ -17,8 +17,7 @@ import org.reactivestreams.Subscriber;
 import com.github.davidmoten.rx2.Callables;
 import com.github.davidmoten.rx2.Consumers;
 import com.github.davidmoten.rx2.Flowables;
-import com.github.davidmoten.rx2.Flowables8;
-import com.github.davidmoten.rx2.Observables8;
+import com.github.davidmoten.rx2.ObservableTransformers;
 import com.github.davidmoten.rx2.buffertofile.Options.BuilderFlowable;
 import com.github.davidmoten.rx2.buffertofile.Options.BuilderObservable;
 import com.github.davidmoten.rx2.buffertofile.Serializer;
@@ -66,13 +65,13 @@ public class FlowableOnBackpressureBufferToFileTest {
     }
 
     private static BuilderFlowable onBackpressureBufferToFile() {
-        return Flowables8. //
+        return Flowables. //
                 onBackpressureBufferToFile() //
                 .fileFactory(FILE_FACTORY);
     }
 
     private static BuilderObservable onBackpressureBufferToFileObservable() {
-        return Observables8. //
+        return ObservableTransformers. //
                 onBackpressureBufferToFile() //
                 .fileFactory(FILE_FACTORY);
     }
@@ -141,8 +140,7 @@ public class FlowableOnBackpressureBufferToFileTest {
                             }
 
                             @Override
-                            public Integer deserialize(byte[] bytes)
-                                    throws IOException, ClassNotFoundException {
+                            public Integer deserialize(byte[] bytes) throws IOException, ClassNotFoundException {
                                 return null;
                             }
                         }))
@@ -164,8 +162,7 @@ public class FlowableOnBackpressureBufferToFileTest {
                             }
 
                             @Override
-                            public Integer deserialize(byte[] bytes)
-                                    throws IOException, ClassNotFoundException {
+                            public Integer deserialize(byte[] bytes) throws IOException, ClassNotFoundException {
                                 return null;
                             }
                         }))
@@ -301,9 +298,8 @@ public class FlowableOnBackpressureBufferToFileTest {
                 .assertValue((long) n);
         t = (System.currentTimeMillis() - t);
         DecimalFormat df = new DecimalFormat("0.000");
-        System.out.println("byte arrays async rate = "
-                + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / t)) + "MB/s, "
-                + "msgs/sec = " + df.format(n * 1000.0 / t));
+        System.out.println("byte arrays async rate = " + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / t))
+                + "MB/s, " + "msgs/sec = " + df.format(n * 1000.0 / t));
     }
 
     @Test
@@ -325,9 +321,9 @@ public class FlowableOnBackpressureBufferToFileTest {
                 .assertValue((long) n);
         t = (System.currentTimeMillis() - t);
         DecimalFormat df = new DecimalFormat("0.000");
-        System.out.println("byte arrays async rate obs = "
-                + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / t)) + "MB/s, "
-                + "msgs/sec = " + df.format(n * 1000.0 / t));
+        System.out
+                .println("byte arrays async rate obs = " + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / t))
+                        + "MB/s, " + "msgs/sec = " + df.format(n * 1000.0 / t));
     }
 
     @Test
@@ -392,9 +388,8 @@ public class FlowableOnBackpressureBufferToFileTest {
                 .assertComplete() //
                 .assertValue((long) n);
         DecimalFormat df = new DecimalFormat("0.000");
-        System.out.println("byte arrays sync rate = " + df.format(
-                (1000.0 * bytes.length * n / 1024.0 / 1024.0 / (System.currentTimeMillis() - t)))
-                + "MB/s");
+        System.out.println("byte arrays sync rate = "
+                + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / (System.currentTimeMillis() - t))) + "MB/s");
 
     }
 
@@ -407,7 +402,7 @@ public class FlowableOnBackpressureBufferToFileTest {
             pageFile.delete();
             byte[] bytes = new byte[40];
             Flowables.repeat(bytes, n) //
-                    .compose(Flowables8 //
+                    .compose(Flowables //
                             .onBackpressureBufferToFile() //
                             .fileFactory(Callables.constant(pageFile)).pageSizeBytes(20000000) //
                             .serializerBytes()) //
@@ -433,7 +428,7 @@ public class FlowableOnBackpressureBufferToFileTest {
             byte[] bytes = new byte[40];
             Observable.just(bytes) //
                     .repeat(n) //
-                    .to(Observables8 //
+                    .to(ObservableTransformers //
                             .onBackpressureBufferToFile() //
                             .fileFactory(Callables.constant(pageFile)) //
                             .pageSizeBytes(20000000) //
@@ -469,9 +464,9 @@ public class FlowableOnBackpressureBufferToFileTest {
                 .assertValue((long) n);
         t = (System.currentTimeMillis() - t);
         DecimalFormat df = new DecimalFormat("0.000");
-        System.out.println("byte arrays async rebatched rate = "
-                + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / t)) + "MB/s, "
-                + "msgs/sec=" + df.format(n * 1000.0 / t));
+        System.out.println(
+                "byte arrays async rebatched rate = " + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / t))
+                        + "MB/s, " + "msgs/sec=" + df.format(n * 1000.0 / t));
     }
 
     @Test
@@ -492,9 +487,8 @@ public class FlowableOnBackpressureBufferToFileTest {
                 .assertValue((long) n);
         t = (System.currentTimeMillis() - t);
         DecimalFormat df = new DecimalFormat("0.000");
-        System.out.println("byte arrays async 1K rate = "
-                + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / t)) + "MB/s, "
-                + "msgs/sec = " + df.format(n * 1000.0 / t));
+        System.out.println("byte arrays async 1K rate = " + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / t))
+                + "MB/s, " + "msgs/sec = " + df.format(n * 1000.0 / t));
     }
 
 }

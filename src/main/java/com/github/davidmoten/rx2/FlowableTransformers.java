@@ -20,9 +20,9 @@ import io.reactivex.functions.BiPredicate;
 import io.reactivex.functions.Function;
 import io.reactivex.functions.Function3;
 
-public final class Transformers<T> {
+public final class FlowableTransformers {
 
-    private Transformers() {
+    private FlowableTransformers() {
         // prevent instantiation
     }
 

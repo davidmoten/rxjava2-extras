@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Test;
 
 import com.github.davidmoten.rx2.Actions;
-import com.github.davidmoten.rx2.Transformers;
+import com.github.davidmoten.rx2.FlowableTransformers;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -26,7 +26,7 @@ public class FlowableDoOnEmptyTest {
 
         final AtomicBoolean wasCalled = new AtomicBoolean(false);
 
-        source.compose(Transformers.<String>doOnEmpty(new Action() {
+        source.compose(FlowableTransformers.<String>doOnEmpty(new Action() {
             @Override
             public void run() {
                 wasCalled.set(true);
@@ -42,7 +42,7 @@ public class FlowableDoOnEmptyTest {
 
         final AtomicBoolean wasCalled = new AtomicBoolean(false);
 
-        source.compose(Transformers.<String>doOnEmpty(new Action() {
+        source.compose(FlowableTransformers.<String>doOnEmpty(new Action() {
             @Override
             public void run() {
                 wasCalled.set(true);
@@ -59,7 +59,7 @@ public class FlowableDoOnEmptyTest {
         PublishSubject<Integer> subject = PublishSubject.create();
 
         Disposable disposable = subject.toFlowable(BackpressureStrategy.BUFFER) //
-                .compose(Transformers.<Integer>doOnEmpty(new Action() {
+                .compose(FlowableTransformers.<Integer>doOnEmpty(new Action() {
                     @Override
                     public void run() {
                         wasCalled.set(true);
@@ -87,7 +87,7 @@ public class FlowableDoOnEmptyTest {
         final AtomicBoolean wasCalled = new AtomicBoolean(false);
         Flowable //
                 .range(0, 1000) //
-                .compose(Transformers.<Integer>doOnEmpty(Actions.setToTrue(wasCalled))) //
+                .compose(FlowableTransformers.<Integer>doOnEmpty(Actions.setToTrue(wasCalled))) //
                 .test(0) //
                 .requestMore(1) //
                 .assertValueCount(1) //
@@ -122,7 +122,7 @@ public class FlowableDoOnEmptyTest {
         AtomicBoolean set = new AtomicBoolean(false);
         Exception ex = new Exception("boo");
         Flowable.error(ex) //
-                .compose(Transformers.doOnEmpty(Actions.setToTrue(set))) //
+                .compose(FlowableTransformers.doOnEmpty(Actions.setToTrue(set))) //
                 .test().assertError(ex).assertNoValues();
         assertFalse(set.get());
     }
@@ -130,7 +130,7 @@ public class FlowableDoOnEmptyTest {
     @Test
     public void ifOnEmptyActionThrowsExceptionThenSubscribeThrows() {
         Flowable.empty() //
-                .compose(Transformers.doOnEmpty(Actions.throwing(new SQLException()))) //
+                .compose(FlowableTransformers.doOnEmpty(Actions.throwing(new SQLException()))) //
                 .test() //
                 .assertNoValues() //
                 .assertError(SQLException.class);
@@ -139,7 +139,7 @@ public class FlowableDoOnEmptyTest {
     @Test
     public void ifOnEmptyActionThrowsNonFatalRuntimeExceptionThenErrorEmitted() {
         Flowable.empty() //
-                .compose(Transformers.doOnEmpty(Actions.throwing(new NumberFormatException()))) //
+                .compose(FlowableTransformers.doOnEmpty(Actions.throwing(new NumberFormatException()))) //
                 .test() //
                 .assertNoValues() //
                 .assertError(NumberFormatException.class);
@@ -149,7 +149,7 @@ public class FlowableDoOnEmptyTest {
     public void testUnsubscribeAfterActionButBeforeCompletionDoesNotAffectCompletion() {
         final TestSubscriber<Object> ts = TestSubscriber.create();
         Flowable.empty() //
-                .compose(Transformers.doOnEmpty(new Action() {
+                .compose(FlowableTransformers.doOnEmpty(new Action() {
                     @Override
                     public void run() {
                         ts.cancel();

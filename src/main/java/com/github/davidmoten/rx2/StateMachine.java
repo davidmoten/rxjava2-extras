@@ -98,7 +98,7 @@ public final class StateMachine {
         }
 
         public FlowableTransformer<In, Out> build() {
-            return Transformers.stateMachine(initialState, transition, completion,
+            return FlowableTransformers.stateMachine(initialState, transition, completion,
                     backpressureStrategy, requestBatchSize);
         }
 

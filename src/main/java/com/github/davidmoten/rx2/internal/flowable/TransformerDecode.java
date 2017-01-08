@@ -44,7 +44,7 @@ public final class TransformerDecode {
             }
         };
 
-        return com.github.davidmoten.rx2.Transformers.stateMachine(initialState, transition,
+        return com.github.davidmoten.rx2.FlowableTransformers.stateMachine(initialState, transition,
                 completion, backpressureStrategy, batchSize);
     }
 

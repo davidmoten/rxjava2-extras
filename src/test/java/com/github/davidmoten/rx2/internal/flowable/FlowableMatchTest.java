@@ -18,7 +18,7 @@ import com.github.davidmoten.rx2.Actions;
 import com.github.davidmoten.rx2.Consumers;
 import com.github.davidmoten.rx2.Flowables;
 import com.github.davidmoten.rx2.Functions;
-import com.github.davidmoten.rx2.Transformers;
+import com.github.davidmoten.rx2.FlowableTransformers;
 
 import io.reactivex.Flowable;
 import io.reactivex.functions.BiFunction;
@@ -324,7 +324,7 @@ public class FlowableMatchTest {
 
     private static Flowable<Integer> matchThem(Flowable<Integer> a, Flowable<Integer> b) {
         return a.compose(
-                Transformers.matchWith(b, Functions.identity(), Functions.identity(), COMBINER));
+                FlowableTransformers.matchWith(b, Functions.identity(), Functions.identity(), COMBINER));
     }
 
     private static void match(Flowable<Integer> a, Flowable<Integer> b, Integer... expected) {

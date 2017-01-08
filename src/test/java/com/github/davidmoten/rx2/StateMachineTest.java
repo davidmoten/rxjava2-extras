@@ -31,7 +31,7 @@ public class StateMachineTest {
 
     @Test
     public void testBuilder() {
-        FlowableTransformer<Integer, String> collectIntoStringsOfMinLength3 = Transformers
+        FlowableTransformer<Integer, String> collectIntoStringsOfMinLength3 = FlowableTransformers
                 .stateMachine() //
                 .initialState("") //
                 .transition(new Transition<String, Integer, String>() {

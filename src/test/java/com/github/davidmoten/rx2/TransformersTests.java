@@ -8,7 +8,7 @@ public class TransformersTests {
 
     @Test
     public void testIsUtilityClass() {
-        Asserts.assertIsUtilityClass(Transformers.class);
+        Asserts.assertIsUtilityClass(FlowableTransformers.class);
     }
 
 }

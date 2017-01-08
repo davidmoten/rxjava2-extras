@@ -4,7 +4,7 @@ import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 
 import com.github.davidmoten.rx2.Callables;
-import com.github.davidmoten.rx2.Transformers;
+import com.github.davidmoten.rx2.FlowableTransformers;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.FlowableEmitter;
@@ -66,7 +66,7 @@ public final class TransformerStringSplit {
                 return true;
             }
         };
-        return Transformers.stateMachine(initialState, transition, completion, backpressureStrategy,
+        return FlowableTransformers.stateMachine(initialState, transition, completion, backpressureStrategy,
                 batchSize);
     }
 
