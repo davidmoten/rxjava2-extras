@@ -20,12 +20,17 @@ public final class Functions {
         };
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> Function<T, T> identity() {
-        // TODO make holder
-        return new Function<T, T>() {
+        return (Function<T, T>) IdentityHolder.INSTANCE;
+    }
+    
+    private static enum IdentityHolder {
+        ;
+        static final Function<Object,Object> INSTANCE = new Function<Object, Object>() {
 
             @Override
-            public T apply(T t) throws Exception {
+            public Object apply(Object t) throws Exception {
                 return t;
             }
         };
