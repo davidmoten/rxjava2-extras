@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import com.github.davidmoten.junit.Asserts;
 
-public class TransformersTests {
+public class FlowableTransformersTests {
 
     @Test
     public void testIsUtilityClass() {
