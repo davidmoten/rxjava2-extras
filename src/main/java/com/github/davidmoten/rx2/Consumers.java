@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.github.davidmoten.rx2.exceptions.AssertionException;
+
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.LongConsumer;
 
@@ -136,7 +138,7 @@ public final class Consumers {
             public void accept(byte[] array) throws Exception {
                 if (!Arrays.equals(expected, array)) {
                     // TODO use custom exception
-                    throw new RuntimeException("arrays not equal: expected="
+                    throw new AssertionException("arrays not equal: expected="
                             + Arrays.toString(expected) + ",actual=" + Arrays.toString(array));
                 }
             }

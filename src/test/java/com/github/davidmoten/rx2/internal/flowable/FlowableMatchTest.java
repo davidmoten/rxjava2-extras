@@ -15,10 +15,12 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
 import com.github.davidmoten.rx2.Actions;
+import com.github.davidmoten.rx2.BiFunctions;
 import com.github.davidmoten.rx2.Consumers;
+import com.github.davidmoten.rx2.FlowableTransformers;
 import com.github.davidmoten.rx2.Flowables;
 import com.github.davidmoten.rx2.Functions;
-import com.github.davidmoten.rx2.FlowableTransformers;
+import com.github.davidmoten.rx2.exceptions.ThrowingException;
 
 import io.reactivex.Flowable;
 import io.reactivex.functions.BiFunction;
@@ -215,7 +217,7 @@ public class FlowableMatchTest {
                         COMBINER)
                 .test() //
                 .assertNoValues() //
-                .assertError(Functions.ThrowingException.class);
+                .assertError(ThrowingException.class);
     }
 
     @Test
@@ -224,7 +226,7 @@ public class FlowableMatchTest {
         Flowable<Integer> b = Flowable.just(1);
         Flowables.match(a, b, Functions.identity(), Functions.throwing(), COMBINER).test() //
                 .assertNoValues() //
-                .assertError(Functions.ThrowingException.class);
+                .assertError(ThrowingException.class);
     }
 
     @Test
@@ -233,10 +235,10 @@ public class FlowableMatchTest {
         Flowable<Integer> b = Flowable.just(2, 1);
         Flowables
                 .match(a, b, Functions.identity(), Functions.identity(),
-                        Functions.<Integer, Integer, Integer>throwing2())
+                        BiFunctions.<Integer, Integer, Integer>throwing())
                 .test() //
                 .assertNoValues() //
-                .assertError(Functions.ThrowingException.class);
+                .assertError(ThrowingException.class);
     }
 
     @Test
@@ -245,10 +247,10 @@ public class FlowableMatchTest {
         Flowable<Integer> b = Flowable.just(1, 2);
         Flowables
                 .match(a, b, Functions.identity(), Functions.identity(),
-                        Functions.<Integer, Integer, Integer>throwing2()) //
+                        BiFunctions.<Integer, Integer, Integer>throwing()) //
                 .test() //
                 .assertNoValues() //
-                .assertError(Functions.ThrowingException.class);
+                .assertError(ThrowingException.class);
     }
 
     @Test(timeout = 5000)

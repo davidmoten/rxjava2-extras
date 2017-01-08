@@ -105,18 +105,32 @@ Consumers
 --------------
 `addLongTo`
 `addTo`
+`assertBytesEquals`
 `close`
 `decrement`
 `doNothing`
 `increment`
 `printStackTrace`
+`println`
 `set`
 `set`
 `setToTrue`
 
+
 Functions
 ------------
 `constant`
+`identity`
+`throwing`
+
+BiFunctions
+-------------
+`throwing`
+
+Predicates
+-------------
+`alwaysFalse`
+`alwaysTrue`
 
 
 ##FlowableTransformers.onBackpressureBufferToFile
