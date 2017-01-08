@@ -10,11 +10,17 @@ public final class BiFunctions {
         // prevent instantiation
     }
 
+    @SuppressWarnings("unchecked")
     public static <A, B, C> BiFunction<A, B, C> throwing() {
-        return new BiFunction<A, B, C>() {
+        return (BiFunction<A, B, C>) ThrowingHolder.INSTANCE;
+    }
+    
+    private static enum ThrowingHolder {
+        ;
+        static BiFunction<Object,Object,Object> INSTANCE = new BiFunction<Object, Object, Object>() {
 
             @Override
-            public C apply(A t1, B t2) throws Exception {
+            public Object apply(Object t1, Object t2) throws Exception {
                 throw new ThrowingException();
             }
         };

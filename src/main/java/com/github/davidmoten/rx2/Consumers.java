@@ -29,11 +29,16 @@ public final class Consumers {
         };
     }
 
+    @SuppressWarnings("unchecked")
     public static <T extends Closeable> Consumer<T> close() {
-        // TODO create holder
-        return new Consumer<T>() {
+        return (Consumer<T>) CloseHolder.INSTANCE;
+    }
+
+    private static enum CloseHolder {
+        ;
+        final static Consumer<Closeable> INSTANCE = new Consumer<Closeable>() {
             @Override
-            public void accept(T t) throws Exception {
+            public void accept(Closeable t) throws Exception {
                 t.close();
             }
 
@@ -59,9 +64,14 @@ public final class Consumers {
         };
     }
 
-    public static Consumer<Object> doNothing() {
-        // TODO make holder
-        return new Consumer<Object>() {
+    @SuppressWarnings("unchecked")
+    public static <T> Consumer<T> doNothing() {
+        return (Consumer<T>) DoNothingHolder.INSTANCE;
+    }
+
+    private static enum DoNothingHolder {
+        ;
+        static final Consumer<Object> INSTANCE = new Consumer<Object>() {
 
             @Override
             public void accept(Object t) throws Exception {
@@ -120,11 +130,16 @@ public final class Consumers {
         };
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> Consumer<T> println() {
-        // TODO make holder
-        return new Consumer<T>() {
+        return (Consumer<T>) PrintlnHolder.INSTANCE;
+    }
+
+    private static enum PrintlnHolder {
+        ;
+        static final Consumer<Object> INSTANCE = new Consumer<Object>() {
             @Override
-            public void accept(T t) throws Exception {
+            public void accept(Object t) throws Exception {
                 System.out.println(t);
             }
         };
@@ -138,8 +153,8 @@ public final class Consumers {
             public void accept(byte[] array) throws Exception {
                 if (!Arrays.equals(expected, array)) {
                     // TODO use custom exception
-                    throw new AssertionException("arrays not equal: expected="
-                            + Arrays.toString(expected) + ",actual=" + Arrays.toString(array));
+                    throw new AssertionException("arrays not equal: expected=" + Arrays.toString(expected) + ",actual="
+                            + Arrays.toString(array));
                 }
             }
 
