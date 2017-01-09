@@ -203,8 +203,8 @@ DataSerializer<String> serializer = new DataSerializer<String>() {
     }
     
     @Override
-    public int capacity() {
-        //dynamic
+    public int sizeHint() {
+        // exact size unknown
         return 0;
     }
 };
