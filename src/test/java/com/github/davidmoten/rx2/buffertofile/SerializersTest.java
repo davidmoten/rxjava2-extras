@@ -35,7 +35,7 @@ public class SerializersTest {
             }
 
             @Override
-            public int capacity() {
+            public int sizeHint() {
                 return 4;
             }
         };
@@ -64,7 +64,7 @@ public class SerializersTest {
             }
 
             @Override
-            public int capacity() {
+            public int sizeHint() {
                 return 0;
             }
         };

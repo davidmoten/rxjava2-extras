@@ -119,7 +119,6 @@ Consumers
 `printStackTrace`
 `println`
 `set`
-`set`
 `setToTrue`
 
 
@@ -144,11 +143,11 @@ With this operator you can offload a stream's emissions to disk to reduce memory
 
 <img src="https://raw.githubusercontent.com/davidmoten/rxjava-extras/master/src/docs/onBackpressureBufferToFile.png" />
 
-If you have used the `onBackpressureBuffer` operator you'll know that when a stream is producing faster than the downstream operators can process (perhaps the producer cannot respond meaningfully to a *slow down* request from downstream) then `onBackpressureBuffer` buffers the items to an in-memory queue until they can be processed. Of course if memory is limited then some streams might eventually cause an `OutOfMemoryError`. One solution to this problem is to increase the effectively available memory for buffering by using disk instead (and small in-memory read/write buffers). That's why `Transformers.onBackpressureBufferToFile` was created. 
+If you have used the `onBackpressureBuffer` operator you'll know that when a stream is producing faster than the downstream operators can process (perhaps the producer cannot respond meaningfully to a *slow down* request from downstream) then `onBackpressureBuffer` buffers the items to an in-memory queue until they can be processed. Of course if memory is limited then some streams might eventually cause an `OutOfMemoryError`. One solution to this problem is to increase the effectively available memory for buffering by using disk instead (and small in-memory read/write buffers). That's why `onBackpressureBufferToFile` was created. 
 
 *rxjava-extras* uses standard file io to buffer serialized stream items. This operator can still be used with RxJava2 using the [RxJava2Interop](https://github.com/akarnokd/RxJava2Interop) library. 
 
-*rxjava2-extras8* uses fixed size memory-mapped files to perform the same operation but with much greater throughput. 
+*rxjava2-extras* uses fixed size memory-mapped files to perform the same operation but with much greater throughput. 
 
 Note that new files for a file buffered observable are created for each subscription and thoses files are in normal circumstances deleted on cancellation (triggered by `onCompleted`/`onError` termination or manual cancellation). 
 
@@ -166,6 +165,17 @@ Flowable<String> source =
       FlowableTransformers.onBackpressureBufferToFile()
           .serializerUtf8())
 ```
+
+You can also use an `Observable` source (without converting to `Flowable` with `toFlowable`):
+```java
+Observable<String> source = 
+  Observable
+    .just("a", "b", "c")
+    .to(
+      ObservableTransformers.onBackpressureBufferToFile()
+          .serializerUtf8())
+```
+Note that `to` is used above to cross types (`Observable` to `Flowable`).
 
 This example does the same as above but more concisely and uses standard java IO serialization (normally it will be more efficient to write your own `DataSerializer`):
 

@@ -53,9 +53,9 @@ public final class Serializers {
         @Override
         public byte[] serialize(T t) throws IOException {
             ByteArrayOutputStream bytes;
-            int cap = ds.capacity();
+            int cap = ds.sizeHint();
             if (cap > 0)
-                bytes = new ByteArrayOutputStream(ds.capacity());
+                bytes = new ByteArrayOutputStream(ds.sizeHint());
             else
                 bytes = new ByteArrayOutputStream();
             DataOutputStream out = new DataOutputStream(bytes);
