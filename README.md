@@ -79,13 +79,13 @@ FlowableTransformers
 
 `mapLast`
 
-`reverse`
-
-`stateMachine`
-
 `match`, `matchWith`
 
 `onBackpressureBufferToFile`
+
+`reverse`
+
+`stateMachine`
 
 ObservableTransformers
 ---------------------------
@@ -96,6 +96,8 @@ SchedulerHelper
 `blockUntilWorkFinished`
 
 `withThreadId`
+
+`withThreadIdFromCallSite`
 
 Actions
 --------------------
@@ -121,7 +123,6 @@ Consumers
 `set`
 `setToTrue`
 
-
 Functions
 ------------
 `constant`
@@ -136,7 +137,6 @@ Predicates
 -------------
 `alwaysFalse`
 `alwaysTrue`
-
 
 ##onBackpressureBufferToFile
 With this operator you can offload a stream's emissions to disk to reduce memory pressure when you have a fast producer + slow consumer (or just to minimize memory usage).
