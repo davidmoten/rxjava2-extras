@@ -8,6 +8,7 @@ import org.reactivestreams.Subscription;
 import io.reactivex.Flowable;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Function;
+import io.reactivex.internal.subscriptions.SubscriptionHelper;
 
 public final class FlowableMapLast<T> extends Flowable<T> {
 
@@ -103,18 +104,16 @@ public final class FlowableMapLast<T> extends Flowable<T> {
 
         @Override
         public void request(long n) {
-            if (n < 0) {
-                throw new IllegalArgumentException("cannot request negative amount");
-            } else if (n == 0) {
-                return;
-            } else if (firstRequest.compareAndSet(true, false)) {
-                long m = n + 1;
-                if (m < 0) {
-                    m = Long.MAX_VALUE;
+            if (SubscriptionHelper.validate(n)) {
+                if (firstRequest.compareAndSet(true, false)) {
+                    long m = n + 1;
+                    if (m < 0) {
+                        m = Long.MAX_VALUE;
+                    }
+                    subscription.request(m);
+                } else {
+                    subscription.request(n);
                 }
-                subscription.request(m);
-            } else {
-                subscription.request(n);
             }
         }
 

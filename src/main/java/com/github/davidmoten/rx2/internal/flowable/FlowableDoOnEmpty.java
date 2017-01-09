@@ -29,28 +29,28 @@ public final class FlowableDoOnEmpty<T> extends Flowable<T> {
     }
 
     @Override
-    protected void subscribeActual(Subscriber<? super T> s) {
-        source.subscribe(new DoOnEmptySubscriber<T>(s, onEmpty));
+    protected void subscribeActual(Subscriber<? super T> child) {
+        source.subscribe(new DoOnEmptySubscriber<T>(child, onEmpty));
     }
 
     static final class DoOnEmptySubscriber<T> implements Subscriber<T>, Subscription {
 
-        private final Subscriber<? super T> actual;
+        private final Subscriber<? super T> child;
         private final Action onEmpty;
         // mutable state
         private boolean done;
         private boolean empty = true;
-        private Subscription subscription;
+        private Subscription parent;
 
-        DoOnEmptySubscriber(Subscriber<? super T> actual, Action onEmpty) {
-            this.actual = actual;
+        DoOnEmptySubscriber(Subscriber<? super T> child, Action onEmpty) {
+            this.child = child;
             this.onEmpty = onEmpty;
         }
 
         @Override
-        public void onSubscribe(Subscription subscription) {
-            this.subscription = subscription;
-            actual.onSubscribe(this);
+        public void onSubscribe(Subscription parent) {
+            this.parent = parent;
+            child.onSubscribe(this);
         }
 
         @Override
@@ -68,13 +68,13 @@ public final class FlowableDoOnEmpty<T> extends Flowable<T> {
                 }
             }
             done = true;
-            actual.onComplete();
+            child.onComplete();
         }
 
         @Override
         public void onNext(T t) {
             empty = false;
-            actual.onNext(t);
+            child.onNext(t);
         }
 
         @Override
@@ -83,17 +83,17 @@ public final class FlowableDoOnEmpty<T> extends Flowable<T> {
                 return;
             }
             done = true;
-            actual.onError(e);
+            child.onError(e);
         }
 
         @Override
         public void cancel() {
-            subscription.cancel();
+            parent.cancel();
         }
 
         @Override
         public void request(long n) {
-            subscription.request(n);
+            parent.request(n);
         }
     }
 }
