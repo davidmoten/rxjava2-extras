@@ -19,7 +19,7 @@ public final class SchedulerHelper {
     }
 
     public static Scheduler withThreadId(Scheduler scheduler, String id) {
-        return new SchedulerWithId(scheduler, describeCallSite());
+        return new SchedulerWithId(scheduler, id);
     }
 
     private static String describeCallSite() {

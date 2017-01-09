@@ -22,14 +22,10 @@ public final class MemoryMappedFile {
     private long addr;
 
     static {
-        try {
-            unsafe = UnsafeAccess.unsafe();
-            mmap = getMethod(FileChannelImpl.class, "map0", int.class, long.class, long.class);
-            unmmap = getMethod(FileChannelImpl.class, "unmap0", long.class, long.class);
-            BYTE_ARRAY_OFFSET = unsafe.arrayBaseOffset(byte[].class);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        unsafe = UnsafeAccess.unsafe();
+        mmap = getMethod(FileChannelImpl.class, "map0", int.class, long.class, long.class);
+        unmmap = getMethod(FileChannelImpl.class, "unmap0", long.class, long.class);
+        BYTE_ARRAY_OFFSET = unsafe.arrayBaseOffset(byte[].class);
     }
 
     public MemoryMappedFile(File file, long len) {
@@ -38,10 +34,15 @@ public final class MemoryMappedFile {
         mapAndSetOffset();
     }
 
+    // visible for testing
     // Bundle reflection calls to get access to the given method
-    private static Method getMethod(Class<?> cls, String name, Class<?>... params)
-            throws Exception {
-        Method m = cls.getDeclaredMethod(name, params);
+    static Method getMethod(Class<?> cls, String name, Class<?>... params) {
+        Method m;
+        try {
+            m = cls.getDeclaredMethod(name, params);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         m.setAccessible(true);
         return m;
     }
