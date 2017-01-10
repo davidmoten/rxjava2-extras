@@ -16,6 +16,7 @@ import org.reactivestreams.Subscriber;
 
 import com.github.davidmoten.rx2.Callables;
 import com.github.davidmoten.rx2.Consumers;
+import com.github.davidmoten.rx2.FlowableTransformers;
 import com.github.davidmoten.rx2.Flowables;
 import com.github.davidmoten.rx2.ObservableTransformers;
 import com.github.davidmoten.rx2.buffertofile.Options.BuilderFlowable;
@@ -65,7 +66,7 @@ public class FlowableOnBackpressureBufferToFileTest {
     }
 
     private static BuilderFlowable onBackpressureBufferToFile() {
-        return Flowables. //
+        return FlowableTransformers. //
                 onBackpressureBufferToFile() //
                 .fileFactory(FILE_FACTORY);
     }
@@ -402,7 +403,7 @@ public class FlowableOnBackpressureBufferToFileTest {
             pageFile.delete();
             byte[] bytes = new byte[40];
             Flowables.repeat(bytes, n) //
-                    .compose(Flowables //
+                    .compose(FlowableTransformers //
                             .onBackpressureBufferToFile() //
                             .fileFactory(Callables.constant(pageFile)).pageSizeBytes(20000000) //
                             .serializerBytes()) //

@@ -1,6 +1,5 @@
 package com.github.davidmoten.rx2;
 
-import com.github.davidmoten.rx2.buffertofile.Options;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMatch;
 import com.github.davidmoten.rx2.internal.flowable.FlowableRepeat;
 
@@ -30,10 +29,6 @@ public final class Flowables {
 
     public static <T> Flowable<T> repeat(T t, long count) {
         return new FlowableRepeat<T>(t, count);
-    }
-
-    public static Options.BuilderFlowable onBackpressureBufferToFile() {
-        return Options.builderFlowable();
     }
 
 }

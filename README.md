@@ -89,11 +89,17 @@ Bytes
 
 RetryWhen
 ------------
-Builder for `.retryWhen()`
+[Builder](#retrywhen) for `.retryWhen()`
 
 IO
 -------------
 `serverSocket(port)` 
+
+Flowables
+---------------
+[`match`](#match-matchwith)
+
+`repeat`
 
 FlowableTransformers
 ---------------------------
@@ -101,17 +107,17 @@ FlowableTransformers
 
 `mapLast`
 
-`match`, `matchWith`
+[`match`, `matchWith`](#match-matchwith)
 
-`onBackpressureBufferToFile`
+[`onBackpressureBufferToFile`](#onbackpressurebuffertofile)
 
 `reverse`
 
-`stateMachine`
+[`stateMachine`](#statemachine)
 
 ObservableTransformers
 ---------------------------
-`onBackpressureBufferToFile`
+[`onBackpressureBufferToFile`](#onbackpressurebuffertofile)
 
 SchedulerHelper
 ----------------

@@ -4,6 +4,7 @@ import java.util.concurrent.Callable;
 
 import org.reactivestreams.Publisher;
 
+import com.github.davidmoten.rx2.buffertofile.Options;
 import com.github.davidmoten.rx2.internal.flowable.FlowableDoOnEmpty;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMapLast;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMatch;
@@ -93,6 +94,10 @@ public final class FlowableTransformers {
             final Function<? super A, K> aKey, final Function<? super B, K> bKey,
             final BiFunction<? super A, ? super B, C> combiner) {
         return matchWith(b, aKey, bKey, combiner, 128);
+    }
+    
+    public static Options.BuilderFlowable onBackpressureBufferToFile() {
+        return Options.builderFlowable();
     }
 
 }
