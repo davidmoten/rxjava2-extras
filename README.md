@@ -171,7 +171,8 @@ doOnEmpty
 Performs an action only if a stream completes without emitting an item.
 
 ```java
-flowable.compose(FlowableTransformers.doOnEmpty(action));
+flowable.compose(
+    FlowableTransformers.doOnEmpty(action));
 ```
 
 match, matchWith
@@ -225,12 +226,13 @@ Here's an example:
 // write the source strings to a 
 // disk-backed queue on the subscription
 // thread and emit the items read from 
-// the queue on the computation() scheduler.
+// the queue on the io() scheduler.
 Flowable<String> source = 
   Flowable
     .just("a", "b", "c")
     .compose(
-      FlowableTransformers.onBackpressureBufferToFile()
+      FlowableTransformers
+          .onBackpressureBufferToFile()
           .serializerUtf8())
 ```
 
@@ -240,7 +242,8 @@ Observable<String> source =
   Observable
     .just("a", "b", "c")
     .to(
-      ObservableTransformers.onBackpressureBufferToFile()
+      ObservableTransformers
+          .onBackpressureBufferToFile()
           .serializerUtf8())
 ```
 Note that `to` is used above to cross types (`Observable` to `Flowable`).
@@ -251,7 +254,8 @@ This example does the same as above but more concisely and uses standard java IO
 Flowable<String> source = 
   Flowable
     .just("a", "b", "c")
-    .compose(FlowableTransformers.<String>onBackpressureBufferToFile());
+    .compose(FlowableTransformers
+        .<String>onBackpressureBufferToFile());
 ```
 
 An example with a custom serializer:
@@ -279,7 +283,8 @@ DataSerializer<String> serializer = new DataSerializer<String>() {
 Flowable
   .just("a", "b", "c")
   .compose(
-    FlowableTransformers.onBackpressureBufferToFile()
+    FlowableTransformers
+        .onBackpressureBufferToFile()
         .serializer(serializer));
   ...
 ```
@@ -289,7 +294,8 @@ You can configure various options:
 Flowable
   .just("a", "b", "c")
   .compose(
-    FlowableTransformers.onBackpressureBufferToFile()
+    FlowableTransformers
+        .onBackpressureBufferToFile()
         .scheduler(Schedulers.computation()) 
         .fileFactory(fileFactory)
         .pageSizeBytes(1024)
@@ -342,7 +348,8 @@ If a stream has elements and completes then the last element is repeated.
 <img src="https://raw.githubusercontent.com/davidmoten/rxjava-extras/master/src/docs/repeatLast.png?raw=true" /> 
 
 ```java
-flowable.compose(FlowableTransformers.repeatLast());
+flowable.compose(
+    FlowableTransformers.repeatLast());
 ```
 
 RetryWhen
