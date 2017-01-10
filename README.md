@@ -305,8 +305,9 @@ Using default java serialization you can buffer array lists of integers to a fil
 Flowable.just(1, 2, 3, 4)
     //accumulate into sublists of length 2
     .buffer(2)
-    .compose(
-      Transformers.<List<Integer>>onBackpressureBufferToFile().serializerJavaIO())
+    .compose(FlowableTransformers
+        .<List<Integer>>onBackpressureBufferToFile()
+        .serializerJavaIO())
 ```
 
 In the above example it's fortunate that `.buffer` emits `ArrayList<Integer>` instances which are serializable. To be strict you might want to `.map` the returned list to a data type you know is serializable:
@@ -316,7 +317,9 @@ Flowable.just(1, 2, 3, 4)
     .buffer(2)
     .map(list -> new ArrayList<Integer>(list))
     .compose(
-      Transformers.<List<Integer>>onBackpressureBufferToFile().serializerJavaIO())
+      FlowableTransformers
+          .<List<Integer>>onBackpressureBufferToFile()
+          .serializerJavaIO())
 ```
 
 ###Performance
