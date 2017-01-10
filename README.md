@@ -97,7 +97,7 @@ IO
 
 FlowableTransformers
 ---------------------------
-`doOnEmpty`
+[`doOnEmpty`](#doonempty)
 
 `mapLast`
 
