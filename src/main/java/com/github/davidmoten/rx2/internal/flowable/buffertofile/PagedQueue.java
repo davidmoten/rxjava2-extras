@@ -18,7 +18,7 @@ public final class PagedQueue extends AtomicInteger {
     private static final int SIZE_PADDING_SIZE_FIELD = 1;
     private static final int SIZE_MESSAGE_TYPE_FIELD = 1;
     private static final int ALIGN_BYTES = 4;
-    public static final int MAX_PADDING_PER_MESSAGE = 32;
+    private static final int MAX_PADDING_PER_FULL_MESSAGE = 32;
     private static final int SIZE_HEADER_PRIMARY_PART = SIZE_MESSAGE_SIZE_FIELD
             + SIZE_MESSAGE_TYPE_FIELD + SIZE_PADDING_SIZE_FIELD;
 
@@ -44,7 +44,7 @@ public final class PagedQueue extends AtomicInteger {
             int availAfter = avail - fullMessageSize;
 
             if (availAfter >= 0) {
-                if (availAfter <= MAX_PADDING_PER_MESSAGE) {
+                if (availAfter <= MAX_PADDING_PER_FULL_MESSAGE) {
                     padding += availAfter;
                 }
                 writeFullMessage(bytes, padding);
