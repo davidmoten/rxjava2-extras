@@ -10,6 +10,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.reactivestreams.Subscriber;
@@ -26,6 +27,7 @@ import com.github.davidmoten.rx2.buffertofile.Serializers;
 
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subscribers.TestSubscriber;
 
@@ -353,23 +355,32 @@ public class FlowableOnBackpressureBufferToFileTest {
     public void testFragments() {
         System.out.println("testing fragments");
         for (int i = 1; i <= 500; i++) {
-            checkFragments(i, 160);
+            checkFragments(i, 160, 1, Schedulers.trampoline());
+        }
+    }
+    
+    @Test
+    @Ignore
+    public void testFragmentsAsync() {
+        System.out.println("testing fragments async");
+        for (int i = 1; i <= 500; i++) {
+            checkFragments(i, 160, 10, Schedulers.io());
         }
     }
 
-    private void checkFragments(int bytesSize, int pageSize) {
+    private void checkFragments(int bytesSize, int pageSize, int numRuns, Scheduler scheduler) {
         byte[] bytes = new byte[bytesSize];
         for (int i = 0; i < bytes.length; i++) {
             bytes[i] = (byte) i;
         }
         // length field + padding field + padding + bytes = 4 + 1 + 1 + 300 =
         // 306 bytes
-        for (int n = 1; n < 10; n++) {
+        for (int n = 1; n <= numRuns; n++) {
              System.out.println("bytes="+ bytesSize + " ======== " + n + " =========");
             Flowables.repeat(bytes, n) //
                     .compose(onBackpressureBufferToFile() //
                             .pageSizeBytes(pageSize) //
-                            .scheduler(Schedulers.trampoline()) //
+                            .scheduler(scheduler) //
                             .serializerBytes()) //
                     .doOnNext(Consumers.assertBytesEquals(bytes)) //
                     // .doOnNext(Consumers.println()) //
