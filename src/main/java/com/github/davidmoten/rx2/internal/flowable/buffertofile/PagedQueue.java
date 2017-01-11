@@ -9,13 +9,14 @@ import com.github.davidmoten.guavamini.Preconditions;
 @SuppressWarnings("serial")
 public final class PagedQueue extends AtomicInteger {
 
+    private static final int EXTRA_PADDING_LIMIT = 64;
     private static final int SIZE_MESSAGE_SIZE_FIELD = 4;
     private static final int SIZE_PADDING_SIZE_FIELD = 1;
     private static final int SIZE_MESSAGE_TYPE_FIELD = 1;
     private static final int ALIGN_BYTES = 4;
     public static final int MAX_PADDING_PER_MESSAGE = 32;
-    private static final int SIZE_HEADER_PRIMARY_PART = SIZE_MESSAGE_SIZE_FIELD + SIZE_MESSAGE_TYPE_FIELD
-            + SIZE_PADDING_SIZE_FIELD;
+    private static final int SIZE_HEADER_PRIMARY_PART = SIZE_MESSAGE_SIZE_FIELD
+            + SIZE_MESSAGE_TYPE_FIELD + SIZE_PADDING_SIZE_FIELD;
 
     private final Pages pages;
 
@@ -28,7 +29,6 @@ public final class PagedQueue extends AtomicInteger {
     }
 
     public void offer(byte[] bytes) {
-        // System.out.println("writing " + bytes.length + " bytes");
         if (getAndIncrement() != 0) {
             return;
         }
@@ -59,12 +59,12 @@ public final class PagedQueue extends AtomicInteger {
     private void writeFragments(byte[] bytes, int avail) {
         int start = 0;
         int length = bytes.length;
-        while (length > 0) {
+        do {
             int totalLengthBytes = start == 0 ? 4 : 0;
             int count = Math.min(avail - 8 - totalLengthBytes, length);
             int padding = padding(count);
             int remaining = avail - count - 8 - totalLengthBytes;
-            if (remaining <= 64)
+            if (remaining <= EXTRA_PADDING_LIMIT)
                 padding += remaining;
             write(bytes, start, count, padding, MessageType.FRAGMENT, bytes.length);
             start += count;
@@ -72,7 +72,7 @@ public final class PagedQueue extends AtomicInteger {
             if (length > 0) {
                 avail = pages.avail();
             }
-        }
+        } while (length > 0);
     }
 
     private int fullMessageSize(int payloadLength, int padding) {
@@ -90,14 +90,13 @@ public final class PagedQueue extends AtomicInteger {
         return padding;
     }
 
-    private void write(byte[] bytes, int offset, int length, int padding, final MessageType messageType,
-            int totalLength) {
+    private void write(byte[] bytes, int offset, int length, int padding,
+            final MessageType messageType, int totalLength) {
         Preconditions.checkArgument(length != 0);
-        pages.markForRewriteAndAdvance4Bytes();// messageSize
+        pages.markForRewriteAndAdvance4Bytes();// messageSize left as 0
         // storeFence not required at this point like Aeron uses.
         // UnsafeAccess.unsafe().storeFence();
         if (padding == 2) {
-            // endian check?
             pages.putInt((messageType.value() << 0) | (((byte) padding) & 0xFF) << 8);
         } else {
             pages.putByte(messageType.value()); // message type
@@ -111,10 +110,13 @@ public final class PagedQueue extends AtomicInteger {
             pages.putInt(totalLength);
         }
         pages.put(bytes, offset, length);
+        // now that the message bytes are written we can set the length field in
+        // the header to indicate that the message is ready to be read
         pages.putIntOrderedAtRewriteMark(length);
     }
 
     public byte[] poll() {
+        // loop here accumulating fragments if necessary
         while (true) {
             int length = pages.getIntVolatile();
             if (length == 0) {
@@ -129,6 +131,7 @@ public final class PagedQueue extends AtomicInteger {
                 MessageType messageType;
                 byte padding;
                 if (length % 4 == 0) {
+                    // read message type and padding in one int read
                     int i = pages.getInt();
                     messageType = MessageType.from((byte) i);
                     padding = (byte) (i >> 8);
@@ -136,6 +139,7 @@ public final class PagedQueue extends AtomicInteger {
                         pages.moveReadPosition(padding - 2);
                     }
                 } else {
+                    // read message type and padding separately
                     messageType = MessageType.from(pages.getByte());
                     padding = pages.getByte();
                     if (padding > 0) {
@@ -156,7 +160,8 @@ public final class PagedQueue extends AtomicInteger {
                     return null;
                 } else {
                     if (readingFragments) {
-                        System.arraycopy(result, 0, messageBytesAccumulated, indexBytesAccumulated, result.length);
+                        System.arraycopy(result, 0, messageBytesAccumulated, indexBytesAccumulated,
+                                result.length);
                         indexBytesAccumulated += result.length;
                         if (indexBytesAccumulated == messageBytesAccumulated.length) {
                             readingFragments = false;
@@ -164,8 +169,9 @@ public final class PagedQueue extends AtomicInteger {
                             messageBytesAccumulated = null;
                             return b;
                         }
-                    } else
+                    } else {
                         return result;
+                    }
                 }
             }
         }
