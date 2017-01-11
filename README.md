@@ -15,6 +15,7 @@ Features
 * [`onBackpressureBufferToFile`](#onbackpressurebuffertofile) - high throughput with memory-mapped files
 * [`FlowableTransformers`](#flowabletransformers)
 * [`ObservableTransformers`](#observabletransformers)
+* tests pass on Linux, Windows 10, Solaris 10
 * supports Java 1.6+
 
 Status: *released to Maven Central*
