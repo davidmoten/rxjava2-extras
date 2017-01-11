@@ -355,13 +355,8 @@ public class FlowableOnBackpressureBufferToFileTest {
     @Test
     public void testFragments() {
         System.out.println("testing fragments");
-        try {
-            PagedQueue.debug = true;
-            for (int i = 1; i <= 500; i++) {
-                checkFragments(i, 160, 1, Schedulers.trampoline());
-            }
-        } finally {
-            PagedQueue.debug = false;
+        for (int i = 1; i <= 500; i++) {
+            checkFragments(i, 160, 1, Schedulers.trampoline());
         }
     }
 
