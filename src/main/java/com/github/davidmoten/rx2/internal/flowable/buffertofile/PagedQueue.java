@@ -8,7 +8,7 @@ import com.github.davidmoten.guavamini.Preconditions;
 
 @SuppressWarnings("serial")
 public final class PagedQueue extends AtomicInteger {
-    
+
     public static final boolean debug = true;
 
     private static final int EXTRA_PADDING_LIMIT = 64;
@@ -57,7 +57,7 @@ public final class PagedQueue extends AtomicInteger {
     private void writeFullMessage(byte[] bytes, int padding) {
         write(bytes, 0, bytes.length, padding, MessageType.FULL_MESSAGE, bytes.length);
     }
- 
+
     private void writeFragments(byte[] bytes, int avail) {
         int start = 0;
         int length = bytes.length;
@@ -68,11 +68,9 @@ public final class PagedQueue extends AtomicInteger {
             int remaining = Math.max(0, avail - count - 6 - padding - extraHeaderBytes);
             if (remaining <= EXTRA_PADDING_LIMIT)
                 padding += remaining;
-            if (debug) {
-                System.out.println(String.format(
-                        "length=%s,start=%s,count=%s,padding=%s,remaining=%s,extraHeaderBytes=%s",
-                        length, start, count, padding, remaining, extraHeaderBytes));
-            }
+            System.out.println(String.format(
+                    "length=%s,start=%s,count=%s,padding=%s,remaining=%s,extraHeaderBytes=%s",
+                    length, start, count, padding, remaining, extraHeaderBytes));
             write(bytes, start, count, padding, MessageType.FRAGMENT, bytes.length);
             start += count;
             length -= count;
