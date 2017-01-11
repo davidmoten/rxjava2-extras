@@ -96,7 +96,7 @@ public final class PagedQueue extends AtomicInteger {
         Preconditions.checkArgument(length != 0);
         pages.markForRewriteAndAdvance4Bytes();// messageSize left as 0
         // storeFence not required at this point like Aeron uses.
-        // UnsafeAccess.unsafe().storeFence();
+         UnsafeAccess.unsafe().storeFence();
         if (padding == 2) {
             pages.putInt((messageType.value() << 0) | (((byte) padding) & 0xFF) << 8);
         } else {
