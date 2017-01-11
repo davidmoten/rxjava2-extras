@@ -333,11 +333,18 @@ Flowable.just(1, 2, 3, 4)
           .<List<Integer>>onBackpressureBufferToFile()
           .serializerJavaIO())
 ```
+###Algorithm
+Usual queue drain practices are in place but the queue this time is based on memory-mapped file storage. The memory-mapped queue borrows tricks used by [Aeron](https://github.com/real-logic/Aeron). In particular:
+
+* every byte array message is preceded by a header comprised of 
+
+message length (int, 4 bytes)
+TODO
 
 ###Performance
 Throughput is increased dramatically by using memory-mapped files. 
 
-*rxjava2-extras* can push through 800MB/s using 1K messages compared to *rxjava-extras* 43MB/s. My 2016 2 core i5 HP Spectre laptop with SSD pushes through up to 1.5GB/s.
+*rxjava2-extras* can push through 800MB/s using 1K messages compared to *rxjava-extras* 43MB/s (2011 i7-920 @2.67GHz). My 2016 2 core i5 HP Spectre laptop with SSD pushes through up to 1.5GB/s for 1K messages.
 
 Smaller messages mean more contention but still on my laptop I am seeing 6 million 40B messages per second.
 
