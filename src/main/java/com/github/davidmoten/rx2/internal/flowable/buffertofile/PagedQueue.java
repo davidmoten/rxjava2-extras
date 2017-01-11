@@ -90,7 +90,6 @@ public final class PagedQueue extends AtomicInteger {
         return padding;
     }
 
-    @SuppressWarnings("restriction")
     private void write(byte[] bytes, int offset, int length, int padding, final MessageType messageType,
             int totalLength) {
         Preconditions.checkArgument(length != 0);
