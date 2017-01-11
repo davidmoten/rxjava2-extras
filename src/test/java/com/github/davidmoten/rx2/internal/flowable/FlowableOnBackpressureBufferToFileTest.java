@@ -396,6 +396,7 @@ public class FlowableOnBackpressureBufferToFileTest {
 
     @Test
     public void testCancel() throws InterruptedException {
+        System.out.println("testCancel");
         for (int i = 0; i < 50; i++) {
             // System.out.println(i);
             long n = 5000L;
@@ -421,6 +422,7 @@ public class FlowableOnBackpressureBufferToFileTest {
 
     @Test
     public void testCancelObservable() throws InterruptedException {
+        System.out.println("testCancelObservable");
         for (int i = 0; i < 50; i++) {
             // System.out.println(i);
             long n = 5000L;

@@ -179,7 +179,7 @@ match, matchWith
 -------------------------
 Finds out-of-order matches in two streams.
 
-<img src="https://raw.githubusercontent.com/davidmoten/rxjava-extras/master/src/docs/match.png?raw=true" />
+<img src="src/docs/match.png?raw=true" />
 
 [javadoc](http://davidmoten.github.io/rxjava-extras/apidocs/com/github/davidmoten/rx/Transformers.html#matchWith--)
 
@@ -210,7 +210,7 @@ Under the covers elements are requested from `a` and `b` in alternating batches 
 ##onBackpressureBufferToFile
 With this operator you can offload a stream's emissions to disk to reduce memory pressure when you have a fast producer + slow consumer (or just to minimize memory usage).
 
-<img src="https://raw.githubusercontent.com/davidmoten/rxjava-extras/master/src/docs/onBackpressureBufferToFile.png" />
+<img src="src/docs/onBackpressureBufferToFile.png" />
 
 If you have used the `onBackpressureBuffer` operator you'll know that when a stream is producing faster than the downstream operators can process (perhaps the producer cannot respond meaningfully to a *slow down* request from downstream) then `onBackpressureBuffer` buffers the items to an in-memory queue until they can be processed. Of course if memory is limited then some streams might eventually cause an `OutOfMemoryError`. One solution to this problem is to increase the effectively available memory for buffering by using disk instead (and small in-memory read/write buffers). That's why `onBackpressureBufferToFile` was created. 
 
@@ -345,7 +345,7 @@ repeatLast
 ------------------------
 If a stream has elements and completes then the last element is repeated.
 
-<img src="https://raw.githubusercontent.com/davidmoten/rxjava-extras/master/src/docs/repeatLast.png?raw=true" /> 
+<img src="src/docs/repeatLast.png?raw=true" /> 
 
 ```java
 flowable.compose(
@@ -390,6 +390,16 @@ flowable.retryWhen(
     RetryWhen.retryWhenInstanceOf(IOException.class)
         .build());
 ```
+reverse
+----------------
+Reverses the order of emissions of a stream. Does not emit till source completes.
+
+<img src="src/docs/reverse.png?raw=true" />
+
+```java
+flowable.compose(
+    FlowableTransformers.reverse());
+```
 
 stateMachine
 --------------------------
@@ -397,7 +407,7 @@ Custom operators are difficult things to get right in RxJava mainly because of t
 
 * each source emission is mapped to 0 to many emissions (of a different type perhaps) to downstream but those emissions are calculated based on accumulated state
 
-<img src="https://raw.githubusercontent.com/davidmoten/rxjava-extras/master/src/docs/stateMachine.png?raw=true" />
+<img src="src/docs/stateMachine.png?raw=true" />
 
 [javadoc](http://davidmoten.github.io/rxjava-extras/apidocs/com/github/davidmoten/rx/Transformers.html#stateMachine-rx.functions.Func0-rx.functions.Func3-rx.functions.Action2-)
 
