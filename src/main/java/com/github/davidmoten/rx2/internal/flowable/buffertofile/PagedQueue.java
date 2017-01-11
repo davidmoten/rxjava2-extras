@@ -1,6 +1,7 @@
 package com.github.davidmoten.rx2.internal.flowable.buffertofile;
 
 import java.io.File;
+import java.nio.ByteOrder;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -8,8 +9,8 @@ import com.github.davidmoten.guavamini.Preconditions;
 
 @SuppressWarnings("serial")
 public final class PagedQueue extends AtomicInteger {
-
-    public static final boolean debug = true;
+    
+    private static final boolean isLittleEndian = ByteOrder.nativeOrder()==ByteOrder.LITTLE_ENDIAN;
 
     private static final int EXTRA_PADDING_LIMIT = 64;
     private static final int SIZE_MESSAGE_SIZE_FIELD = 4;
@@ -102,7 +103,7 @@ public final class PagedQueue extends AtomicInteger {
         pages.markForRewriteAndAdvance4Bytes();// messageSize left as 0
         // storeFence not required at this point like Aeron uses.
         UnsafeAccess.unsafe().storeFence();
-        if (padding == 2) {
+        if (padding == 2 && isLittleEndian) {
             pages.putInt((messageType.value() << 0) | (((byte) padding) & 0xFF) << 8);
         } else {
             pages.putByte(messageType.value()); // message type
@@ -136,7 +137,7 @@ public final class PagedQueue extends AtomicInteger {
             } else {
                 MessageType messageType;
                 byte padding;
-                if (length % 4 == 0) {
+                if (length % 4 == 0 && isLittleEndian) {
                     // read message type and padding in one int read
                     int i = pages.getInt();
                     messageType = MessageType.from((byte) i);
