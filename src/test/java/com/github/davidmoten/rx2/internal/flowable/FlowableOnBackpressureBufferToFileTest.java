@@ -4,6 +4,7 @@ import static org.junit.Assert.assertFalse;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteOrder;
 import java.text.DecimalFormat;
 import java.util.Random;
 import java.util.concurrent.Callable;
@@ -24,7 +25,6 @@ import com.github.davidmoten.rx2.buffertofile.Options.BuilderFlowable;
 import com.github.davidmoten.rx2.buffertofile.Options.BuilderObservable;
 import com.github.davidmoten.rx2.buffertofile.Serializer;
 import com.github.davidmoten.rx2.buffertofile.Serializers;
-import com.github.davidmoten.rx2.internal.flowable.buffertofile.PagedQueue;
 
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
@@ -354,7 +354,8 @@ public class FlowableOnBackpressureBufferToFileTest {
 
     @Test
     public void testFragments() {
-        System.out.println("testing fragments");
+        System.out.println("testing fragments sync");
+        System.out.println(ByteOrder.nativeOrder().toString());
         for (int i = 1; i <= 500; i++) {
             checkFragments(i, 160, 1, Schedulers.trampoline());
         }

@@ -140,7 +140,7 @@ public final class PagedQueue extends AtomicInteger {
                     // read message type and padding in one int read
                     int i = pages.getInt();
                     messageType = MessageType.from((byte) i);
-                    padding = (byte) (i >> 8);
+                    padding = (byte) ((i >> 8) & 0xFF);
                     if (padding > 2) {
                         pages.moveReadPosition(padding - 2);
                     }
