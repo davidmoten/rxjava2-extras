@@ -9,7 +9,7 @@ import com.github.davidmoten.guavamini.Preconditions;
 @SuppressWarnings("serial")
 public final class PagedQueue extends AtomicInteger {
     
-    public static boolean debug = false;
+    public static boolean debug = true;
 
     private static final int EXTRA_PADDING_LIMIT = 64;
     private static final int SIZE_MESSAGE_SIZE_FIELD = 4;
