@@ -57,7 +57,7 @@ public final class PagedQueue extends AtomicInteger {
     private void writeFullMessage(byte[] bytes, int padding) {
         write(bytes, 0, bytes.length, padding, MessageType.FULL_MESSAGE, bytes.length);
     }
-
+ 
     private void writeFragments(byte[] bytes, int avail) {
         int start = 0;
         int length = bytes.length;
