@@ -24,6 +24,7 @@ import com.github.davidmoten.rx2.buffertofile.Options.BuilderFlowable;
 import com.github.davidmoten.rx2.buffertofile.Options.BuilderObservable;
 import com.github.davidmoten.rx2.buffertofile.Serializer;
 import com.github.davidmoten.rx2.buffertofile.Serializers;
+import com.github.davidmoten.rx2.internal.flowable.buffertofile.PagedQueue;
 
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
@@ -354,11 +355,16 @@ public class FlowableOnBackpressureBufferToFileTest {
     @Test
     public void testFragments() {
         System.out.println("testing fragments");
-        for (int i = 1; i <= 500; i++) {
-            checkFragments(i, 160, 1, Schedulers.trampoline());
+        try {
+            PagedQueue.debug = true;
+            for (int i = 1; i <= 500; i++) {
+                checkFragments(i, 160, 1, Schedulers.trampoline());
+            }
+        } finally {
+            PagedQueue.debug = false;
         }
     }
-    
+
     @Test
     @Ignore
     public void testFragmentsAsync() {
@@ -376,7 +382,7 @@ public class FlowableOnBackpressureBufferToFileTest {
         // length field + padding field + padding + bytes = 4 + 1 + 1 + 300 =
         // 306 bytes
         for (int n = 1; n <= numRuns; n++) {
-             System.out.println("bytes="+ bytesSize + " ======== " + n + " =========");
+            System.out.println("bytes=" + bytesSize + " ======== " + n + " =========");
             Flowables.repeat(bytes, n) //
                     .compose(onBackpressureBufferToFile() //
                             .pageSizeBytes(pageSize) //

@@ -1,7 +1,6 @@
 package com.github.davidmoten.rx2.internal.flowable.buffertofile;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -9,6 +8,8 @@ import com.github.davidmoten.guavamini.Preconditions;
 
 @SuppressWarnings("serial")
 public final class PagedQueue extends AtomicInteger {
+    
+    public static boolean debug = false;
 
     private static final int EXTRA_PADDING_LIMIT = 64;
     private static final int SIZE_MESSAGE_SIZE_FIELD = 4;
@@ -67,6 +68,11 @@ public final class PagedQueue extends AtomicInteger {
             int remaining = Math.max(0, avail - count - 6 - padding - extraHeaderBytes);
             if (remaining <= EXTRA_PADDING_LIMIT)
                 padding += remaining;
+            if (debug) {
+                System.out.println(String.format(
+                        "length=%s,start=%s,count=%s,padding=%s,remaining=%s,extraHeaderBytes=%s",
+                        length, start, count, padding, remaining, extraHeaderBytes));
+            }
             write(bytes, start, count, padding, MessageType.FRAGMENT, bytes.length);
             start += count;
             length -= count;
