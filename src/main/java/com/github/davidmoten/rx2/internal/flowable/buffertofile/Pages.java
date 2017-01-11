@@ -187,6 +187,7 @@ public final class Pages {
     }
 
     public void close() {
+        //called from read thread
         if (readPage != null) {
             readPage.close();
             readPage = null;
