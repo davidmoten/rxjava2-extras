@@ -120,4 +120,8 @@ public final class MemoryMappedFile {
         unsafe.copyMemory(data, BYTE_ARRAY_OFFSET + offset, null, pos + addr, length);
     }
 
+    public byte getByte(long pos) {
+        return unsafe.getByte(pos + addr);
+    }
+
 }
