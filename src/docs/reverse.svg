@@ -16,7 +16,7 @@
    version="1.1"
    inkscape:version="0.48.4 r9939"
    sodipodi:docname="reverse.svg"
-   inkscape:export-filename="/home/dave/Development/ide/eclipse/workspace-4.3/rxjava-extras/src/docs/toListWhile.png"
+   inkscape:export-filename="/home/dxm/Development/ide/eclipse/workspace/rxjava2-extras/src/docs/reverse.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90">
   <defs
@@ -1379,7 +1379,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -1397,12 +1397,12 @@
     <text
        xml:space="preserve"
        style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="219"
+       x="131"
        y="175.21933"
        id="text6476"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
-         x="219"
+         x="131"
          y="175.21933"
          style="font-size:20px"
          id="tspan3517">reverse</tspan></text>
