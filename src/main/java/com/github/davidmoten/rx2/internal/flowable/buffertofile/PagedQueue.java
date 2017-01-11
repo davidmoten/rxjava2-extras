@@ -9,8 +9,9 @@ import com.github.davidmoten.guavamini.Preconditions;
 
 @SuppressWarnings("serial")
 public final class PagedQueue extends AtomicInteger {
-    
-    private static final boolean isLittleEndian = ByteOrder.nativeOrder()==ByteOrder.LITTLE_ENDIAN;
+
+    private static final boolean isLittleEndian = ByteOrder
+            .nativeOrder() == ByteOrder.LITTLE_ENDIAN;
 
     private static final int EXTRA_PADDING_LIMIT = 64;
     private static final int SIZE_MESSAGE_SIZE_FIELD = 4;
@@ -69,9 +70,9 @@ public final class PagedQueue extends AtomicInteger {
             int remaining = Math.max(0, avail - count - 6 - padding - extraHeaderBytes);
             if (remaining <= EXTRA_PADDING_LIMIT)
                 padding += remaining;
-            System.out.println(String.format(
-                    "length=%s,start=%s,count=%s,padding=%s,remaining=%s,extraHeaderBytes=%s",
-                    length, start, count, padding, remaining, extraHeaderBytes));
+            // System.out.println(String.format(
+            // "length=%s,start=%s,count=%s,padding=%s,remaining=%s,extraHeaderBytes=%s",
+            // length, start, count, padding, remaining, extraHeaderBytes));
             write(bytes, start, count, padding, MessageType.FRAGMENT, bytes.length);
             start += count;
             length -= count;
@@ -103,6 +104,7 @@ public final class PagedQueue extends AtomicInteger {
         pages.markForRewriteAndAdvance4Bytes();// messageSize left as 0
         // storeFence not required at this point like Aeron uses.
         UnsafeAccess.unsafe().storeFence();
+        // TODO optimize for BigEndian as well
         if (padding == 2 && isLittleEndian) {
             pages.putInt((messageType.value() << 0) | (((byte) padding) & 0xFF) << 8);
         } else {
