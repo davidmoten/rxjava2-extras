@@ -10,9 +10,8 @@ import com.github.davidmoten.guavamini.Preconditions;
 @SuppressWarnings("serial")
 public final class PagedQueue extends AtomicInteger {
 
-    private static final boolean isLittleEndian = true; 
-//            ByteOrder
-//            .nativeOrder() == ByteOrder.LITTLE_ENDIAN;
+    private static final boolean isLittleEndian = ByteOrder
+            .nativeOrder() == ByteOrder.LITTLE_ENDIAN;
 
     private static final int EXTRA_PADDING_LIMIT = 64;
     private static final int SIZE_MESSAGE_SIZE_FIELD = 4;
