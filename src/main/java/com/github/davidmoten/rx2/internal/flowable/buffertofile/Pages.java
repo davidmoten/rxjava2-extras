@@ -45,8 +45,8 @@ public final class Pages {
     public void markForRewriteAndAdvance4Bytes() {
         markPage = writePage();
         markPosition = writePosition;
-        // writePosition += 4;
-        putInt(markPage, 0);
+        writePosition += 4;
+        // putInt(markPage, 0);
     }
 
     public void putInt(int value) {
