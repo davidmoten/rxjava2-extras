@@ -1,6 +1,7 @@
 package com.github.davidmoten.rx2.internal.flowable.buffertofile;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -60,10 +61,10 @@ public final class PagedQueue extends AtomicInteger {
         int start = 0;
         int length = bytes.length;
         do {
-            int totalLengthBytes = start == 0 ? 4 : 0;
-            int count = Math.min(avail - 8 - totalLengthBytes, length);
+            int extraHeaderBytes = start == 0 ? 4 : 0;
+            int count = Math.min(avail - 8 - extraHeaderBytes, length);
             int padding = padding(count);
-            int remaining = avail - count - 8 - totalLengthBytes;
+            int remaining = Math.max(0, avail - count - 6 - padding - extraHeaderBytes);
             if (remaining <= EXTRA_PADDING_LIMIT)
                 padding += remaining;
             write(bytes, start, count, padding, MessageType.FRAGMENT, bytes.length);
@@ -90,13 +91,12 @@ public final class PagedQueue extends AtomicInteger {
         return padding;
     }
 
-    @SuppressWarnings("restriction")
     private void write(byte[] bytes, int offset, int length, int padding,
             final MessageType messageType, int totalLength) {
         Preconditions.checkArgument(length != 0);
         pages.markForRewriteAndAdvance4Bytes();// messageSize left as 0
         // storeFence not required at this point like Aeron uses.
-         UnsafeAccess.unsafe().storeFence();
+        // UnsafeAccess.unsafe().storeFence();
         if (padding == 2) {
             pages.putInt((messageType.value() << 0) | (((byte) padding) & 0xFF) << 8);
         } else {

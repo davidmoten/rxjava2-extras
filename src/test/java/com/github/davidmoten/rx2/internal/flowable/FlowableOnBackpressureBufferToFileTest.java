@@ -46,7 +46,7 @@ public class FlowableOnBackpressureBufferToFileTest {
         Flowable.just(1, 2, 3) //
                 .compose(onBackpressureBufferToFile() //
                         .pageSizeBytes(1000000) //
-                        .<Integer>serializerJavaIO())
+                        .<Integer> serializerJavaIO())
                 .test() //
                 .awaitDone(5000000000L, TimeUnit.SECONDS) //
                 .assertValues(1, 2, 3)//
@@ -58,7 +58,7 @@ public class FlowableOnBackpressureBufferToFileTest {
         Observable.just(1, 2, 3) //
                 .to(onBackpressureBufferToFileObservable() //
                         .pageSizeBytes(1000000) //
-                        .<Integer>serializerJavaIO())
+                        .<Integer> serializerJavaIO())
                 .test() //
                 .awaitDone(5000000000L, TimeUnit.SECONDS) //
                 .assertValues(1, 2, 3)//
@@ -109,9 +109,9 @@ public class FlowableOnBackpressureBufferToFileTest {
 
     @Test
     public void testEmpty() {
-        Flowable.<Integer>empty() //
+        Flowable.<Integer> empty() //
                 .compose(onBackpressureBufferToFile() //
-                        .<Integer>serializerJavaIO())
+                        .<Integer> serializerJavaIO())
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertNoValues() //
@@ -122,7 +122,7 @@ public class FlowableOnBackpressureBufferToFileTest {
     public void testOne() {
         Flowable.just(4) //
                 .compose(onBackpressureBufferToFile() //
-                        .<Integer>serializerJavaIO())
+                        .<Integer> serializerJavaIO())
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertValue(4) //
@@ -141,7 +141,8 @@ public class FlowableOnBackpressureBufferToFileTest {
                             }
 
                             @Override
-                            public Integer deserialize(byte[] bytes) throws IOException, ClassNotFoundException {
+                            public Integer deserialize(byte[] bytes)
+                                    throws IOException, ClassNotFoundException {
                                 return null;
                             }
                         }))
@@ -163,7 +164,8 @@ public class FlowableOnBackpressureBufferToFileTest {
                             }
 
                             @Override
-                            public Integer deserialize(byte[] bytes) throws IOException, ClassNotFoundException {
+                            public Integer deserialize(byte[] bytes)
+                                    throws IOException, ClassNotFoundException {
                                 return null;
                             }
                         }))
@@ -175,16 +177,16 @@ public class FlowableOnBackpressureBufferToFileTest {
 
     @Test(expected = NullPointerException.class)
     public void testNullSubscriber() {
-        Flowable.just(1).compose(onBackpressureBufferToFile().<Integer>serializerJavaIO())
+        Flowable.just(1).compose(onBackpressureBufferToFile().<Integer> serializerJavaIO())
                 .subscribe((Subscriber<Integer>) null);
     }
 
     @Test
     public void testError() {
         IOException e = new IOException();
-        Flowable.<Integer>error(e) //
+        Flowable.<Integer> error(e) //
                 .compose(onBackpressureBufferToFile() //
-                        .<Integer>serializerJavaIO())
+                        .<Integer> serializerJavaIO())
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertNoValues() //
@@ -194,9 +196,9 @@ public class FlowableOnBackpressureBufferToFileTest {
     @Test
     public void testErrorObservable() {
         IOException e = new IOException();
-        Observable.<Integer>error(e) //
+        Observable.<Integer> error(e) //
                 .to(onBackpressureBufferToFileObservable() //
-                        .<Integer>serializerJavaIO())
+                        .<Integer> serializerJavaIO())
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertNoValues() //
@@ -206,9 +208,9 @@ public class FlowableOnBackpressureBufferToFileTest {
     @Test
     public void testItemsThenError() {
         IOException e = new IOException();
-        Flowable.just(1, 2, 3).concatWith(Flowable.<Integer>error(e)) //
+        Flowable.just(1, 2, 3).concatWith(Flowable.<Integer> error(e)) //
                 .compose(onBackpressureBufferToFile() //
-                        .<Integer>serializerJavaIO())
+                        .<Integer> serializerJavaIO())
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertError(e); //
@@ -240,7 +242,7 @@ public class FlowableOnBackpressureBufferToFileTest {
         Flowable.range(1, n) //
                 .compose(onBackpressureBufferToFile() //
                         .pageSizeBytes(100) //
-                        .<Integer>serializerJavaIO()) //
+                        .<Integer> serializerJavaIO()) //
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertNoErrors() //
@@ -256,7 +258,7 @@ public class FlowableOnBackpressureBufferToFileTest {
         Flowable.range(1, n) //
                 .compose(onBackpressureBufferToFile() //
                         .pageSizeBytes(1000) //
-                        .<Integer>serializerJavaIO()) //
+                        .<Integer> serializerJavaIO()) //
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertNoErrors() //
@@ -272,7 +274,7 @@ public class FlowableOnBackpressureBufferToFileTest {
         Flowable.range(1, n) //
                 .compose(onBackpressureBufferToFile() //
                         .pageSizeBytes(10000000) //
-                        .<Integer>serializerJavaIO()) //
+                        .<Integer> serializerJavaIO()) //
                 .count() //
                 .test() //
                 .awaitDone(50L, TimeUnit.SECONDS) //
@@ -299,8 +301,9 @@ public class FlowableOnBackpressureBufferToFileTest {
                 .assertValue((long) n);
         t = (System.currentTimeMillis() - t);
         DecimalFormat df = new DecimalFormat("0.000");
-        System.out.println("byte arrays async rate = " + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / t))
-                + "MB/s, " + "msgs/sec = " + df.format(n * 1000.0 / t));
+        System.out.println("byte arrays async rate = "
+                + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / t)) + "MB/s, "
+                + "msgs/sec = " + df.format(n * 1000.0 / t));
     }
 
     @Test
@@ -322,9 +325,9 @@ public class FlowableOnBackpressureBufferToFileTest {
                 .assertValue((long) n);
         t = (System.currentTimeMillis() - t);
         DecimalFormat df = new DecimalFormat("0.000");
-        System.out
-                .println("byte arrays async rate obs = " + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / t))
-                        + "MB/s, " + "msgs/sec = " + df.format(n * 1000.0 / t));
+        System.out.println("byte arrays async rate obs = "
+                + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / t)) + "MB/s, "
+                + "msgs/sec = " + df.format(n * 1000.0 / t));
     }
 
     @Test
@@ -349,17 +352,24 @@ public class FlowableOnBackpressureBufferToFileTest {
     @Test
     public void testFragments() {
         System.out.println("testing fragments");
-        byte[] bytes = new byte[200];
+        for (int i = 0; i <= 500; i++) {
+            checkFragments(200, 160);
+        }
+    }
+
+    private void checkFragments(int bytesSize, int pageSize) {
+        byte[] bytes = new byte[bytesSize];
         for (int i = 0; i < bytes.length; i++) {
             bytes[i] = (byte) i;
         }
         // length field + padding field + padding + bytes = 4 + 1 + 1 + 300 =
         // 306 bytes
-        for (int n = 1; n < 100; n++) {
+        for (int n = 1; n < 10; n++) {
             // System.out.println("======== " + n + " =========");
             Flowables.repeat(bytes, n) //
                     .compose(onBackpressureBufferToFile() //
-                            .pageSizeBytes(160) //
+                            .pageSizeBytes(pageSize) //
+                            .scheduler(Schedulers.trampoline()) //
                             .serializerBytes()) //
                     .doOnNext(Consumers.assertBytesEquals(bytes)) //
                     // .doOnNext(Consumers.println()) //
@@ -389,8 +399,9 @@ public class FlowableOnBackpressureBufferToFileTest {
                 .assertComplete() //
                 .assertValue((long) n);
         DecimalFormat df = new DecimalFormat("0.000");
-        System.out.println("byte arrays sync rate = "
-                + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / (System.currentTimeMillis() - t))) + "MB/s");
+        System.out.println("byte arrays sync rate = " + df.format(
+                (1000.0 * bytes.length * n / 1024.0 / 1024.0 / (System.currentTimeMillis() - t)))
+                + "MB/s");
 
     }
 
@@ -467,9 +478,9 @@ public class FlowableOnBackpressureBufferToFileTest {
                 .assertValue((long) n);
         t = (System.currentTimeMillis() - t);
         DecimalFormat df = new DecimalFormat("0.000");
-        System.out.println(
-                "byte arrays async rebatched rate = " + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / t))
-                        + "MB/s, " + "msgs/sec=" + df.format(n * 1000.0 / t));
+        System.out.println("byte arrays async rebatched rate = "
+                + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / t)) + "MB/s, "
+                + "msgs/sec=" + df.format(n * 1000.0 / t));
     }
 
     @Test
@@ -490,8 +501,9 @@ public class FlowableOnBackpressureBufferToFileTest {
                 .assertValue((long) n);
         t = (System.currentTimeMillis() - t);
         DecimalFormat df = new DecimalFormat("0.000");
-        System.out.println("byte arrays async 1K rate = " + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / t))
-                + "MB/s, " + "msgs/sec = " + df.format(n * 1000.0 / t));
+        System.out.println("byte arrays async 1K rate = "
+                + df.format((1000.0 * bytes.length * n / 1024.0 / 1024.0 / t)) + "MB/s, "
+                + "msgs/sec = " + df.format(n * 1000.0 / t));
     }
 
 }
