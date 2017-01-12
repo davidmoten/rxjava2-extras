@@ -30,8 +30,8 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
 
     public FlowableOnBackpressureBufferToFile(Flowable<T> source, Observable<T> source2,
             Options options, Serializer<T> serializer) {
-        Preconditions.checkArgument(
-                source != null && source2 == null || source == null && source2 != null);
+        // only one source should be defined
+        Preconditions.checkArgument((source != null) ^ (source2 != null));
         this.source = source;
         this.source2 = source2;
         this.options = options;
@@ -163,13 +163,10 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
             scheduleDrain();
         }
     }
-    
-    private interface HasUpstream {
-        void cancelUpstream();
-    }
 
-    @SuppressWarnings({ "serial" })
-    private static abstract class BufferToFileSubscriber<T> extends AtomicInteger implements Runnable, HasUpstream {
+        @SuppressWarnings({ "serial" })
+    private static abstract class BufferToFileSubscriber<T> extends AtomicInteger
+            implements Runnable {
 
         protected final Subscriber<? super T> child;
         private final PagedQueue queue;
@@ -180,7 +177,7 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
         protected volatile boolean cancelled;
         private volatile boolean done;
 
-        // Is set just before the volatile `done` is set and read just after
+        // `error` set just before the volatile `done` is set and read just after
         // `done` is read. Thus doesn't need to be volatile.
         private Throwable error;
 
@@ -305,6 +302,8 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
             queue.close();
             worker.dispose();
         }
+        
+        abstract public void cancelUpstream();
 
     }
 

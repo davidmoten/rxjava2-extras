@@ -167,6 +167,7 @@ Predicates
 `alwaysFalse`
 `alwaysTrue`
 
+
 doOnEmpty
 -------------------------
 Performs an action only if a stream completes without emitting an item.
