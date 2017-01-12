@@ -41,7 +41,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.davidmoten:rxjava-extras:VERSION_HERE'
+    compile 'com.github.davidmoten:rxjava2-extras:VERSION_HERE'
 }
 ```
 
