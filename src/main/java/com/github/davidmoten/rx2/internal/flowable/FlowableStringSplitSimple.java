@@ -40,7 +40,7 @@ public final class FlowableStringSplitSimple extends Flowable<String> {
 
         private final Subscriber<? super String> actual;
         // queue of notifications
-        private final SimpleQueue<Object> queue = new SpscArrayQueue<Object>(16);
+        private final transient SimpleQueue<Object> queue = new SpscArrayQueue<Object>(16);
         private final AtomicInteger wip = new AtomicInteger();
         private final AtomicBoolean once = new AtomicBoolean();
 

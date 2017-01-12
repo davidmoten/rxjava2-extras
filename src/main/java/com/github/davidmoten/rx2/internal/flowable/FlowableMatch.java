@@ -71,7 +71,7 @@ public class FlowableMatch<A, B, K, C> extends Flowable<C> {
         private final Function<? super B, ? extends K> bKey;
         private final BiFunction<? super A, ? super B, C> combiner;
         private final long requestSize;
-        private final SimpleQueue<Object> queue;
+        private final transient SimpleQueue<Object> queue;
         private final Subscriber<? super C> child;
         private final AtomicLong requested = new AtomicLong(0);
 

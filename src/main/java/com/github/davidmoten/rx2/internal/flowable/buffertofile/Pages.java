@@ -46,7 +46,7 @@ public final class Pages {
         markPage = writePage();
         markPosition = writePosition;
         writePosition += 4;
-//         putInt(markPage, 0);
+        // putInt(markPage, 0);
     }
 
     public void putInt(int value) {
@@ -54,14 +54,13 @@ public final class Pages {
     }
 
     private void putInt(Page page, int value) {
-        int wp = writePosition;
         if (CHECK) {
-            int avail = page.length() - wp;
+            int avail = page.length() - writePosition;
             if (avail < 0)
                 throw new RuntimeException("unexpected");
         }
-        page.putInt(wp, value);
-        writePosition = wp + 4;
+        page.putInt(writePosition, value);
+        writePosition += 4;
     }
 
     public void put(byte[] bytes, int offset, int length) {
@@ -146,17 +145,6 @@ public final class Pages {
         return readPage;
     }
 
-    // public static final byte[] intToByteArray(int value) {
-    // return new byte[] { (byte) (value >> 24), (byte) (value >> 16), (byte)
-    // (value >> 8),
-    // (byte) value };
-    // }
-    //
-    // public static int byteArrayToInt(byte[] bytes) {
-    // return bytes[0] << 24 | (bytes[1] & 0xFF) << 16 | (bytes[2] & 0xFF) << 8
-    // | (bytes[3] & 0xFF);
-    // }
-
     public void putByte(byte b) {
         Page page = writePage();
         if (CHECK) {
@@ -169,7 +157,15 @@ public final class Pages {
     }
 
     public byte getByte() {
-        return get(1)[0];
+        Page page = readPage();
+        if (CHECK) {
+            int avail = page.length() - readPosition;
+            if (avail < 1)
+                throw new RuntimeException("unexpected");
+        }
+        byte result = page.getByte(readPosition);
+        readPosition += 1;
+        return result;
     }
 
     public void moveReadPosition(int forward) {
@@ -191,6 +187,7 @@ public final class Pages {
     }
 
     public void close() {
+        // called from read thread
         if (readPage != null) {
             readPage.close();
             readPage = null;

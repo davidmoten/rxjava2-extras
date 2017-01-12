@@ -70,4 +70,8 @@ public final class Page {
     public void putByte(int currentWritePosition, byte b) {
         mm.putByte(currentWritePosition, b);
     }
+
+    public byte getByte(int readPosition) {
+        return mm.getByte(readPosition);
+    }
 }

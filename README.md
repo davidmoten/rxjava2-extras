@@ -15,6 +15,7 @@ Features
 * [`onBackpressureBufferToFile`](#onbackpressurebuffertofile) - high throughput with memory-mapped files
 * [`FlowableTransformers`](#flowabletransformers)
 * [`ObservableTransformers`](#observabletransformers)
+* tests pass on Linux, Windows 10, Solaris 10
 * supports Java 1.6+
 
 Status: *released to Maven Central*
@@ -179,7 +180,7 @@ match, matchWith
 -------------------------
 Finds out-of-order matches in two streams.
 
-<img src="https://raw.githubusercontent.com/davidmoten/rxjava-extras/master/src/docs/match.png?raw=true" />
+<img src="src/docs/match.png?raw=true" />
 
 [javadoc](http://davidmoten.github.io/rxjava-extras/apidocs/com/github/davidmoten/rx/Transformers.html#matchWith--)
 
@@ -210,7 +211,7 @@ Under the covers elements are requested from `a` and `b` in alternating batches 
 ##onBackpressureBufferToFile
 With this operator you can offload a stream's emissions to disk to reduce memory pressure when you have a fast producer + slow consumer (or just to minimize memory usage).
 
-<img src="https://raw.githubusercontent.com/davidmoten/rxjava-extras/master/src/docs/onBackpressureBufferToFile.png" />
+<img src="src/docs/onBackpressureBufferToFile.png" />
 
 If you have used the `onBackpressureBuffer` operator you'll know that when a stream is producing faster than the downstream operators can process (perhaps the producer cannot respond meaningfully to a *slow down* request from downstream) then `onBackpressureBuffer` buffers the items to an in-memory queue until they can be processed. Of course if memory is limited then some streams might eventually cause an `OutOfMemoryError`. One solution to this problem is to increase the effectively available memory for buffering by using disk instead (and small in-memory read/write buffers). That's why `onBackpressureBufferToFile` was created. 
 
@@ -333,11 +334,18 @@ Flowable.just(1, 2, 3, 4)
           .<List<Integer>>onBackpressureBufferToFile()
           .serializerJavaIO())
 ```
+###Algorithm
+Usual queue drain practices are in place but the queue this time is based on memory-mapped file storage. The memory-mapped queue borrows tricks used by [Aeron](https://github.com/real-logic/Aeron). In particular:
+
+* every byte array message is preceded by a header comprised of 
+
+message length (int, 4 bytes)
+TODO
 
 ###Performance
 Throughput is increased dramatically by using memory-mapped files. 
 
-*rxjava2-extras* can push through 800MB/s using 1K messages compared to *rxjava-extras* 43MB/s. My 2016 2 core i5 HP Spectre laptop with SSD pushes through up to 1.5GB/s.
+*rxjava2-extras* can push through 800MB/s using 1K messages compared to *rxjava-extras* 43MB/s (2011 i7-920 @2.67GHz). My 2016 2 core i5 HP Spectre laptop with SSD pushes through up to 1.5GB/s for 1K messages.
 
 Smaller messages mean more contention but still on my laptop I am seeing 6 million 40B messages per second.
 
@@ -345,7 +353,7 @@ repeatLast
 ------------------------
 If a stream has elements and completes then the last element is repeated.
 
-<img src="https://raw.githubusercontent.com/davidmoten/rxjava-extras/master/src/docs/repeatLast.png?raw=true" /> 
+<img src="src/docs/repeatLast.png?raw=true" /> 
 
 ```java
 flowable.compose(
@@ -390,6 +398,16 @@ flowable.retryWhen(
     RetryWhen.retryWhenInstanceOf(IOException.class)
         .build());
 ```
+reverse
+----------------
+Reverses the order of emissions of a stream. Does not emit till source completes.
+
+<img src="src/docs/reverse.png?raw=true" />
+
+```java
+flowable.compose(
+    FlowableTransformers.reverse());
+```
 
 stateMachine
 --------------------------
@@ -397,7 +415,7 @@ Custom operators are difficult things to get right in RxJava mainly because of t
 
 * each source emission is mapped to 0 to many emissions (of a different type perhaps) to downstream but those emissions are calculated based on accumulated state
 
-<img src="https://raw.githubusercontent.com/davidmoten/rxjava-extras/master/src/docs/stateMachine.png?raw=true" />
+<img src="src/docs/stateMachine.png?raw=true" />
 
 [javadoc](http://davidmoten.github.io/rxjava-extras/apidocs/com/github/davidmoten/rx/Transformers.html#stateMachine-rx.functions.Func0-rx.functions.Func3-rx.functions.Action2-)
 

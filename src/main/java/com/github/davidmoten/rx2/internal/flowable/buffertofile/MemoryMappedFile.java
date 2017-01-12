@@ -98,7 +98,7 @@ public final class MemoryMappedFile {
     public void putByte(long pos, byte val) {
         unsafe.putByte(pos + addr, val);
     }
-
+    
     public void putInt(long pos, int val) {
         unsafe.putInt(pos + addr, val);
     }
@@ -118,6 +118,10 @@ public final class MemoryMappedFile {
 
     public void putBytes(long pos, byte[] data, long offset, long length) {
         unsafe.copyMemory(data, BYTE_ARRAY_OFFSET + offset, null, pos + addr, length);
+    }
+
+    public byte getByte(long pos) {
+        return unsafe.getByte(pos + addr);
     }
 
 }

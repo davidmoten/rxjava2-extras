@@ -164,12 +164,12 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
         }
     }
     
-    private interface Upstream {
+    private interface HasUpstream {
         void cancelUpstream();
     }
 
     @SuppressWarnings({ "serial" })
-    private static abstract class BufferToFileSubscriber<T> extends AtomicInteger implements Runnable, Upstream {
+    private static abstract class BufferToFileSubscriber<T> extends AtomicInteger implements Runnable, HasUpstream {
 
         protected final Subscriber<? super T> child;
         private final PagedQueue queue;
