@@ -358,10 +358,23 @@ Flowable.just(1, 2, 3, 4)
 ###Algorithm
 Usual queue drain practices are in place but the queue this time is based on memory-mapped file storage. The memory-mapped queue borrows tricks used by [Aeron](https://github.com/real-logic/Aeron). In particular:
 
-* every byte array message is preceded by a header comprised of 
+* every byte array message is preceded by a header 
 
-message length (int, 4 bytes)
-TODO
+```
+message length in bytes (int, 4 bytes)
+message type (1 byte) (0 or 1 for FULL_MESSAGE or FRAGMENT)
+padding length in bytes (1 byte)
+zeroes according to padding length
+```
+
+* high read/write throughput is achieved via minimal use of `Unsafe` volatile puts and gets.
+
+When a message is placed on the memory-mapped file based queue the header and message bytes above are appended at the current write position in the file but the message length is written as zero (or in our case not written at all because the value defaults to zero). Only once all the message bytes are written is message length given its actual value (and this is done using `Unsafe.putOrderedInt`). When a read is attempted the length field is read using `Unsafe.getIntVolatile` and if zero we do nothing (until the next read attempt). 
+
+Cancellation complicates things somewhat because pulling the plug suddenly on `Unsafe` memory mapped files means crashing the JVM with a sigsev fault. To reduce contention with cancellation checks, resource disposal is processed by the queue drain method (reads) and writes to the queue are serialized with cancellation via CAS semantics. 
+
+TODO 
+Describe fragmentation handling.
 
 ###Performance
 Throughput is increased dramatically by using memory-mapped files. 
