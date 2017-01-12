@@ -106,7 +106,7 @@ FlowableTransformers
 ---------------------------
 [`doOnEmpty`](#doonempty)
 
-`mapLast`
+[`mapLast`](#maplast)
 
 [`match`, `matchWith`](#match-matchwith)
 
@@ -174,6 +174,27 @@ Performs an action only if a stream completes without emitting an item.
 ```java
 flowable.compose(
     FlowableTransformers.doOnEmpty(action));
+```
+
+mapLast
+-------------------------
+Modifies the last element of the stream via a defined Function.
+
+<img src="src/docs/mapLast.png?raw=true" />
+
+Example:
+
+```java
+Flowable
+    .just(1, 2, 3)
+    .compose(FlowableTransformers.mapLast(x -> x + 1))
+    .forEach(System.out::println);
+```
+produces
+```
+1
+2
+4
 ```
 
 match, matchWith
