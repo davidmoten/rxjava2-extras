@@ -15,7 +15,7 @@ public final class BiFunctions {
         return (BiFunction<A, B, C>) ThrowingHolder.INSTANCE;
     }
     
-    private static enum ThrowingHolder {
+    private static final class ThrowingHolder {
         ;
         static BiFunction<Object,Object,Object> INSTANCE = new BiFunction<Object, Object, Object>() {
 

@@ -34,8 +34,7 @@ public final class Consumers {
         return (Consumer<T>) CloseHolder.INSTANCE;
     }
 
-    private static enum CloseHolder {
-        ;
+    private static final class CloseHolder {
         final static Consumer<Closeable> INSTANCE = new Consumer<Closeable>() {
             @Override
             public void accept(Closeable t) throws Exception {
@@ -69,8 +68,7 @@ public final class Consumers {
         return (Consumer<T>) DoNothingHolder.INSTANCE;
     }
 
-    private static enum DoNothingHolder {
-        ;
+    private static final class DoNothingHolder {
         static final Consumer<Object> INSTANCE = new Consumer<Object>() {
 
             @Override

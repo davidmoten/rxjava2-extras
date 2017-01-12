@@ -25,8 +25,7 @@ public final class Functions {
         return (Function<T, T>) IdentityHolder.INSTANCE;
     }
     
-    private static enum IdentityHolder {
-        ;
+    private static final class IdentityHolder {
         static final Function<Object,Object> INSTANCE = new Function<Object, Object>() {
 
             @Override

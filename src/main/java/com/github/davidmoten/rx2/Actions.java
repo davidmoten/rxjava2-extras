@@ -36,8 +36,7 @@ public final class Actions {
         return DoNothingHolder.DO_NOTHING;
     }
 
-    private static enum DoNothingHolder {
-        ;
+    private static final class DoNothingHolder {
         static final Action DO_NOTHING = new Action() {
             @Override
             public void run() throws Exception {

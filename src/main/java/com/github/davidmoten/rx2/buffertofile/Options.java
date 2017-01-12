@@ -252,8 +252,7 @@ public final class Options {
         }
     }
 
-    private static enum FileFactoryHolder {
-        ;
+    private static final class FileFactoryHolder {
         private static final Callable<File> INSTANCE = new Callable<File>() {
             @Override
             public File call() {
