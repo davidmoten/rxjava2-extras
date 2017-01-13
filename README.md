@@ -104,7 +104,7 @@ Flowables
 
 FlowableTransformers
 ---------------------------
-[`collectStats](#collectStats)
+[`collectStats`](#collectstats)
 
 [`doOnEmpty`](#doonempty)
 
