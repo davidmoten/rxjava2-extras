@@ -104,6 +104,8 @@ Flowables
 
 FlowableTransformers
 ---------------------------
+[`collectStats](#collectStats)
+
 [`doOnEmpty`](#doonempty)
 
 [`mapLast`](#maplast)
@@ -115,6 +117,7 @@ FlowableTransformers
 [`reverse`](#reverse)
 
 [`stateMachine`](#statemachine)
+
 
 ObservableTransformers
 ---------------------------
@@ -167,6 +170,11 @@ Predicates
 `alwaysFalse`
 `alwaysTrue`
 
+collectStats
+---------------------------
+Accumulate statistics, emitting the accumulated results with each item.
+
+<img src="src/docs/collectStats.png?raw=true" />
 
 doOnEmpty
 -------------------------
