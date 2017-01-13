@@ -112,7 +112,7 @@ FlowableTransformers
 
 [`onBackpressureBufferToFile`](#onbackpressurebuffertofile)
 
-`reverse`
+[`reverse`](#reverse)
 
 [`stateMachine`](#statemachine)
 
@@ -433,6 +433,7 @@ flowable.retryWhen(
     RetryWhen.retryWhenInstanceOf(IOException.class)
         .build());
 ```
+
 reverse
 ----------------
 Reverses the order of emissions of a stream. Does not emit till source completes.
