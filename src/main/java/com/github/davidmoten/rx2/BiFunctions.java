@@ -25,4 +25,15 @@ public final class BiFunctions {
             }
         };
     }
+    
+    public static <T extends Number> BiFunction<Statistics, T, Statistics> collectStats() {
+        return new BiFunction<Statistics, T, Statistics>() {
+
+            @Override
+            public Statistics apply(Statistics s, T t) {
+                return s.add(t);
+            }
+        };
+    }
+
 }

@@ -10,6 +10,7 @@ import com.github.davidmoten.rx2.internal.flowable.FlowableMapLast;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMatch;
 import com.github.davidmoten.rx2.internal.flowable.FlowableReverse;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStateMachine;
+import com.github.davidmoten.rx2.util.Pair;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -100,4 +101,32 @@ public final class FlowableTransformers {
         return Options.builderFlowable();
     }
 
+    public static <T extends Number> FlowableTransformer<T, Statistics> collectStats() {
+        return new FlowableTransformer<T, Statistics>() {
+
+            @Override
+            public Flowable<Statistics> apply(Flowable<T> source) {
+                return source.scan(Statistics.create(), BiFunctions.collectStats());
+            }
+        };
+    }
+
+    public static <T, R extends Number> FlowableTransformer<T, Pair<T, Statistics>> collectStats(
+            final Function<? super T, ? extends R> function) {
+        return new FlowableTransformer<T, Pair<T, Statistics>>() {
+
+            @Override
+            public Flowable<Pair<T, Statistics>> apply(Flowable<T> source) {
+                return source.scan(Pair.create((T) null, Statistics.create()),
+                        new BiFunction<Pair<T, Statistics>, T, Pair<T, Statistics>>() {
+                            @Override
+                            public Pair<T, Statistics> apply(Pair<T, Statistics> pair, T t) throws Exception {
+                                return Pair.create(t, pair.b().add(function.apply(t)));
+                            }
+                        }).skip(1);
+            }
+        };
+    }
+
+    
 }
