@@ -430,7 +430,8 @@ public class FlowableOnBackpressureBufferToFileTest {
             Flowables.repeat(bytes, n) //
                     .compose(FlowableTransformers //
                             .onBackpressureBufferToFile() //
-                            .fileFactory(Callables.constant(pageFile)).pageSizeBytes(20000000) //
+                            .fileFactory(Callables.constant(pageFile)) //
+                            .pageSizeBytes(20000000) //
                             .serializerBytes()) //
                     .take(5) //
                     .count() //
@@ -439,7 +440,12 @@ public class FlowableOnBackpressureBufferToFileTest {
                     .assertNoErrors() //
                     .assertComplete() //
                     .assertValue((long) 5);
-            TimeUnit.MILLISECONDS.sleep(50);
+            long t = TimeUnit.SECONDS.toMillis(5);
+            while (t > 0 && pageFile.exists()) {
+                long waitMs = 10;
+                TimeUnit.MILLISECONDS.sleep(waitMs);
+                t -= waitMs;
+            }
             assertFalse(pageFile.exists());
         }
     }
@@ -467,7 +473,12 @@ public class FlowableOnBackpressureBufferToFileTest {
                     .assertNoErrors() //
                     .assertComplete() //
                     .assertValue((long) 5);
-            TimeUnit.MILLISECONDS.sleep(50);
+            long t = TimeUnit.SECONDS.toMillis(5);
+            while (t > 0 && pageFile.exists()) {
+                long waitMs = 10;
+                TimeUnit.MILLISECONDS.sleep(waitMs);
+                t -= waitMs;
+            }
             assertFalse(pageFile.exists());
         }
     }
