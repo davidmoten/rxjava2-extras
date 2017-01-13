@@ -68,15 +68,9 @@ public final class FlowableSerialized {
             final int bufferSize) {
         Callable<ObjectInputStream> resourceFactory = new Callable<ObjectInputStream>() {
             @Override
-            public ObjectInputStream call() {
-                try {
+            public ObjectInputStream call() throws IOException {
                     return new ObjectInputStream(
                             new BufferedInputStream(new FileInputStream(file), bufferSize));
-                } catch (FileNotFoundException e) {
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
             }
         };
         Function<ObjectInputStream, Flowable<? extends T>> observableFactory = new Function<ObjectInputStream, Flowable<? extends T>>() {
@@ -90,12 +84,8 @@ public final class FlowableSerialized {
         Consumer<ObjectInputStream> disposeAction = new Consumer<ObjectInputStream>() {
 
             @Override
-            public void accept(ObjectInputStream ois) {
-                try {
+            public void accept(ObjectInputStream ois) throws IOException {
                     ois.close();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
             }
         };
         return Flowable.using(resourceFactory, observableFactory, disposeAction, true);
@@ -135,12 +125,8 @@ public final class FlowableSerialized {
         return source.doOnNext(new Consumer<T>() {
 
             @Override
-            public void accept(T t) {
-                try {
+            public void accept(T t) throws IOException {
                     oos.writeObject(t);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
             }
         });
     }
@@ -166,15 +152,9 @@ public final class FlowableSerialized {
             final File file, final boolean append, final int bufferSize) {
         Callable<ObjectOutputStream> resourceFactory = new Callable<ObjectOutputStream>() {
             @Override
-            public ObjectOutputStream call() {
-                try {
+            public ObjectOutputStream call() throws IOException {
                     return new ObjectOutputStream(new BufferedOutputStream(
                             new FileOutputStream(file, append), bufferSize));
-                } catch (FileNotFoundException e) {
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
             }
         };
         Function<ObjectOutputStream, Flowable<? extends T>> observableFactory = new Function<ObjectOutputStream, Flowable<? extends T>>() {
@@ -187,12 +167,8 @@ public final class FlowableSerialized {
         Consumer<ObjectOutputStream> disposeAction = new Consumer<ObjectOutputStream>() {
 
             @Override
-            public void accept(ObjectOutputStream oos) {
-                try {
+            public void accept(ObjectOutputStream oos) throws IOException {
                     oos.close();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
             }
         };
         return Flowable.using(resourceFactory, observableFactory, disposeAction, true);
@@ -266,12 +242,8 @@ public final class FlowableSerialized {
                 final boolean append, final int bufferSize) {
             Callable<Output> resourceFactory = new Callable<Output>() {
                 @Override
-                public Output call() {
-                    try {
+                public Output call() throws FileNotFoundException {
                         return new Output(new FileOutputStream(file, append), bufferSize);
-                    } catch (FileNotFoundException e) {
-                        throw new RuntimeException(e);
-                    }
                 }
             };
             Function<Output, Flowable<? extends T>> observableFactory = new Function<Output, Flowable<? extends T>>() {
@@ -303,12 +275,8 @@ public final class FlowableSerialized {
         public <T> Flowable<T> read(final Class<T> cls, final File file, final int bufferSize) {
             Callable<Input> resourceFactory = new Callable<Input>() {
                 @Override
-                public Input call() {
-                    try {
+                public Input call() throws FileNotFoundException {
                         return new Input(new FileInputStream(file), bufferSize);
-                    } catch (FileNotFoundException e) {
-                        throw new RuntimeException(e);
-                    }
                 }
             };
             Function<Input, Flowable<? extends T>> observableFactory = new Function<Input, Flowable<? extends T>>() {
