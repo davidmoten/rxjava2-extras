@@ -181,6 +181,8 @@ doOnEmpty
 -------------------------
 Performs an action only if a stream completes without emitting an item.
 
+<img src="src/docs/doOnEmpty.png?raw=true" />
+
 ```java
 flowable.compose(
     FlowableTransformers.doOnEmpty(action));
