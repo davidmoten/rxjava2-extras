@@ -163,6 +163,7 @@ Functions
 
 BiFunctions
 -------------
+`collectStats`
 `throwing`
 
 Predicates
