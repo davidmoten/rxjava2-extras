@@ -133,8 +133,7 @@ public final class Consumers {
         return (Consumer<T>) PrintlnHolder.INSTANCE;
     }
 
-    private static enum PrintlnHolder {
-        ;
+    private static final class PrintlnHolder {
         static final Consumer<Object> INSTANCE = new Consumer<Object>() {
             @Override
             public void accept(Object t) throws Exception {

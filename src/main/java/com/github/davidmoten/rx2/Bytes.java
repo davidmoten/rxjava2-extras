@@ -150,7 +150,6 @@ public final class Bytes {
 	}
 
 	private static final class BosCreatorHolder {
-		;
 		static final Callable<ByteArrayOutputStream> INSTANCE = new Callable<ByteArrayOutputStream>() {
 
 			@Override
@@ -161,7 +160,6 @@ public final class Bytes {
 	}
 
 	private static final class BosCollectorHolder {
-		;
 		static final BiConsumer<ByteArrayOutputStream, byte[]> INSTANCE = new BiConsumer<ByteArrayOutputStream, byte[]>() {
 
 			@Override
@@ -172,7 +170,6 @@ public final class Bytes {
 	}
 
 	private static final class BosToArrayHolder {
-		;
 		static final Function<ByteArrayOutputStream, byte[]> INSTANCE = new Function<ByteArrayOutputStream, byte[]>() {
 			@Override
 			public byte[] apply(ByteArrayOutputStream bos) {
@@ -182,7 +179,6 @@ public final class Bytes {
 	}
 
 	private static final class ZipHolder {
-		;
 		static final Consumer<ZipInputStream> DISPOSER = new Consumer<ZipInputStream>() {
 
 			@Override

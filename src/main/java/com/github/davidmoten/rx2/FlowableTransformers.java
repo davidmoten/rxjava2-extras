@@ -101,11 +101,16 @@ public final class FlowableTransformers {
         return Options.builderFlowable();
     }
 
-    public static <T extends Number> FlowableTransformer<T, Statistics> collectStats() {
-        return new FlowableTransformer<T, Statistics>() {
+    @SuppressWarnings("unchecked")
+	public static <T extends Number> FlowableTransformer<T, Statistics> collectStats() {
+        return (FlowableTransformer<T, Statistics>) CollectStatsHolder.INSTANCE;
+    }
+    
+    private static final class CollectStatsHolder {
+    	static final FlowableTransformer<Number, Statistics> INSTANCE = new FlowableTransformer<Number, Statistics>() {
 
             @Override
-            public Flowable<Statistics> apply(Flowable<T> source) {
+            public Flowable<Statistics> apply(Flowable<Number> source) {
                 return source.scan(Statistics.create(), BiFunctions.collectStats());
             }
         };
@@ -127,6 +132,5 @@ public final class FlowableTransformers {
             }
         };
     }
-
     
 }

@@ -16,7 +16,6 @@ public final class BiFunctions {
     }
     
     private static final class ThrowingHolder {
-        ;
         static BiFunction<Object,Object,Object> INSTANCE = new BiFunction<Object, Object, Object>() {
 
             @Override
