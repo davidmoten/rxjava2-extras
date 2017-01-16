@@ -81,13 +81,7 @@ public final class FlowableSerialized {
             }
 
         };
-        Consumer<ObjectInputStream> disposeAction = new Consumer<ObjectInputStream>() {
-
-            @Override
-            public void accept(ObjectInputStream ois) throws IOException {
-                ois.close();
-            }
-        };
+        Consumer<ObjectInputStream> disposeAction = Consumers.close();
         return Flowable.using(resourceFactory, observableFactory, disposeAction, true);
     }
 
@@ -163,13 +157,7 @@ public final class FlowableSerialized {
                 return write(source, oos);
             }
         };
-        Consumer<ObjectOutputStream> disposeAction = new Consumer<ObjectOutputStream>() {
-
-            @Override
-            public void accept(ObjectOutputStream oos) throws IOException {
-                oos.close();
-            }
-        };
+        Consumer<ObjectOutputStream> disposeAction = Consumers.close();
         return Flowable.using(resourceFactory, observableFactory, disposeAction, true);
     }
 
@@ -256,13 +244,7 @@ public final class FlowableSerialized {
                     });
                 }
             };
-            Consumer<Output> disposeAction = new Consumer<Output>() {
-
-                @Override
-                public void accept(Output output) {
-                    output.close();
-                }
-            };
+            Consumer<Output> disposeAction = Consumers.close();
             return Flowable.using(resourceFactory, observableFactory, disposeAction, true);
         }
 
@@ -284,13 +266,7 @@ public final class FlowableSerialized {
                     return read(cls, input);
                 }
             };
-            Consumer<Input> disposeAction = new Consumer<Input>() {
-
-                @Override
-                public void accept(Input input) {
-                    input.close();
-                }
-            };
+            Consumer<Input> disposeAction = Consumers.close();
             return Flowable.using(resourceFactory, observableFactory, disposeAction, true);
         }
 
