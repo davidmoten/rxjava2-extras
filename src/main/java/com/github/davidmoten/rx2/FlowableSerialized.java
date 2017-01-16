@@ -73,10 +73,10 @@ public final class FlowableSerialized {
                         new BufferedInputStream(new FileInputStream(file), bufferSize));
             }
         };
-        Function<ObjectInputStream, Flowable<? extends T>> observableFactory = new Function<ObjectInputStream, Flowable<? extends T>>() {
+        Function<ObjectInputStream, Flowable<T>> observableFactory = new Function<ObjectInputStream, Flowable<T>>() {
 
             @Override
-            public Flowable<? extends T> apply(ObjectInputStream is) throws Exception {
+            public Flowable<T> apply(ObjectInputStream is) throws Exception {
                 return read(is);
             }
 
@@ -150,10 +150,10 @@ public final class FlowableSerialized {
                         new BufferedOutputStream(new FileOutputStream(file, append), bufferSize));
             }
         };
-        Function<ObjectOutputStream, Flowable<? extends T>> observableFactory = new Function<ObjectOutputStream, Flowable<? extends T>>() {
+        Function<ObjectOutputStream, Flowable<T>> observableFactory = new Function<ObjectOutputStream, Flowable<T>>() {
 
             @Override
-            public Flowable<? extends T> apply(ObjectOutputStream oos) {
+            public Flowable<T> apply(ObjectOutputStream oos) {
                 return write(source, oos);
             }
         };
@@ -232,10 +232,10 @@ public final class FlowableSerialized {
                     return new Output(new FileOutputStream(file, append), bufferSize);
                 }
             };
-            Function<Output, Flowable<? extends T>> observableFactory = new Function<Output, Flowable<? extends T>>() {
+            Function<Output, Flowable<T>> observableFactory = new Function<Output, Flowable<T>>() {
 
                 @Override
-                public Flowable<? extends T> apply(final Output output) {
+                public Flowable<T> apply(final Output output) {
                     return source.doOnNext(new Consumer<T>() {
                         @Override
                         public void accept(T t) {
@@ -259,10 +259,10 @@ public final class FlowableSerialized {
                     return new Input(new FileInputStream(file), bufferSize);
                 }
             };
-            Function<Input, Flowable<? extends T>> observableFactory = new Function<Input, Flowable<? extends T>>() {
+            Function<Input, Flowable<T>> observableFactory = new Function<Input, Flowable<T>>() {
 
                 @Override
-                public Flowable<? extends T> apply(final Input input) {
+                public Flowable<T> apply(final Input input) {
                     return read(cls, input);
                 }
             };
