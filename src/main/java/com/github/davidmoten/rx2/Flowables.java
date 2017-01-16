@@ -9,7 +9,7 @@ import io.reactivex.functions.Function;
 
 public final class Flowables {
 
-    private static final int _128 = 128;
+    private static final int DEFAULT_MATCH_BATCH_SIZE = 128;
 
 	private Flowables() {
         // prevent instantiation
@@ -22,7 +22,7 @@ public final class Flowables {
 
     public static <A, B, K, C> Flowable<C> match(Flowable<A> a, Flowable<B> b, Function<? super A, K> aKey,
             Function<? super B, K> bKey, BiFunction<? super A, ? super B, C> combiner) {
-        return match(a, b, aKey, bKey, combiner, _128);
+        return match(a, b, aKey, bKey, combiner, DEFAULT_MATCH_BATCH_SIZE);
     }
 
     public static <T> Flowable<T> repeat(T t) {
