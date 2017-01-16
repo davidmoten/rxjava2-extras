@@ -3,6 +3,8 @@ package com.github.davidmoten.rx2;
 import io.reactivex.Flowable;
 import org.junit.Test;
 
+import com.github.davidmoten.junit.Asserts;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -14,6 +16,12 @@ import static org.junit.Assert.assertTrue;
  * Created by erzfn on 12/1/17.
  */
 public class FlowableSerializedTest {
+
+    @Test
+    public void isUtilityClass() {
+        Asserts.assertIsUtilityClass(FlowableSerialized.class);
+    }
+
     @Test
     public void testSerializeAndDeserializeOfNonEmptyStream() {
         File file = new File("target/temp1");
@@ -57,7 +65,8 @@ public class FlowableSerializedTest {
         FlowableSerialized.kryo().write(source, file).subscribe();
         assertTrue(file.exists());
         assertTrue(file.length() > 0);
-        List<Integer> list = FlowableSerialized.kryo().read(Integer.class, file).toList().blockingGet();
+        List<Integer> list = FlowableSerialized.kryo().read(Integer.class, file).toList()
+                .blockingGet();
         assertEquals(Arrays.asList(1, 2, 3), list);
     }
 
@@ -68,7 +77,8 @@ public class FlowableSerializedTest {
         Flowable<Integer> source = Flowable.empty();
         FlowableSerialized.kryo().write(source, file).subscribe();
         assertTrue(file.exists());
-        List<Integer> list = FlowableSerialized.kryo().read(Integer.class, file).toList().blockingGet();
+        List<Integer> list = FlowableSerialized.kryo().read(Integer.class, file).toList()
+                .blockingGet();
         assertTrue(list.isEmpty());
     }
 
@@ -79,7 +89,8 @@ public class FlowableSerializedTest {
         Flowable<Person> source = Flowable.just(new Person("fred", 24), new Person("jane", 32));
         FlowableSerialized.kryo().write(source, file).subscribe();
         assertTrue(file.exists());
-        List<Person> list = FlowableSerialized.kryo().read(Person.class, file).toList().blockingGet();
+        List<Person> list = FlowableSerialized.kryo().read(Person.class, file).toList()
+                .blockingGet();
         assertEquals(2, list.size());
         assertEquals("fred", list.get(0).name);
         assertEquals(24, list.get(0).age);

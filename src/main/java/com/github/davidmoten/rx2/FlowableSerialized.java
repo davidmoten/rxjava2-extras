@@ -31,6 +31,10 @@ import io.reactivex.functions.Function;
 public final class FlowableSerialized {
 
     private static final int DEFAULT_BUFFER_SIZE = 8192;
+    
+    private FlowableSerialized() {
+        //prevent instantiation
+    }
 
     /**
      * Returns the deserialized objects from the given {@link InputStream} as a
