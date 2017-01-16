@@ -1,15 +1,27 @@
 package com.github.davidmoten.rx2;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.concurrent.Callable;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
-
-import java.io.*;
-import java.util.concurrent.Callable;
 
 /**
  * Utility class for writing {@link Flowable} streams to
@@ -73,16 +85,22 @@ public final class FlowableSerialized {
                         new BufferedInputStream(new FileInputStream(file), bufferSize));
             }
         };
-        Function<ObjectInputStream, Flowable<T>> observableFactory = new Function<ObjectInputStream, Flowable<T>>() {
+        @SuppressWarnings("unchecked")
+        Function<ObjectInputStream, Flowable<T>> observableFactory = (Function<ObjectInputStream, Flowable<T>>) (Function<?, ?>) ObjectInputStreamObservableFactoryHolder.INSTANCE;
+        Consumer<ObjectInputStream> disposeAction = Consumers.close();
+        return Flowable.using(resourceFactory, observableFactory, disposeAction, true);
+    }
+
+    // singleton instance using Holder pattern
+    private static final class ObjectInputStreamObservableFactoryHolder {
+        static final Function<ObjectInputStream, Flowable<Serializable>> INSTANCE = new Function<ObjectInputStream, Flowable<Serializable>>() {
 
             @Override
-            public Flowable<T> apply(ObjectInputStream is) throws Exception {
+            public Flowable<Serializable> apply(ObjectInputStream is) throws Exception {
                 return read(is);
             }
 
         };
-        Consumer<ObjectInputStream> disposeAction = Consumers.close();
-        return Flowable.using(resourceFactory, observableFactory, disposeAction, true);
     }
 
     /**
