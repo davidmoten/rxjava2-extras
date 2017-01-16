@@ -12,15 +12,16 @@ import java.io.*;
 import java.util.concurrent.Callable;
 
 /**
- * Utility class for writing {@link Flowable} streams to {@link ObjectOutputStream}s and
- * reading {@link Flowable} streams of indeterminate size from {@link ObjectInputStream}s.
+ * Utility class for writing {@link Flowable} streams to
+ * {@link ObjectOutputStream}s and reading {@link Flowable} streams of
+ * indeterminate size from {@link ObjectInputStream}s.
  */
 public final class FlowableSerialized {
 
     private static final int DEFAULT_BUFFER_SIZE = 8192;
 
     /**
-     * Returns the deserialized objects from the given {@link InputStream} as an
+     * Returns the deserialized objects from the given {@link InputStream} as a
      * {@link Flowable} stream.
      * 
      * @param ois
@@ -31,7 +32,7 @@ public final class FlowableSerialized {
      *         as an {@link Flowable}.
      */
     public static <T extends Serializable> Flowable<T> read(final ObjectInputStream ois) {
-        return Flowable.generate(new Consumer<Emitter<T>>(){
+        return Flowable.generate(new Consumer<Emitter<T>>() {
             @Override
             public void accept(Emitter<T> emitter) throws Exception {
                 try {
@@ -50,7 +51,7 @@ public final class FlowableSerialized {
     }
 
     /**
-     * Returns the deserialized objects from the given {@link File} as an
+     * Returns the deserialized objects from the given {@link File} as a
      * {@link Flowable} stream. Uses buffer of size <code>bufferSize</code>
      * buffer reads from the File.
      * 
@@ -62,15 +63,14 @@ public final class FlowableSerialized {
      *            the generic type of the deserialized objects returned in the
      *            stream
      * @return the stream of deserialized objects from the {@link InputStream}
-     *         as an {@link Flowable}.
+     *         as a {@link Flowable}.
      */
-    public static <T extends Serializable> Flowable<T> read(final File file,
-            final int bufferSize) {
+    public static <T extends Serializable> Flowable<T> read(final File file, final int bufferSize) {
         Callable<ObjectInputStream> resourceFactory = new Callable<ObjectInputStream>() {
             @Override
             public ObjectInputStream call() throws IOException {
-                    return new ObjectInputStream(
-                            new BufferedInputStream(new FileInputStream(file), bufferSize));
+                return new ObjectInputStream(
+                        new BufferedInputStream(new FileInputStream(file), bufferSize));
             }
         };
         Function<ObjectInputStream, Flowable<? extends T>> observableFactory = new Function<ObjectInputStream, Flowable<? extends T>>() {
@@ -85,16 +85,15 @@ public final class FlowableSerialized {
 
             @Override
             public void accept(ObjectInputStream ois) throws IOException {
-                    ois.close();
+                ois.close();
             }
         };
         return Flowable.using(resourceFactory, observableFactory, disposeAction, true);
     }
 
     /**
-     * Returns the deserialized objects from the given {@link File} as an
-     * {@link Flowable} stream. A buffer size of 8192 bytes is used by
-     * default.
+     * Returns the deserialized objects from the given {@link File} as a
+     * {@link Flowable} stream. A buffer size of 8192 bytes is used by default.
      * 
      * @param file
      *            the input file containing serialized java objects
@@ -126,7 +125,7 @@ public final class FlowableSerialized {
 
             @Override
             public void accept(T t) throws IOException {
-                    oos.writeObject(t);
+                oos.writeObject(t);
             }
         });
     }
@@ -153,8 +152,8 @@ public final class FlowableSerialized {
         Callable<ObjectOutputStream> resourceFactory = new Callable<ObjectOutputStream>() {
             @Override
             public ObjectOutputStream call() throws IOException {
-                    return new ObjectOutputStream(new BufferedOutputStream(
-                            new FileOutputStream(file, append), bufferSize));
+                return new ObjectOutputStream(
+                        new BufferedOutputStream(new FileOutputStream(file, append), bufferSize));
             }
         };
         Function<ObjectOutputStream, Flowable<? extends T>> observableFactory = new Function<ObjectOutputStream, Flowable<? extends T>>() {
@@ -168,7 +167,7 @@ public final class FlowableSerialized {
 
             @Override
             public void accept(ObjectOutputStream oos) throws IOException {
-                    oos.close();
+                oos.close();
             }
         };
         return Flowable.using(resourceFactory, observableFactory, disposeAction, true);
@@ -233,8 +232,7 @@ public final class FlowableSerialized {
             return write(source, file, false, DEFAULT_BUFFER_SIZE);
         }
 
-        public <T> Flowable<T> write(final Flowable<T> source, final File file,
-                boolean append) {
+        public <T> Flowable<T> write(final Flowable<T> source, final File file, boolean append) {
             return write(source, file, append, DEFAULT_BUFFER_SIZE);
         }
 
@@ -243,7 +241,7 @@ public final class FlowableSerialized {
             Callable<Output> resourceFactory = new Callable<Output>() {
                 @Override
                 public Output call() throws FileNotFoundException {
-                        return new Output(new FileOutputStream(file, append), bufferSize);
+                    return new Output(new FileOutputStream(file, append), bufferSize);
                 }
             };
             Function<Output, Flowable<? extends T>> observableFactory = new Function<Output, Flowable<? extends T>>() {
@@ -276,7 +274,7 @@ public final class FlowableSerialized {
             Callable<Input> resourceFactory = new Callable<Input>() {
                 @Override
                 public Input call() throws FileNotFoundException {
-                        return new Input(new FileInputStream(file), bufferSize);
+                    return new Input(new FileInputStream(file), bufferSize);
                 }
             };
             Function<Input, Flowable<? extends T>> observableFactory = new Function<Input, Flowable<? extends T>>() {
