@@ -532,7 +532,7 @@ Flowable<Item> items = Serialized.read(file);
 To write a `Flowable` to a file:
 
 ```java
-Flowable.write(observable, file).subscribe();
+Serialized.write(flowable, file).subscribe();
 ```
 
 ### Kryo
