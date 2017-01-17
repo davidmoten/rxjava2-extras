@@ -170,8 +170,11 @@ Predicates
 Serialized
 ---------------
 [`read`](#serialized)
+
 [`write`](#serialized)
+
 [`kryo().read`](#serialized)
+
 [`kryo().write`](#serialized)
 
 #Documentation
