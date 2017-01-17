@@ -270,18 +270,28 @@ public final class RetryWhen {
             this.action = action;
             return this;
         }
+        
+        public Builder exponentialBackoff(final long firstDelay, final long maxDelay, final TimeUnit unit, final double factor) {
 
-        public Builder exponentialBackoff(final long firstDelay, final TimeUnit unit,
-                final double factor) {
             delays = Flowable.range(1, Integer.MAX_VALUE)
                     // make exponential
                     .map(new Function<Integer, Long>() {
                         @Override
                         public Long apply(Integer n) {
-                            return Math.round(Math.pow(factor, n - 1) * unit.toMillis(firstDelay));
+                            long delayMs = Math.round(Math.pow(factor, n - 1) * unit.toMillis(firstDelay));
+                            if (maxDelay == -1) {
+                                return delayMs;
+                            } else {
+                                long maxDelayMs = unit.toMillis(maxDelay);
+                                return Math.min(maxDelayMs, delayMs);
+                            }
                         }
                     });
             return this;
+        }
+        
+        public Builder exponentialBackoff(final long firstDelay, final TimeUnit unit, final double factor) {
+            return exponentialBackoff(firstDelay, -1, unit, factor);
         }
 
         public Builder exponentialBackoff(long firstDelay, TimeUnit unit) {
