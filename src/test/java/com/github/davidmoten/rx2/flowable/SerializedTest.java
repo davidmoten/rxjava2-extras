@@ -1,25 +1,24 @@
-package com.github.davidmoten.rx2;
+package com.github.davidmoten.rx2.flowable;
 
-import io.reactivex.Flowable;
-import org.junit.Test;
-
-import com.github.davidmoten.junit.Asserts;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
-/**
- * Created by erzfn on 12/1/17.
- */
-public class FlowableSerializedTest {
+import com.github.davidmoten.junit.Asserts;
+import com.github.davidmoten.rx2.flowable.Serialized;
+
+import io.reactivex.Flowable;
+
+public class SerializedTest {
 
     @Test
     public void isUtilityClass() {
-        Asserts.assertIsUtilityClass(FlowableSerialized.class);
+        Asserts.assertIsUtilityClass(Serialized.class);
     }
 
     @Test
@@ -27,10 +26,10 @@ public class FlowableSerializedTest {
         File file = new File("target/temp1");
         file.delete();
         Flowable<Integer> source = Flowable.just(1, 2, 3);
-        FlowableSerialized.write(source, file).subscribe();
+        Serialized.write(source, file).subscribe();
         assertTrue(file.exists());
         assertTrue(file.length() > 0);
-        List<Integer> list = FlowableSerialized.<Integer> read(file).toList().blockingGet();
+        List<Integer> list = Serialized.<Integer> read(file).toList().blockingGet();
         assertEquals(Arrays.asList(1, 2, 3), list);
     }
 
@@ -39,10 +38,10 @@ public class FlowableSerializedTest {
         File file = new File("target/temp2");
         file.delete();
         Flowable<Integer> source = Flowable.just(1, 2, 3);
-        FlowableSerialized.write(source, file, false, 1).subscribe();
+        Serialized.write(source, file, false, 1).subscribe();
         assertTrue(file.exists());
         assertTrue(file.length() > 0);
-        List<Integer> list = FlowableSerialized.<Integer> read(file, 1).toList().blockingGet();
+        List<Integer> list = Serialized.<Integer> read(file, 1).toList().blockingGet();
         assertEquals(Arrays.asList(1, 2, 3), list);
     }
 
@@ -51,9 +50,9 @@ public class FlowableSerializedTest {
         File file = new File("target/temp3");
         file.delete();
         Flowable<Integer> source = Flowable.empty();
-        FlowableSerialized.write(source, file).subscribe();
+        Serialized.write(source, file).subscribe();
         assertTrue(file.exists());
-        List<Integer> list = FlowableSerialized.<Integer> read(file).toList().blockingGet();
+        List<Integer> list = Serialized.<Integer> read(file).toList().blockingGet();
         assertTrue(list.isEmpty());
     }
 
@@ -62,10 +61,10 @@ public class FlowableSerializedTest {
         File file = new File("target/temp4");
         file.delete();
         Flowable<Integer> source = Flowable.just(1, 2, 3);
-        FlowableSerialized.kryo().write(source, file).subscribe();
+        Serialized.kryo().write(source, file).subscribe();
         assertTrue(file.exists());
         assertTrue(file.length() > 0);
-        List<Integer> list = FlowableSerialized.kryo().read(Integer.class, file).toList()
+        List<Integer> list = Serialized.kryo().read(Integer.class, file).toList()
                 .blockingGet();
         assertEquals(Arrays.asList(1, 2, 3), list);
     }
@@ -75,9 +74,9 @@ public class FlowableSerializedTest {
         File file = new File("target/temp5");
         file.delete();
         Flowable<Integer> source = Flowable.empty();
-        FlowableSerialized.kryo().write(source, file).subscribe();
+        Serialized.kryo().write(source, file).subscribe();
         assertTrue(file.exists());
-        List<Integer> list = FlowableSerialized.kryo().read(Integer.class, file).toList()
+        List<Integer> list = Serialized.kryo().read(Integer.class, file).toList()
                 .blockingGet();
         assertTrue(list.isEmpty());
     }
@@ -87,9 +86,9 @@ public class FlowableSerializedTest {
         File file = new File("target/temp6");
         file.delete();
         Flowable<Person> source = Flowable.just(new Person("fred", 24), new Person("jane", 32));
-        FlowableSerialized.kryo().write(source, file).subscribe();
+        Serialized.kryo().write(source, file).subscribe();
         assertTrue(file.exists());
-        List<Person> list = FlowableSerialized.kryo().read(Person.class, file).toList()
+        List<Person> list = Serialized.kryo().read(Person.class, file).toList()
                 .blockingGet();
         assertEquals(2, list.size());
         assertEquals("fred", list.get(0).name);

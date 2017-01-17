@@ -1,4 +1,4 @@
-package com.github.davidmoten.rx2;
+package com.github.davidmoten.rx2.flowable;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -17,6 +17,7 @@ import java.util.concurrent.Callable;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import com.github.davidmoten.rx2.Consumers;
 
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
@@ -28,11 +29,11 @@ import io.reactivex.functions.Function;
  * {@link ObjectOutputStream}s and reading {@link Flowable} streams of
  * indeterminate size from {@link ObjectInputStream}s.
  */
-public final class FlowableSerialized {
+public final class Serialized {
 
     private static final int DEFAULT_BUFFER_SIZE = 8192;
     
-    private FlowableSerialized() {
+    private Serialized() {
         //prevent instantiation
     }
 
