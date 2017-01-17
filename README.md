@@ -529,7 +529,7 @@ To read serialized objects from a file:
 Flowable<Item> items = Serialized.read(file);
 ```
 
-To write an Observable to a file:
+To write a `Flowable` to a file:
 
 ```java
 Flowable.write(observable, file).subscribe();
@@ -557,7 +557,7 @@ Flowable<Item> items = Serialized.kryo().read(file);
 
 To write:
 ```java
-Flowable.write(observable, file).subscribe();
+Flowable.write(flowable, file).subscribe();
 ```
 
 You can also call `Serialized.kryo(kryo)` to use an instance of `Kryo` that you have configured specially. 
