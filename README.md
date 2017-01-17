@@ -15,6 +15,7 @@ Features
 * [`onBackpressureBufferToFile`](#onbackpressurebuffertofile) - high throughput with memory-mapped files
 * [`FlowableTransformers`](#flowabletransformers)
 * [`ObservableTransformers`](#observabletransformers)
+* [`Serialized`](#serialized)
 * tests pass on Linux, Windows 10, Solaris 10
 * supports Java 1.6+
 
@@ -161,15 +162,19 @@ Functions
 `identity`
 `throwing`
 
-BiFunctions
--------------
-`collectStats`
-`throwing`
-
 Predicates
 -------------
 `alwaysFalse`
 `alwaysTrue`
+
+Serialized
+---------------
+[`read`](#serialized)
+[`write`](#serialized)
+[`kryo().read`](#serialized)
+[`kryo().write`](#serialized)
+
+#Documentation
 
 collectStats
 ---------------------------
@@ -516,3 +521,43 @@ Flowable
     .forEach(System.out::println);
 ```
 
+Serialized
+------------------
+To read serialized objects from a file:
+
+```java
+Flowable<Item> items = Serialized.read(file);
+```
+
+To write an Observable to a file:
+
+```java
+Flowable.write(observable, file).subscribe();
+```
+
+### Kryo
+`Serialized` also has support for the very fast serialization library [kryo](https://github.com/EsotericSoftware/kryo). Unlike standard Java serialization *Kryo* can also serialize/deserialize objects that don't implement `Serializable`. 
+
+Add this to your pom.xml:
+
+```xml
+<dependency>
+    <groupId>com.esotericsoftware</groupId>
+    <artifactId>kryo</artifactId>
+    <version>4.0.0</version>
+</dependency>
+```
+
+For example,
+
+To read:
+```java
+Flowable<Item> items = Serialized.kryo().read(file);
+```
+
+To write:
+```java
+Flowable.write(observable, file).subscribe();
+```
+
+You can also call `Serialized.kryo(kryo)` to use an instance of `Kryo` that you have configured specially. 
