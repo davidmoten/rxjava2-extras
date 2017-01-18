@@ -15,13 +15,13 @@ public final class FlowableReverse {
     @SuppressWarnings("unchecked")
     public static <T> Flowable<T> reverse(Flowable<T> source) {
         return source.toList().toFlowable()
-                .flatMap((Function<List<T>, Flowable<T>>) (Function<?, ?>) REVERSE_LIST);
+                .flatMapIterable((Function<List<T>, Iterable<T>>) (Function<?, ?>) REVERSE_LIST);
     }
 
-    private static final Function<List<Object>, Flowable<Object>> REVERSE_LIST = new Function<List<Object>, Flowable<Object>>() {
+    private static final Function<List<Object>, Iterable<Object>> REVERSE_LIST = new Function<List<Object>, Iterable<Object>>() {
         @Override
-        public Flowable<Object> apply(List<Object> list) {
-            return Flowable.fromIterable(reverse(list));
+        public Iterable<Object> apply(List<Object> list) {
+            return reverse(list);
         }
     };
 
