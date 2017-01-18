@@ -22,7 +22,7 @@ import io.reactivex.internal.queue.MpscLinkedQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 
-public class FlowableMatch<A, B, K, C> extends Flowable<C> {
+public final class FlowableMatch<A, B, K, C> extends Flowable<C> {
 
     private final Flowable<A> a;
     private final Flowable<B> b;
@@ -50,10 +50,10 @@ public class FlowableMatch<A, B, K, C> extends Flowable<C> {
 
     @Override
     protected void subscribeActual(Subscriber<? super C> child) {
-        MatchCoordinator<A, B, K, C> coordinator = new MatchCoordinator<A, B, K, C>(a, b, aKey,
-                bKey, combiner, requestSize, child);
+        MatchCoordinator<A, B, K, C> coordinator = new MatchCoordinator<A, B, K, C>(aKey, bKey,
+                combiner, requestSize, child);
         child.onSubscribe(coordinator);
-        coordinator.subscribe(child);
+        coordinator.subscribe(a, b);
     }
 
     interface Receiver {
@@ -65,8 +65,6 @@ public class FlowableMatch<A, B, K, C> extends Flowable<C> {
             implements Receiver, Subscription {
         private final Map<K, Queue<A>> as = new HashMap<K, Queue<A>>();
         private final Map<K, Queue<B>> bs = new HashMap<K, Queue<B>>();
-        private final Flowable<A> a;
-        private final Flowable<B> b;
         private final Function<? super A, ? extends K> aKey;
         private final Function<? super B, ? extends K> bKey;
         private final BiFunction<? super A, ? super B, C> combiner;
@@ -92,11 +90,9 @@ public class FlowableMatch<A, B, K, C> extends Flowable<C> {
 
         private volatile boolean cancelled = false;
 
-        MatchCoordinator(Flowable<A> a, Flowable<B> b, Function<? super A, ? extends K> aKey,
+        MatchCoordinator(Function<? super A, ? extends K> aKey,
                 Function<? super B, ? extends K> bKey, BiFunction<? super A, ? super B, C> combiner,
                 long requestSize, Subscriber<? super C> child) {
-            this.a = a;
-            this.b = b;
             this.aKey = aKey;
             this.bKey = bKey;
             this.combiner = combiner;
@@ -105,7 +101,7 @@ public class FlowableMatch<A, B, K, C> extends Flowable<C> {
             this.child = child;
         }
 
-        public void subscribe(Subscriber<? super C> child) {
+        public void subscribe(Flowable<A> a, Flowable<B> b) {
             aSub = new MySubscriber<A, K>(Source.A, this, requestSize);
             bSub = new MySubscriber<B, K>(Source.B, this, requestSize);
             a.subscribe(aSub);
@@ -142,7 +138,7 @@ public class FlowableMatch<A, B, K, C> extends Flowable<C> {
             int missed = 1;
             while (true) {
                 long r = requested.get();
-                int emitted = 0;
+                long emitted = 0;
                 while (emitted != r) {
                     if (cancelled) {
                         return;
@@ -191,10 +187,8 @@ public class FlowableMatch<A, B, K, C> extends Flowable<C> {
                         break;
                     }
                 }
-                if (emitted > 0) {
-                    // reduce requested by emitted
-                    BackpressureHelper.produced(requested, emitted);
-                }
+                // reduce requested by emitted which will always be positive
+                BackpressureHelper.produced(requested, emitted);
                 missed = this.addAndGet(-missed);
                 if (missed == 0) {
                     return;
