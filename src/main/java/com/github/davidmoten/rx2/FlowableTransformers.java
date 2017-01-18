@@ -100,6 +100,10 @@ public final class FlowableTransformers {
     public static Options.BuilderFlowable onBackpressureBufferToFile() {
         return Options.builderFlowable();
     }
+    
+    public static com.github.davidmoten.rx2.persist.Options.BuilderFlowable persist() {
+        return com.github.davidmoten.rx2.persist.Options.builderFlowable();
+    }
 
     @SuppressWarnings("unchecked")
 	public static <T extends Number> FlowableTransformer<T, Statistics> collectStats() {

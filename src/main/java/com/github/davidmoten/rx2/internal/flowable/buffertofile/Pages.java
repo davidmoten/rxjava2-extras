@@ -17,25 +17,27 @@ public final class Pages {
 
     private final Callable<File> fileFactory;
     private final int pageSize;
+    private final boolean forceWrites;
 
     // read queue must be SPSC because is added to from the write thread
-    private final SimplePlainQueue<Page> queue = new SpscLinkedArrayQueue<Page>(
+    private final SimplePlainQueue<PageI> queue = new SpscLinkedArrayQueue<PageI>(
             QUEUE_INITIAL_CAPACITY);
 
-    Page writePage;
+    PageI writePage;
     int writePosition;
 
-    Page readPage;
+    PageI readPage;
     int readPosition;
 
-    Page markPage;
+    PageI markPage;
     int markPosition;
 
-    public Pages(Callable<File> fileFactory, int pageSize) {
+    public Pages(Callable<File> fileFactory, int pageSize, boolean forceWrites) {
         Preconditions.checkArgument(pageSize >= 4);
         Preconditions.checkArgument(pageSize % 4 == 0);
         this.fileFactory = fileFactory;
         this.pageSize = pageSize;
+        this.forceWrites = forceWrites;
     }
 
     public int avail() {
@@ -53,7 +55,7 @@ public final class Pages {
         putInt(writePage(), value);
     }
 
-    private void putInt(Page page, int value) {
+    private void putInt(PageI page, int value) {
         if (CHECK) {
             int avail = page.length() - writePosition;
             if (avail < 0)
@@ -64,7 +66,7 @@ public final class Pages {
     }
 
     public void put(byte[] bytes, int offset, int length) {
-        Page page = writePage();
+        PageI page = writePage();
         if (CHECK) {
             if (length == 0)
                 throw new IllegalArgumentException();
@@ -80,10 +82,13 @@ public final class Pages {
         // if there is any space at all in current page then it will be enough
         // for 4 bytes because we pad all offerings to the queue
         markPage.putIntOrdered(markPosition, value);
+        if (forceWrites) {
+            markPage.forceWrite();
+        }
         markPage = null;
     }
 
-    private Page writePage() {
+    private PageI writePage() {
         if (writePage == null || writePosition == pageSize) {
             createNewPage();
         }
@@ -97,7 +102,10 @@ public final class Pages {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        writePage = new Page(file, pageSize);
+        if (forceWrites)
+            writePage = new PageForced(file, pageSize);
+        else
+            writePage = new Page(file, pageSize);
         writePosition = 0;
         queue.offer(writePage);
         // System.out.println(Thread.currentThread().getName() + ": created
@@ -134,7 +142,7 @@ public final class Pages {
         return result;
     }
 
-    private Page readPage() {
+    private PageI readPage() {
         if (readPage == null || readPosition >= pageSize) {
             if (readPage != null) {
                 readPage.close();
@@ -146,7 +154,7 @@ public final class Pages {
     }
 
     public void putByte(byte b) {
-        Page page = writePage();
+        PageI page = writePage();
         if (CHECK) {
             int avail = page.length() - writePosition;
             if (avail < 0)
@@ -157,7 +165,7 @@ public final class Pages {
     }
 
     public byte getByte() {
-        Page page = readPage();
+        PageI page = readPage();
         if (CHECK) {
             int avail = page.length() - readPosition;
             if (avail < 1)
@@ -192,7 +200,7 @@ public final class Pages {
             readPage.close();
             readPage = null;
         }
-        Page page;
+        PageI page;
         while ((page = queue.poll()) != null) {
             page.close();
         }

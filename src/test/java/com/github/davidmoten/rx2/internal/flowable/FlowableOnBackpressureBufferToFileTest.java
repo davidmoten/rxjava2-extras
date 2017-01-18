@@ -33,6 +33,7 @@ import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subscribers.TestSubscriber;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@Ignore
 public class FlowableOnBackpressureBufferToFileTest {
 
     private static final Callable<File> FILE_FACTORY = new Callable<File>() {

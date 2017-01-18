@@ -20,14 +20,18 @@ public class PageListTest {
 
     @Test
     public void testPutOneAndReadLessThanPageSize() {
-        Pages p = new Pages(factory, 8);
+        Pages p = createPages(8);
         p.putInt(1);
         assertEquals(1, p.getInt());
+    }
+    
+    private static Pages createPages(int size) {
+        return new Pages(factory, size, false);
     }
 
     @Test
     public void testPutTwoAndReadLessThanPageSize() {
-        Pages p = new Pages(factory, 12);
+        Pages p = createPages(12);
         p.putInt(1);
         p.putInt(2);
         assertEquals(1, p.getInt());
@@ -36,7 +40,7 @@ public class PageListTest {
 
     @Test
     public void testPutTwoAndReadEqualsPageSize() {
-        Pages p = new Pages(factory, 8);
+        Pages p = createPages(8);
         p.putInt(1);
         p.putInt(2);
         assertEquals(1, p.getInt());
@@ -45,7 +49,7 @@ public class PageListTest {
 
     @Test
     public void testPutTwoAndReadMoreThanPageSize() {
-        Pages p = new Pages(factory, 4);
+        Pages p = createPages(4);
         p.putInt(1);
         p.putInt(2);
         assertEquals(1, p.getInt());
@@ -54,7 +58,7 @@ public class PageListTest {
 
     @Test
     public void testPutSixAndReadMultiplePages() {
-        Pages p = new Pages(factory, 8);
+        Pages p = createPages(8);
         p.putInt(1);
         p.putInt(2);
         p.putInt(3);

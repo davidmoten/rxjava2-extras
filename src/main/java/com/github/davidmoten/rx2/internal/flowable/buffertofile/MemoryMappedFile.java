@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.RandomAccessFile;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
 import sun.misc.Unsafe;
@@ -122,6 +123,10 @@ public final class MemoryMappedFile {
 
     public byte getByte(long pos) {
         return unsafe.getByte(pos + addr);
+    }
+
+    public void force() {
+        //TODO how to force writing to storage?
     }
 
 }

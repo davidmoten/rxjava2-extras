@@ -143,7 +143,7 @@ public final class Options {
                 @Override
                 public Publisher<T> apply(Flowable<T> source) {
                     return new FlowableOnBackpressureBufferToFile<T>(source, null, options,
-                            serializer);
+                            serializer, false);
                 }
             };
         }
@@ -242,7 +242,7 @@ public final class Options {
                 @Override
                 public Flowable<T> apply(Observable<T> source) {
                     return new FlowableOnBackpressureBufferToFile<T>(null, source, options,
-                            serializer);
+                            serializer, false);
                 }
             };
         }

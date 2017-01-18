@@ -27,20 +27,22 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
     private final Observable<T> source2;
     private final Options options;
     private final Serializer<T> serializer;
+    private final boolean forceWrites;
 
     public FlowableOnBackpressureBufferToFile(Flowable<T> source, Observable<T> source2,
-            Options options, Serializer<T> serializer) {
+            Options options, Serializer<T> serializer, boolean forceWrites) {
         // only one source should be defined
         Preconditions.checkArgument((source != null) ^ (source2 != null));
         this.source = source;
         this.source2 = source2;
         this.options = options;
         this.serializer = serializer;
+        this.forceWrites = true;
     }
 
     @Override
     protected void subscribeActual(Subscriber<? super T> child) {
-        PagedQueue queue = new PagedQueue(options.fileFactory(), options.pageSizeBytes());
+        PagedQueue queue = new PagedQueue(options.fileFactory(), options.pageSizeBytes(), forceWrites);
         Worker worker = options.scheduler().createWorker();
         if (source != null) {
             source.subscribe(

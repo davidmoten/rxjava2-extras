@@ -28,8 +28,9 @@ public final class PagedQueue extends AtomicInteger {
     private byte[] messageBytesAccumulated;
     private int indexBytesAccumulated;
 
-    public PagedQueue(Callable<File> fileFactory, int pageSize) {
-        this.pages = new Pages(fileFactory, pageSize);
+
+    public PagedQueue(Callable<File> fileFactory, int pageSize, boolean forceWrites) {
+        this.pages = new Pages(fileFactory, pageSize, forceWrites);
     }
 
     public void offer(byte[] bytes) {
@@ -68,8 +69,9 @@ public final class PagedQueue extends AtomicInteger {
             int count = Math.min(avail - 8 - extraHeaderBytes, length);
             int padding = padding(count);
             int remaining = Math.max(0, avail - count - 6 - padding - extraHeaderBytes);
-            if (remaining <= EXTRA_PADDING_LIMIT)
+            if (remaining <= EXTRA_PADDING_LIMIT) {
                 padding += remaining;
+            }
             // System.out.println(String.format(
             // "length=%s,start=%s,count=%s,padding=%s,remaining=%s,extraHeaderBytes=%s",
             // length, start, count, padding, remaining, extraHeaderBytes));
