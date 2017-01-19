@@ -253,7 +253,7 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
                         // for visibility purposes must read error AFTER reading
                         // done (done is volatile and error is non-volatile)
                         boolean isDone = done;
-                        if (error != null) {
+                        if (isDone && error != null) {
                             cancelNow();
                             child.onError(error);
                             return;
