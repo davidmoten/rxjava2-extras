@@ -1,4 +1,4 @@
-package com.github.davidmoten.rx2.internal.flowable.buffertofile;
+package com.github.davidmoten.rx2.buffertofile;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -12,13 +12,13 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.mockito.Mockito;
 import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
 import com.github.davidmoten.rx2.Callables;
 import com.github.davidmoten.rx2.Consumers;
@@ -27,12 +27,14 @@ import com.github.davidmoten.rx2.Flowables;
 import com.github.davidmoten.rx2.ObservableTransformers;
 import com.github.davidmoten.rx2.buffertofile.Options.BuilderFlowable;
 import com.github.davidmoten.rx2.buffertofile.Options.BuilderObservable;
-import com.github.davidmoten.rx2.buffertofile.Serializer;
-import com.github.davidmoten.rx2.buffertofile.Serializers;
+import com.github.davidmoten.rx2.internal.flowable.buffertofile.FlowableOnBackpressureBufferToFile;
+import com.github.davidmoten.rx2.internal.flowable.buffertofile.FlowableOnBackpressureBufferToFile.BufferToFileSubscriberFlowable;
+import com.github.davidmoten.rx2.internal.flowable.buffertofile.PagedQueue;
 
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
+import io.reactivex.Scheduler.Worker;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subscribers.TestSubscriber;
@@ -54,7 +56,7 @@ public class FlowableOnBackpressureBufferToFileTest {
         Flowable.just(1, 2, 3) //
                 .compose(onBackpressureBufferToFile() //
                         .pageSizeBytes(1000000) //
-                        .<Integer> serializerJavaIO())
+                        .<Integer>serializerJavaIO())
                 .test() //
                 .awaitDone(5000000000L, TimeUnit.SECONDS) //
                 .assertValues(1, 2, 3)//
@@ -66,7 +68,7 @@ public class FlowableOnBackpressureBufferToFileTest {
         Observable.just(1, 2, 3) //
                 .to(onBackpressureBufferToFileObservable() //
                         .pageSizeBytes(1000000) //
-                        .<Integer> serializerJavaIO())
+                        .<Integer>serializerJavaIO())
                 .test() //
                 .awaitDone(5000000000L, TimeUnit.SECONDS) //
                 .assertValues(1, 2, 3)//
@@ -117,9 +119,9 @@ public class FlowableOnBackpressureBufferToFileTest {
 
     @Test
     public void testEmpty() {
-        Flowable.<Integer> empty() //
+        Flowable.<Integer>empty() //
                 .compose(onBackpressureBufferToFile() //
-                        .<Integer> serializerJavaIO())
+                        .<Integer>serializerJavaIO())
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertNoValues() //
@@ -130,7 +132,7 @@ public class FlowableOnBackpressureBufferToFileTest {
     public void testOne() {
         Flowable.just(4) //
                 .compose(onBackpressureBufferToFile() //
-                        .<Integer> serializerJavaIO())
+                        .<Integer>serializerJavaIO())
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertValue(4) //
@@ -185,16 +187,16 @@ public class FlowableOnBackpressureBufferToFileTest {
 
     @Test(expected = NullPointerException.class)
     public void testNullSubscriber() {
-        Flowable.just(1).compose(onBackpressureBufferToFile().<Integer> serializerJavaIO())
+        Flowable.just(1).compose(onBackpressureBufferToFile().<Integer>serializerJavaIO())
                 .subscribe((Subscriber<Integer>) null);
     }
 
     @Test
     public void testError() {
         IOException e = new IOException();
-        Flowable.<Integer> error(e) //
+        Flowable.<Integer>error(e) //
                 .compose(onBackpressureBufferToFile() //
-                        .<Integer> serializerJavaIO())
+                        .<Integer>serializerJavaIO())
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertNoValues() //
@@ -204,9 +206,9 @@ public class FlowableOnBackpressureBufferToFileTest {
     @Test
     public void testErrorObservable() {
         IOException e = new IOException();
-        Observable.<Integer> error(e) //
+        Observable.<Integer>error(e) //
                 .to(onBackpressureBufferToFileObservable() //
-                        .<Integer> serializerJavaIO())
+                        .<Integer>serializerJavaIO())
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertNoValues() //
@@ -216,9 +218,9 @@ public class FlowableOnBackpressureBufferToFileTest {
     @Test
     public void testItemsThenError() {
         IOException e = new IOException();
-        Flowable.just(1, 2, 3).concatWith(Flowable.<Integer> error(e)) //
+        Flowable.just(1, 2, 3).concatWith(Flowable.<Integer>error(e)) //
                 .compose(onBackpressureBufferToFile() //
-                        .<Integer> serializerJavaIO())
+                        .<Integer>serializerJavaIO())
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertError(e); //
@@ -250,7 +252,7 @@ public class FlowableOnBackpressureBufferToFileTest {
         Flowable.range(1, n) //
                 .compose(onBackpressureBufferToFile() //
                         .pageSizeBytes(100) //
-                        .<Integer> serializerJavaIO()) //
+                        .<Integer>serializerJavaIO()) //
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertNoErrors() //
@@ -266,7 +268,7 @@ public class FlowableOnBackpressureBufferToFileTest {
         Flowable.range(1, n) //
                 .compose(onBackpressureBufferToFile() //
                         .pageSizeBytes(1000) //
-                        .<Integer> serializerJavaIO()) //
+                        .<Integer>serializerJavaIO()) //
                 .test() //
                 .awaitDone(5L, TimeUnit.SECONDS) //
                 .assertNoErrors() //
@@ -282,7 +284,7 @@ public class FlowableOnBackpressureBufferToFileTest {
         Flowable.range(1, n) //
                 .compose(onBackpressureBufferToFile() //
                         .pageSizeBytes(10000000) //
-                        .<Integer> serializerJavaIO()) //
+                        .<Integer>serializerJavaIO()) //
                 .count() //
                 .test() //
                 .awaitDone(50L, TimeUnit.SECONDS) //
@@ -383,7 +385,8 @@ public class FlowableOnBackpressureBufferToFileTest {
         // length field + padding field + padding + bytes = 4 + 1 + 1 + 300 =
         // 306 bytes
         for (int n = 1; n <= numRuns; n++) {
-//            System.out.println("bytes=" + bytesSize + " ======== " + n + " =========");
+            // System.out.println("bytes=" + bytesSize + " ======== " + n + "
+            // =========");
             Flowables.repeat(bytes, n) //
                     .compose(onBackpressureBufferToFile() //
                             .pageSizeBytes(pageSize) //
@@ -542,7 +545,7 @@ public class FlowableOnBackpressureBufferToFileTest {
         FlowableOnBackpressureBufferToFile.close(queue);
         Mockito.verify(queue, Mockito.atLeastOnce()).close();
     }
-    
+
     @Test
     public void testCloseQueueThrowsExceptionReportsToPlugins() {
         AtomicBoolean set = new AtomicBoolean();
@@ -554,4 +557,32 @@ public class FlowableOnBackpressureBufferToFileTest {
         Mockito.verify(queue, Mockito.atLeastOnce()).close();
         assertTrue(set.get());
     }
+
+    @Test
+    public void testPollQueueThrowsExceptionEmitsError() {
+        PagedQueue queue = Mockito.mock(PagedQueue.class);
+        RuntimeException err = new RuntimeException();
+        Mockito.doThrow(err).when(queue).poll();
+        Worker worker = Schedulers.trampoline().createWorker();
+        TestSubscriber<String> ts = TestSubscriber.create(1);
+        BufferToFileSubscriberFlowable<String> b = new BufferToFileSubscriberFlowable<String>(ts,
+                queue, Serializers.utf8(), worker);
+        b.onSubscribe(IGNORE);
+        b.request(1);
+        b.run();
+        Mockito.verify(queue, Mockito.atLeastOnce()).poll();
+        ts.assertError(err);
+    }
+
+    private static final Subscription IGNORE = new Subscription() {
+        @Override
+        public void request(long n) {
+            // deliberately no op
+        }
+
+        @Override
+        public void cancel() {
+            // deliberately no op
+        }
+    };
 }

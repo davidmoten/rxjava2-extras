@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 import org.reactivestreams.Publisher;
 
 import com.github.davidmoten.guavamini.Preconditions;
+import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
 import com.github.davidmoten.rx2.internal.flowable.buffertofile.FlowableOnBackpressureBufferToFile;
 
 import io.reactivex.Flowable;
@@ -25,7 +26,8 @@ public final class Options {
     private final int pageSizeBytes;
     private final Scheduler scheduler;
 
-    private Options(Callable<File> filefactory, int pageSizeBytes, Scheduler scheduler) {
+    @VisibleForTesting
+    Options(Callable<File> filefactory, int pageSizeBytes, Scheduler scheduler) {
         Preconditions.checkNotNull(filefactory);
         Preconditions.checkArgument(pageSizeBytes > 0, "bufferSizeBytes must be greater than 0");
         Preconditions.checkNotNull(scheduler);
@@ -252,7 +254,8 @@ public final class Options {
         }
     }
 
-    private static final class FileFactoryHolder {
+    @VisibleForTesting
+    static final class FileFactoryHolder {
         private static final Callable<File> INSTANCE = new Callable<File>() {
             @Override
             public File call() {
