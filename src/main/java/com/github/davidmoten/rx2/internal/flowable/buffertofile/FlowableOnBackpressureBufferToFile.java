@@ -234,7 +234,7 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
 			// the queue) and we still want it to happen if there are no
 			// requests
 			if (cancelled) {
-				closeQueue();
+				close(queue);
 				worker.dispose();
 				return;
 			}
@@ -243,7 +243,7 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
 				long e = 0; // emitted
 				while (e != r) {
 					if (cancelled) {
-						closeQueue();
+						close(queue);
 						worker.dispose();
 						return;
 					}
@@ -304,21 +304,22 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
 		private void cancelNow() {
 			cancelled = true;
 			cancelUpstream();
-			closeQueue();
+			close(queue);
 			worker.dispose();
-		}
-
-		private void closeQueue() {
-			try {
-				queue.close();
-			} catch (Throwable err) {
-				Exceptions.throwIfFatal(err);
-				RxJavaPlugins.onError(err);
-			}
 		}
 
 		abstract public void cancelUpstream();
 
+	}
+
+	//TODO unit test
+	static void close(PagedQueue queue) {
+		try {
+			queue.close();
+		} catch (Throwable err) {
+			Exceptions.throwIfFatal(err);
+			RxJavaPlugins.onError(err);
+		}
 	}
 
 }
