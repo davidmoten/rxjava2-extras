@@ -1,6 +1,5 @@
 package com.github.davidmoten.rx2.internal.flowable.buffertofile;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
