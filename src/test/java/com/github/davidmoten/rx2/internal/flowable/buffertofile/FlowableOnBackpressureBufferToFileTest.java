@@ -1,6 +1,7 @@
-package com.github.davidmoten.rx2.internal.flowable;
+package com.github.davidmoten.rx2.internal.flowable.buffertofile;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,11 +10,14 @@ import java.text.DecimalFormat;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
+import org.mockito.Mockito;
 import org.reactivestreams.Subscriber;
 
 import com.github.davidmoten.rx2.Callables;
@@ -29,6 +33,7 @@ import com.github.davidmoten.rx2.buffertofile.Serializers;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
+import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subscribers.TestSubscriber;
 
@@ -530,4 +535,23 @@ public class FlowableOnBackpressureBufferToFileTest {
                 + "msgs/sec = " + df.format(n * 1000.0 / t));
     }
 
+    @Test
+    public void testCloseQueue() {
+        PagedQueue queue = Mockito.mock(PagedQueue.class);
+        Mockito.doNothing().when(queue).close();
+        FlowableOnBackpressureBufferToFile.close(queue);
+        Mockito.verify(queue, Mockito.atLeastOnce()).close();
+    }
+    
+    @Test
+    public void testCloseQueueThrowsExceptionReportsToPlugins() {
+        AtomicBoolean set = new AtomicBoolean();
+        RxJavaPlugins.setErrorHandler(Consumers.<Throwable>setToTrue(set));
+        PagedQueue queue = Mockito.mock(PagedQueue.class);
+        RuntimeException err = new RuntimeException();
+        Mockito.doThrow(err).when(queue).close();
+        FlowableOnBackpressureBufferToFile.close(queue);
+        Mockito.verify(queue, Mockito.atLeastOnce()).close();
+        assertTrue(set.get());
+    }
 }

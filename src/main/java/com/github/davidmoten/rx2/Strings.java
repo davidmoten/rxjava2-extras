@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 import org.reactivestreams.Publisher;
 
 import com.github.davidmoten.guavamini.Preconditions;
+import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
 import com.github.davidmoten.rx2.internal.flowable.FlowableStringSplitSimple;
 import com.github.davidmoten.rx2.internal.flowable.TransformerDecode;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStringSplit;
@@ -49,7 +50,7 @@ public final class Strings {
     /**
      * Returns null if input is null otherwise returns input.toString().trim().
      */
-    // visible for testing
+    @VisibleForTesting
     static Function<Object, String> TRIM = new Function<Object, String>() {
 
         @Override

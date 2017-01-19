@@ -7,6 +7,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
 import com.github.davidmoten.guavamini.Preconditions;
+import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
 import com.github.davidmoten.rx2.buffertofile.Options;
 import com.github.davidmoten.rx2.buffertofile.Serializer;
 
@@ -311,7 +312,7 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
 
 	}
 
-	//TODO unit test
+	@VisibleForTesting
 	static void close(PagedQueue queue) {
 		try {
 			queue.close();

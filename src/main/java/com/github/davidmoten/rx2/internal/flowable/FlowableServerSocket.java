@@ -8,6 +8,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.Callable;
 
+import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
 import com.github.davidmoten.rx2.Bytes;
 import com.github.davidmoten.rx2.Consumers;
 
@@ -120,7 +121,7 @@ public final class FlowableServerSocket {
         }
     }
 
-    // visible for testing
+    @VisibleForTesting
     static void closeQuietly(Socket socket) {
         try {
             socket.close();

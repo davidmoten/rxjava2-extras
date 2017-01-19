@@ -6,6 +6,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 
+import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
+
 import sun.misc.Unsafe;
 import sun.nio.ch.FileChannelImpl;
 
@@ -34,8 +36,8 @@ public final class MemoryMappedFile {
         mapAndSetOffset();
     }
 
-    // visible for testing
     // Bundle reflection calls to get access to the given method
+    @VisibleForTesting
     static Method getMethod(Class<?> cls, String name, Class<?>... params) {
         Method m;
         try {

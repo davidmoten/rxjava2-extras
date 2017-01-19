@@ -2,6 +2,8 @@ package com.github.davidmoten.rx2;
 
 import java.util.concurrent.Callable;
 
+import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
+
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableTransformer;
@@ -104,7 +106,7 @@ public final class StateMachine {
 
     }
 
-    // visible for testing
+    @VisibleForTesting
     static final class CompletionAlwaysTrueHolder {
 
         private CompletionAlwaysTrueHolder() {

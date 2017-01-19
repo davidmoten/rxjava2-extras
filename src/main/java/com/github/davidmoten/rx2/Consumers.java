@@ -108,8 +108,9 @@ public final class Consumers {
         };
     }
 
-    public static Consumer<Object> setToTrue(final AtomicBoolean value) {
-        return new Consumer<Object>() {
+    @SuppressWarnings("unchecked")
+    public static <T> Consumer<T> setToTrue(final AtomicBoolean value) {
+        return (Consumer<T>) new Consumer<Object>() {
 
             @Override
             public void accept(Object t) throws Exception {

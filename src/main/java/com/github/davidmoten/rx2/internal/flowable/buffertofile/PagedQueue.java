@@ -8,7 +8,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.github.davidmoten.guavamini.Preconditions;
 
 @SuppressWarnings("serial")
-public final class PagedQueue extends AtomicInteger {
+// non-final class for unit testing
+public class PagedQueue extends AtomicInteger {
 
     private static final boolean isLittleEndian = ByteOrder
             .nativeOrder() == ByteOrder.LITTLE_ENDIAN;
