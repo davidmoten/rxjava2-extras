@@ -74,4 +74,8 @@ public final class Page {
     public byte getByte(int readPosition) {
         return mm.getByte(readPosition);
     }
+    
+    public void force(boolean updateMetadata) {
+    	mm.force(updateMetadata);
+    }
 }

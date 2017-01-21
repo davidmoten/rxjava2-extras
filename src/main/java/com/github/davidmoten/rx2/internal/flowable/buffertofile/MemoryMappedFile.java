@@ -23,7 +23,7 @@ public final class MemoryMappedFile {
 	private final File file;
 	private final long size;
 	private final RandomAccessFile backingFile;
-	private final FileChannel ch;
+	private final FileChannel fileChannel;
 	private long addr;
 
 	static {
@@ -41,8 +41,8 @@ public final class MemoryMappedFile {
 		try {
 			backingFile = new RandomAccessFile(this.file, "rw");
 			backingFile.setLength(this.size);
-			this.ch = backingFile.getChannel();
-			this.addr = (Long) mmap.invoke(ch, 1, 0L, this.size);
+			this.fileChannel = backingFile.getChannel();
+			this.addr = (Long) mmap.invoke(fileChannel, 1, 0L, this.size);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -77,7 +77,7 @@ public final class MemoryMappedFile {
 	public void close() {
 		try {
 			unmmap.invoke(null, addr, this.size);
-			ch.close();
+			fileChannel.close();
 			backingFile.close();
 			if (!file.delete()) {
 				throw new RuntimeException("could not delete " + file);
@@ -107,20 +107,13 @@ public final class MemoryMappedFile {
 
 	public void putOrderedInt(long pos, int val) {
 		unsafe.putOrderedInt(null, pos + addr, val);
-		try {
-			force();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
-	private long lastForceTime = 0;
-
-	public void force() throws IOException {
-		long t = System.currentTimeMillis();
-		if (t - lastForceTime > 1000000) {
-			lastForceTime = t;
-			ch.force(true);
+	public void force(boolean updateMetadata) {
+		try {
+			fileChannel.force(updateMetadata);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 

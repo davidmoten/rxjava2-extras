@@ -83,28 +83,6 @@ public final class Pages {
         markPage = null;
     }
 
-    private Page writePage() {
-        if (writePage == null || writePosition == pageSize) {
-            createNewPage();
-        }
-        return writePage;
-    }
-
-    private void createNewPage() {
-        File file;
-        try {
-            file = fileFactory.call();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        writePage = new Page(file, pageSize);
-        writePosition = 0;
-        queue.offer(writePage);
-        // System.out.println(Thread.currentThread().getName() + ": created
-        // page "
-        // + currentWritePage.hashCode());
-    }
-
     public int getInt() {
         if (readPage() == null) {
             return -1;
@@ -133,6 +111,16 @@ public final class Pages {
         readPosition += length;
         return result;
     }
+
+	public int getIntVolatile() {
+		if (readPage() == null) {
+			return -1;
+		} else {
+			int result = readPage.getIntVolatile(readPosition);
+			readPosition += 4;
+			return result;
+		}
+	}
 
     private Page readPage() {
         if (readPage == null || readPosition >= pageSize) {
@@ -167,20 +155,14 @@ public final class Pages {
         readPosition += 1;
         return result;
     }
-
-    public void moveReadPosition(int forward) {
-        readPosition += forward;
+    
+    public void force(boolean updateMetadata) {
+    	writePage.force(updateMetadata);
     }
 
-    public int getIntVolatile() {
-        if (readPage() == null) {
-            return -1;
-        } else {
-            int result = readPage.getIntVolatile(readPosition);
-            readPosition += 4;
-            return result;
-        }
-    }
+	public void moveReadPosition(int forward) {
+		readPosition += forward;
+	}
 
     public void moveWritePosition(int forward) {
         writePosition += forward;
@@ -197,5 +179,25 @@ public final class Pages {
             page.close();
         }
     }
+    private Page writePage() {
+        if (writePage == null || writePosition == pageSize) {
+            createNewPage();
+        }
+        return writePage;
+    }
 
+    private void createNewPage() {
+        File file;
+        try {
+            file = fileFactory.call();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        writePage = new Page(file, pageSize);
+        writePosition = 0;
+        queue.offer(writePage);
+        // System.out.println(Thread.currentThread().getName() + ": created
+        // page "
+        // + currentWritePage.hashCode());
+    }
 }
