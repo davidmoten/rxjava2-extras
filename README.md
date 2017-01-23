@@ -599,8 +599,8 @@ You may want to group emissions from a Flowable into lists of variable size. Thi
 As an example from a sequence of temperatures lets group the sub-zero and zero or above temperatures into contiguous lists:
 
 ```java
-Observable.just(10, 5, 2, -1, -2, -5, -1, 2, 5, 6)
-    .compose(Transformers.toListWhile( 
+Flowable.just(10, 5, 2, -1, -2, -5, -1, 2, 5, 6)
+    .compose(FlowableTransformers.toListWhile( 
         (list, t) -> list.isEmpty() 
             || Math.signum(list.get(0)) < 0 && Math.signum(t) < 0
             || Math.signum(list.get(0)) >= 0 && Math.signum(t) >= 0)
