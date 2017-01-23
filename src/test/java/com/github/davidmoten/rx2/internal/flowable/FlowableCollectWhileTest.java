@@ -29,8 +29,7 @@ public final class FlowableCollectWhileTest {
 		        .assertNoValues() //
 		        .assertComplete();
 	}
-	
-	
+
 	@Test
 	public void testOne() {
 		Flowable.just(3) //
@@ -41,4 +40,23 @@ public final class FlowableCollectWhileTest {
 		        .assertComplete();
 	}
 
+	@Test
+	public void testTwo() {
+		Flowable.just(3, 4) //
+		        .compose(FlowableTransformers. //
+		                toListWhile(BUFFER_TWO)) //
+		        .test() //
+		        .assertValue(Lists.newArrayList(3, 4)) //
+		        .assertComplete();
+	}
+
+	@Test
+	public void testThree() {
+		Flowable.just(3, 4, 5) //
+		        .compose(FlowableTransformers. //
+		                toListWhile(BUFFER_TWO)) //
+		        .test() //
+		        .assertValues(Lists.newArrayList(3, 4), Lists.newArrayList(5)) //
+		        .assertComplete();
+	}
 }

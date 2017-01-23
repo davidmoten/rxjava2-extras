@@ -46,16 +46,10 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 		private Subscription parent;
 		private R collection;
 		private boolean done;
-		
+
 		private volatile boolean cancelled;
 
-		private final AtomicInteger state = new AtomicInteger(0);
-		//0 == NOT_COMPLETED_NOR_CANCELLED 
-		//1 == CANCELLED
-		//2 == COMPLETED_AND_CANCELLED
-		//3 == COMPLETED_NO_REQUEST
-
-		public CollectWhileSubscriber(Callable<R> collectionFactory, BiFunction<? super R, ? super T, ? extends R> add,
+		CollectWhileSubscriber(Callable<R> collectionFactory, BiFunction<? super R, ? super T, ? extends R> add,
 		        BiPredicate<? super R, ? super T> condition, Subscriber<? super R> child) {
 			this.collectionFactory = collectionFactory;
 			this.add = add;
@@ -94,22 +88,29 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 				onError(e);
 				return;
 			}
-			if (collect) {
+			if (!collect) {
+				child.onNext(collection);
 				try {
-					collection = add.apply(collection, t);
+					collection = collectionFactory.call();
 					if (collection == null) {
-						throw new NullPointerException("add function should not return null");
+						throw new NullPointerException("collectionFactory should not return null");
 					}
-					parent.request(1);
 				} catch (Exception e) {
 					Exceptions.throwIfFatal(e);
 					onError(e);
 					return;
 				}
-			} else {
-				R c = collection;
-				collection = null;
-				child.onNext(c);
+			}
+			try {
+				collection = add.apply(collection, t);
+				if (collection == null) {
+					throw new NullPointerException("add function should not return null");
+				}
+				parent.request(1);
+			} catch (Exception e) {
+				Exceptions.throwIfFatal(e);
+				onError(e);
+				return;
 			}
 		}
 
