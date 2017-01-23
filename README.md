@@ -412,7 +412,11 @@ zeroes according to padding length
 
 * high read/write throughput is achieved via minimal use of `Unsafe` volatile puts and gets.
 
-When a message is placed on the memory-mapped file based queue the header and message bytes above are appended at the current write position in the file but the message length is written as zero (or in our case not written at all because the value defaults to zero). Only once all the message bytes are written is message length given its actual value (and this is done using `Unsafe.putOrderedInt`). When a read is attempted the length field is read using `Unsafe.getIntVolatile` and if zero we do nothing (until the next read attempt). 
+When a message is placed on the memory-mapped file based queue:
+
+* The header and message bytes above are appended at the current write position in the file but the message length is written as zero (or in our case not written at all because the value defaults to zero). 
+* Only once all the message bytes are written is message length given its actual value (and this is done using `Unsafe.putOrderedInt`). 
+* When a read is attempted the length field is read using `Unsafe.getIntVolatile` and if zero we do nothing (until the next read attempt). 
 
 Cancellation complicates things somewhat because pulling the plug suddenly on `Unsafe` memory mapped files means crashing the JVM with a sigsev fault. To reduce contention with cancellation checks, resource disposal is processed by the queue drain method (reads) and writes to the queue are serialized with cancellation via CAS semantics. 
 
@@ -590,7 +594,7 @@ You can also call `Serialized.kryo(kryo)` to use an instance of `Kryo` that you 
 
 toListWhile
 ---------------------------
-You may want to group emissions from a Flowable into lists of variable size. This can be achieved safely using `toListWhile`.
+You may want to group emissions from a `Flowable` into lists of variable size. This can be achieved safely using `toListWhile`.
 
 <img src="src/docs/toListWhile.png?raw=true" />
 
