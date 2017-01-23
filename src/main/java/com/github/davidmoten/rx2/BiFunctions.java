@@ -1,7 +1,5 @@
 package com.github.davidmoten.rx2;
 
-import java.util.List;
-
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
 
 import io.reactivex.functions.BiFunction;
