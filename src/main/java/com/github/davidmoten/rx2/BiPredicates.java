@@ -6,6 +6,10 @@ import io.reactivex.functions.BiPredicate;
 
 public final class BiPredicates {
 
+	private BiPredicates() {
+		// prevent instantiation
+	}
+
 	public static <T, R> BiPredicate<T, R> alwaysTrue() {
 		// TODO make holder
 		return new BiPredicate<T, R>() {
@@ -28,7 +32,7 @@ public final class BiPredicates {
 		};
 	}
 
-	public static <T,R> BiPredicate<T,R> throwing() {
+	public static <T, R> BiPredicate<T, R> throwing() {
 		// TODO make holder
 		return new BiPredicate<T, R>() {
 
