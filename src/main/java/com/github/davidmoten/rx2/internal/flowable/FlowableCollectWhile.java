@@ -1,7 +1,6 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
