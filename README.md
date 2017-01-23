@@ -109,6 +109,8 @@ FlowableTransformers
 
 [`doOnEmpty`](#doonempty)
 
+[`collectWhile`](#collectwhile)
+
 [`mapLast`](#maplast)
 
 [`match`, `matchWith`](#match-matchwith)
@@ -118,6 +120,8 @@ FlowableTransformers
 [`reverse`](#reverse)
 
 [`stateMachine`](#statemachine)
+
+[`toListWhile`](#tolistwhile)
 
 
 ObservableTransformers
@@ -138,9 +142,21 @@ Actions
 `setToTrue`
 `throwing`
 
+BiFunctions 
+-------------
+`constant`
+`throwing`
+
+BiPredicates
+----------------
+`alwaysTrue`
+`alwaysFalse`
+`throwing`
+
 Callables
 ---------------
 `constant`
+`throwing`
 
 Consumers
 --------------
@@ -184,6 +200,13 @@ collectStats
 Accumulate statistics, emitting the accumulated results with each item.
 
 <img src="src/docs/collectStats.png?raw=true" />
+
+
+collectWhile
+-------------------------
+Behaves as per `toListWhile` but allows control over the data structure used. 
+
+<img src="src/docs/collectWhile.png?raw=true" />
 
 doOnEmpty
 -------------------------
@@ -564,3 +587,29 @@ Flowable.write(flowable, file).subscribe();
 ```
 
 You can also call `Serialized.kryo(kryo)` to use an instance of `Kryo` that you have configured specially. 
+
+toListWhile
+---------------------------
+You may want to group emissions from a Flowable into lists of variable size. This can be achieved safely using `toListWhile`.
+
+<img src="src/docs/toListWhile.png?raw=true" />
+
+[javadoc](http://davidmoten.github.io/rxjava-extras/apidocs/com/github/davidmoten/rx/Transformers.html#toListWhile-rx.functions.Func2-)
+
+As an example from a sequence of temperatures lets group the sub-zero and zero or above temperatures into contiguous lists:
+
+```java
+Observable.just(10, 5, 2, -1, -2, -5, -1, 2, 5, 6)
+    .compose(Transformers.toListWhile( 
+        (list, t) -> list.isEmpty() 
+            || Math.signum(list.get(0)) < 0 && Math.signum(t) < 0
+            || Math.signum(list.get(0)) >= 0 && Math.signum(t) >= 0)
+    .forEach(System.out::println);
+```
+produces
+```
+[10, 5, 2]
+[-1, -2, -5, -1]
+[2, 5, 6]
+```
+
