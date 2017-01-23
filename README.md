@@ -594,8 +594,6 @@ You may want to group emissions from a Flowable into lists of variable size. Thi
 
 <img src="src/docs/toListWhile.png?raw=true" />
 
-[javadoc](http://davidmoten.github.io/rxjava-extras/apidocs/com/github/davidmoten/rx/Transformers.html#toListWhile-rx.functions.Func2-)
-
 As an example from a sequence of temperatures lets group the sub-zero and zero or above temperatures into contiguous lists:
 
 ```java
@@ -612,4 +610,6 @@ produces
 [-1, -2, -5, -1]
 [2, 5, 6]
 ```
+
+See also `collectWhile`.
 
