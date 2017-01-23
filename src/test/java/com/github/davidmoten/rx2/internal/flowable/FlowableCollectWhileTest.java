@@ -74,4 +74,15 @@ public final class FlowableCollectWhileTest {
 		        .assertNoValues() //
 		        .assertError(NullPointerException.class);
 	}
+
+	@Test
+	public void testAddReturnsNullShouldEmitNPE() {
+		Flowable.just(3) //
+		        .compose(FlowableTransformers. //
+		                collectWhile(Callables.<List<Integer>>toNull(),
+		                        BiFunctions.<List<Integer>, Integer, List<Integer>>toNull(), BUFFER_TWO)) //
+		        .test() //
+		        .assertNoValues() //
+		        .assertError(NullPointerException.class);
+	}
 }

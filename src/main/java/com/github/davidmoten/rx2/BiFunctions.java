@@ -1,5 +1,7 @@
 package com.github.davidmoten.rx2;
 
+import java.util.List;
+
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
 
 import io.reactivex.functions.BiFunction;
@@ -44,6 +46,18 @@ public final class BiFunctions {
 				return value;
 			}
 		};
+	}
+
+	public static <T, R, S> BiFunction<T, R, S> toNull() {
+		// TODO make holder
+		return new BiFunction<T, R, S>() {
+
+			@Override
+			public S apply(T t1, R t2) throws Exception {
+				return null;
+			}
+		};
+
 	}
 
 }
