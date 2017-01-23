@@ -133,10 +133,13 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 				R c = collection;
 				collection = null;
 				child.onNext(c);
-			}
-			if (!cancelled) {
+				if (!cancelled) {
+					child.onComplete();
+				}
+			} else {
 				child.onComplete();
 			}
+
 		}
 
 		@Override
