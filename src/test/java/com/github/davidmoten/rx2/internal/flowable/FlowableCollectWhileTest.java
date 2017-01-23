@@ -166,6 +166,16 @@ public final class FlowableCollectWhileTest {
 		}
 	}
 
+	@Test
+	public void testBackpressure() {
+		Flowable.just(3, 4, 5) //
+		        .compose(FlowableTransformers. //
+		                toListWhile(BUFFER_TWO)) //
+		        .test(1) //
+		        .assertValue(Lists.newArrayList(3, 4)) //
+		        .assertNotTerminated();
+	}
+	
 	private static final BiFunction<List<Integer>, Integer, List<Integer>> ADD = new BiFunction<List<Integer>, Integer, List<Integer>>() {
 
 		@Override

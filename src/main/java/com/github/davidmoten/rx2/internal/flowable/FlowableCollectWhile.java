@@ -83,13 +83,14 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 				if (!collectionCreated()) {
 					return;
 				}
+			} else {
+				parent.request(1);
 			}
 			try {
 				collection = add.apply(collection, t);
 				if (collection == null) {
 					throw new NullPointerException("add function should not return null");
 				}
-				parent.request(1);
 			} catch (Exception e) {
 				Exceptions.throwIfFatal(e);
 				onError(e);
