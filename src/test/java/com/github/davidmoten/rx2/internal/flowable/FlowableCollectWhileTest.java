@@ -6,11 +6,14 @@ import java.util.List;
 import org.junit.Test;
 
 import com.github.davidmoten.rx2.BiFunctions;
+import com.github.davidmoten.rx2.BiPredicates;
 import com.github.davidmoten.rx2.Callables;
 import com.github.davidmoten.rx2.FlowableTransformers;
+import com.github.davidmoten.rx2.exceptions.ThrowingException;
 import com.google.common.collect.Lists;
 
 import io.reactivex.Flowable;
+import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.BiPredicate;
 
 public final class FlowableCollectWhileTest {
@@ -85,4 +88,52 @@ public final class FlowableCollectWhileTest {
 		        .assertNoValues() //
 		        .assertError(NullPointerException.class);
 	}
+
+	@Test
+	public void testAddReturnsNull() {
+		Flowable.just(3) //
+		        .compose(FlowableTransformers. //
+		                collectWhile( //
+		                        Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()),
+		                        BiFunctions.<List<Integer>, Integer, List<Integer>>toNull(), //
+		                        BUFFER_TWO)) //
+		        .test() //
+		        .assertNoValues() //
+		        .assertError(NullPointerException.class);
+	}
+	
+	@Test
+	public void testAddThrows() {
+		Flowable.just(3) //
+		        .compose(FlowableTransformers. //
+		                collectWhile( //
+		                        Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()),
+		                        BiFunctions.<List<Integer>, Integer, List<Integer>>throwing(), //
+		                        BUFFER_TWO)) //
+		        .test() //
+		        .assertNoValues() //
+		        .assertError(ThrowingException.class);
+	}
+	
+	@Test
+	public void testConditionThrows() {
+		Flowable.just(3) //
+		        .compose(FlowableTransformers. //
+		                collectWhile( //
+		                        Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()),
+		                        ADD, //
+		                        BiPredicates.throwing())) //
+		        .test() //
+		        .assertNoValues() //
+		        .assertError(ThrowingException.class);
+	}
+	
+	private static final BiFunction<List<Integer>, Integer, List<Integer>> ADD = new BiFunction<List<Integer>, Integer, List<Integer>>() {
+
+		@Override
+		public List<Integer> apply(List<Integer> list, Integer t) throws Exception {
+			list.add(t);
+			return list;
+		}};
+
 }

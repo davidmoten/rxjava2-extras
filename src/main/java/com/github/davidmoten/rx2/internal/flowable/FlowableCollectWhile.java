@@ -67,17 +67,8 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 			if (done) {
 				return;
 			}
-			if (collection == null) {
-				try {
-					collection = collectionFactory.call();
-					if (collection == null) {
-						throw new NullPointerException("collectionFactory should not return null");
-					}
-				} catch (Exception e) {
-					Exceptions.throwIfFatal(e);
-					onError(e);
-					return;
-				}
+			if (collection == null && !collectionCreated()) {
+				return;
 			}
 			boolean collect;
 			try {
@@ -89,14 +80,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 			}
 			if (!collect) {
 				child.onNext(collection);
-				try {
-					collection = collectionFactory.call();
-					if (collection == null) {
-						throw new NullPointerException("collectionFactory should not return null");
-					}
-				} catch (Exception e) {
-					Exceptions.throwIfFatal(e);
-					onError(e);
+				if (!collectionCreated()) {
 					return;
 				}
 			}
@@ -110,6 +94,20 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 				Exceptions.throwIfFatal(e);
 				onError(e);
 				return;
+			}
+		}
+
+		public boolean collectionCreated() {
+			try {
+				collection = collectionFactory.call();
+				if (collection == null) {
+					throw new NullPointerException("collectionFactory should not return null");
+				}
+				return true;
+			} catch (Exception e) {
+				Exceptions.throwIfFatal(e);
+				onError(e);
+				return false;
 			}
 		}
 
