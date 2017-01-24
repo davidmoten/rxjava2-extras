@@ -234,7 +234,6 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
         }
 
         private void drain() {
-            int missed = 1;
             // check cancel outside of request drain loop because the drain
             // method is also used to serialize read with cancellation (closing
             // the queue) and we still want it to happen if there are no
@@ -244,6 +243,7 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
                 worker.dispose();
                 return;
             }
+            int missed = 1;
             while (true) {
                 long r = requested.get();
                 long e = 0; // emitted

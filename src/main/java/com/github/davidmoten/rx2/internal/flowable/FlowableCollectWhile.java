@@ -1,6 +1,8 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -10,6 +12,7 @@ import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.BiPredicate;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
+import io.reactivex.internal.util.BackpressureHelper;
 import io.reactivex.plugins.RxJavaPlugins;
 
 public final class FlowableCollectWhile<T, R> extends Flowable<R> {
@@ -35,16 +38,21 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 		source.subscribe(subscriber);
 	}
 
-	private static final class CollectWhileSubscriber<T, R> implements Subscriber<T>, Subscription {
+	private static final class CollectWhileSubscriber<T, R> extends AtomicInteger
+	        implements Subscriber<T>, Subscription {
 
 		private final Callable<R> collectionFactory;
 		private final BiFunction<? super R, ? super T, ? extends R> add;
 		private final BiPredicate<? super R, ? super T> condition;
 		private final Subscriber<? super R> child;
+		private final AtomicLong requested = new AtomicLong();
 
 		private Subscription parent;
 		private R collection;
+		private R collectionToEmit;
 		private boolean done;
+		private Throwable error;
+		private volatile boolean terminalEventReceived;
 
 		private volatile boolean cancelled;
 
@@ -79,12 +87,10 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 				return;
 			}
 			if (!collect) {
-				child.onNext(collection);
+				collectionToEmit = collection;
 				if (!collectionCreated()) {
 					return;
 				}
-			} else {
-				parent.request(1);
 			}
 			try {
 				collection = add.apply(collection, t);
@@ -96,6 +102,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 				onError(e);
 				return;
 			}
+			drain();
 		}
 
 		public boolean collectionCreated() {
@@ -121,7 +128,9 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 			done = true;
 			collection = null;
 			parent.cancel();
-			child.onError(e);
+			error = e;
+			terminalEventReceived = true;
+			drain();
 		}
 
 		@Override
@@ -130,23 +139,50 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 				return;
 			}
 			done = true;
-			if (collection != null) {
-				R c = collection;
-				collection = null;
-				child.onNext(c);
-				if (!cancelled) {
-					child.onComplete();
-				}
-			} else {
-				child.onComplete();
-			}
+			collectionToEmit = collection;
+			collection = null;
+			terminalEventReceived = true;
+			drain();
+		}
 
+		private void drain() {
+			if (getAndIncrement() == 0) {
+				int missed = 1;
+				while (true) {
+					long r = requested.get();
+					boolean emitted = false;
+					boolean terminal = terminalEventReceived;
+					if (terminal && error != null) {
+						parent.cancel();
+						collection = null;
+						collectionToEmit = null;
+						child.onError(error);
+						return;
+					}
+					if (r > 0) {
+						R c = collectionToEmit;
+						if (c != null) {
+							collectionToEmit = null;
+							child.onNext(c);
+							emitted = true;
+						}
+					}
+					if (emitted) {
+						BackpressureHelper.add(requested, -1);
+					}
+					missed = addAndGet(-missed);
+					if (missed == 0) {
+						return;
+					}
+				}
+			}
 		}
 
 		@Override
 		public void request(long n) {
 			if (SubscriptionHelper.validate(n)) {
-				parent.request(n);
+				BackpressureHelper.add(requested, n);
+				drain();
 			}
 		}
 
