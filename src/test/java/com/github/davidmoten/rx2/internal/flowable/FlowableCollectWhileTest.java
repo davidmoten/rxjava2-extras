@@ -4,10 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.junit.Test;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
 import com.github.davidmoten.rx2.BiFunctions;
 import com.github.davidmoten.rx2.BiPredicates;
@@ -184,7 +187,6 @@ public final class FlowableCollectWhileTest {
 		        .assertComplete();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testBackpressureAndCancel() {
 
@@ -198,6 +200,89 @@ public final class FlowableCollectWhileTest {
 		ts.requestMore(Long.MAX_VALUE) //
 		        .assertValueCount(1) //
 		        .assertNotTerminated();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testRequestWhileProcessingOnNext() {
+		final List<List<Integer>> list = new ArrayList<List<Integer>>();
+		Subscriber<List<Integer>> subscriber = new Subscriber<List<Integer>>() {
+
+			private Subscription parent;
+
+			@Override
+			public void onSubscribe(Subscription s) {
+				this.parent = s;
+				parent.request(1);
+			}
+
+			@Override
+			public void onNext(List<Integer> a) {
+				list.add(a);
+				parent.request(1);
+			}
+
+			@Override
+			public void onError(Throwable e) {
+			}
+
+			@Override
+			public void onComplete() {
+
+			}
+		};
+		Flowable.just(3, 4, 5, 6) //
+		        .compose(FlowableTransformers. //
+		                toListWhile(BUFFER_TWO)) //
+		        .subscribe(subscriber);
+		assertEquals(list, Arrays.asList(list(3, 4), list(5, 6)));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testCancelWhileProcessingOnNext() {
+		final List<List<Integer>> list = new ArrayList<List<Integer>>();
+		Subscriber<List<Integer>> subscriber = new Subscriber<List<Integer>>() {
+
+			private Subscription parent;
+
+			@Override
+			public void onSubscribe(Subscription s) {
+				this.parent = s;
+				parent.request(2);
+			}
+
+			@Override
+			public void onNext(List<Integer> a) {
+				list.add(a);
+				parent.cancel();
+			}
+
+			@Override
+			public void onError(Throwable e) {
+			}
+
+			@Override
+			public void onComplete() {
+
+			}
+		};
+		Flowable.just(3, 4, 5, 6) //
+		        .compose(FlowableTransformers. //
+		                toListWhile(BUFFER_TWO)) //
+		        .subscribe(subscriber);
+		assertEquals(list, Arrays.asList(list(3, 4)));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testWhenEmitRemainderFalse() {
+		Flowable.just(3, 4, 5) //
+		        .compose(FlowableTransformers. //
+		                toListWhile(BUFFER_TWO, false)) //
+		        .test() //
+		        .assertValues(Lists.newArrayList(3, 4)) //
+		        .assertComplete();
 	}
 
 	private static List<Integer> list(Integer... values) {
