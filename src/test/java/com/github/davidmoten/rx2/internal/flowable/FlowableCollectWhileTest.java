@@ -22,6 +22,7 @@ import io.reactivex.Flowable;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.BiPredicate;
 import io.reactivex.plugins.RxJavaPlugins;
+import io.reactivex.subscribers.TestSubscriber;
 
 public final class FlowableCollectWhileTest {
 
@@ -181,6 +182,22 @@ public final class FlowableCollectWhileTest {
 		        .requestMore(2) //
 		        .assertValues(list(3, 4), list(5, 6), list(7, 8)) //
 		        .assertComplete();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testBackpressureAndCancel() {
+
+		TestSubscriber<List<Integer>> ts = Flowable.just(3, 4, 5, 6, 7, 8) //
+		        .compose(FlowableTransformers. //
+		                toListWhile(BUFFER_TWO)) //
+		        .test(1) //
+		        .assertValue(list(3, 4)) //
+		        .assertNotTerminated();
+		ts.cancel(); //
+		ts.requestMore(Long.MAX_VALUE) //
+		        .assertValueCount(1) //
+		        .assertNotTerminated();
 	}
 
 	private static List<Integer> list(Integer... values) {
