@@ -134,8 +134,10 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 				RxJavaPlugins.onError(e);
 				return;
 			}
-			done = true;
+			// must set `error` before done because `error` is not volatile and
+			// `done` is
 			error = e;
+			done = true;
 			drain();
 		}
 
@@ -149,8 +151,8 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 		}
 
 		private void drain() {
-			int missed = 1;
 			if (getAndIncrement() == 0) {
+				int missed = 1;
 				while (true) {
 					long r = requested.get();
 					long e = 0;
@@ -164,8 +166,10 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 						R c = queue.poll();
 						if (c == null) {
 							if (done) {
-								if (error != null) {
-									Throwable err = error;
+								// `error` must be read AFTER `done` for
+								// visibility
+								Throwable err = error;
+								if (err != null) {
 									error = null;
 									child.onError(err);
 									return;
@@ -174,6 +178,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 									if (col != null) {
 										collection = null;
 										// ensure that the remainder is emitted
+										// if configured to
 										if (emitRemainder) {
 											queue.offer(col);
 										}
