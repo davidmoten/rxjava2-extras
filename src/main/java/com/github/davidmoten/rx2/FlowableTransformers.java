@@ -53,16 +53,21 @@ public final class FlowableTransformers {
 		};
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <T> FlowableTransformer<T, T> reverse() {
-		// TODO make holder
-		return new FlowableTransformer<T, T>() {
+		return (FlowableTransformer<T, T>) ReverseHolder.INSTANCE;
+	}
+	
+	private static final class ReverseHolder {
+		static final FlowableTransformer<Object,Object> INSTANCE = new FlowableTransformer<Object, Object>() {
 
 			@Override
-			public Publisher<T> apply(Flowable<T> upstream) {
+			public Publisher<Object> apply(Flowable<Object> upstream) {
 				return FlowableReverse.reverse(upstream);
 			}
 
 		};
+
 	}
 
 	public static <T> FlowableTransformer<T, T> mapLast(final Function<? super T, ? extends T> function) {
