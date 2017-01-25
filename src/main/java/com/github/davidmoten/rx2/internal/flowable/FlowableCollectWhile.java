@@ -1,6 +1,8 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
+import java.util.Queue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -38,6 +40,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 		source.subscribe(subscriber);
 	}
 
+	@SuppressWarnings("serial")
 	private static final class CollectWhileSubscriber<T, R> extends AtomicInteger
 	        implements Subscriber<T>, Subscription {
 
@@ -46,13 +49,12 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 		private final BiPredicate<? super R, ? super T> condition;
 		private final Subscriber<? super R> child;
 		private final AtomicLong requested = new AtomicLong();
+		private final Queue<R> queue = new ConcurrentLinkedQueue<R>();
 
 		private Subscription parent;
-		private R collection;
-		private R collectionToEmit;
-		private boolean done;
+		private volatile R collection;
+		private volatile boolean done;
 		private Throwable error;
-		private volatile boolean terminalEventReceived;
 
 		private volatile boolean cancelled;
 
@@ -87,10 +89,12 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 				return;
 			}
 			if (!collect) {
-				collectionToEmit = collection;
+				queue.offer(collection);
 				if (!collectionCreated()) {
 					return;
 				}
+			} else {
+				parent.request(1);
 			}
 			try {
 				collection = add.apply(collection, t);
@@ -126,10 +130,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 				return;
 			}
 			done = true;
-			collection = null;
-			parent.cancel();
 			error = e;
-			terminalEventReceived = true;
 			drain();
 		}
 
@@ -139,36 +140,53 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 				return;
 			}
 			done = true;
-			collectionToEmit = collection;
-			collection = null;
-			terminalEventReceived = true;
 			drain();
 		}
 
 		private void drain() {
+			int missed = 1;
 			if (getAndIncrement() == 0) {
-				int missed = 1;
 				while (true) {
 					long r = requested.get();
-					boolean emitted = false;
-					boolean terminal = terminalEventReceived;
-					if (terminal && error != null) {
-						parent.cancel();
-						collection = null;
-						collectionToEmit = null;
-						child.onError(error);
-						return;
-					}
-					if (r > 0) {
-						R c = collectionToEmit;
-						if (c != null) {
-							collectionToEmit = null;
+					long e = 0;
+					while (e != r) {
+						if (cancelled) {
+							// TODO GC Nepotism?
+							queue.clear();
+							collection = null;
+							return;
+						}
+						R c = queue.poll();
+						if (c == null) {
+							if (done) {
+								if (error != null) {
+									Throwable err = error;
+									error = null;
+									child.onError(err);
+									return;
+								} else {
+									R col = collection;
+									if (col != null) {
+										collection = null;
+										// ensure that the remainder is emitted
+										queue.offer(col);
+										// loop around again
+									} else {
+										child.onComplete();
+										return;
+									}
+								}
+							} else {
+								// nothing to emit and not done
+								break;
+							}
+						} else {
 							child.onNext(c);
-							emitted = true;
+							e++;
 						}
 					}
-					if (emitted) {
-						BackpressureHelper.add(requested, -1);
+					if (e > 0) {
+						BackpressureHelper.add(requested, -e);
 					}
 					missed = addAndGet(-missed);
 					if (missed == 0) {
@@ -182,6 +200,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 		public void request(long n) {
 			if (SubscriptionHelper.validate(n)) {
 				BackpressureHelper.add(requested, n);
+				parent.request(n);
 				drain();
 			}
 		}
