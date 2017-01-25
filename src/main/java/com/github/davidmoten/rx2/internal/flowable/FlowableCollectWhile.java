@@ -58,7 +58,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 		private Subscription parent;
 		private volatile R collection;
 		private volatile boolean done;
-		private Throwable error;
+		private Throwable error; // does not need to be volatile because is set before `done` and read after `done`
 
 		private volatile boolean cancelled;
 
