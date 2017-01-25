@@ -30,7 +30,7 @@ public final class Bytes {
 	}
 
 	/**
-	 * Returns an Flowable stream of byte arrays from the given
+	 * Returns a Flowable stream of byte arrays from the given
 	 * {@link InputStream} between 1 and {@code bufferSize} bytes.
 	 * 
 	 * @param is
