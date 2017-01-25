@@ -91,13 +91,13 @@ public final class Serialized {
             }
         };
         @SuppressWarnings("unchecked")
-        Function<ObjectInputStream, Flowable<T>> observableFactory = (Function<ObjectInputStream, Flowable<T>>) (Function<?, ?>) ObjectInputStreamObservableFactoryHolder.INSTANCE;
+        Function<ObjectInputStream, Flowable<T>> flowableFactory = (Function<ObjectInputStream, Flowable<T>>) (Function<?, ?>) ObjectInputStreamFlowableFactoryHolder.INSTANCE;
         Consumer<ObjectInputStream> disposeAction = Consumers.close();
-        return Flowable.using(resourceFactory, observableFactory, disposeAction, true);
+        return Flowable.using(resourceFactory, flowableFactory, disposeAction, true);
     }
 
     // singleton instance using Holder pattern
-    private static final class ObjectInputStreamObservableFactoryHolder {
+    private static final class ObjectInputStreamFlowableFactoryHolder {
         static final Function<ObjectInputStream, Flowable<Serializable>> INSTANCE = new Function<ObjectInputStream, Flowable<Serializable>>() {
 
             @Override
@@ -173,7 +173,7 @@ public final class Serialized {
                         new BufferedOutputStream(new FileOutputStream(file, append), bufferSize));
             }
         };
-        Function<ObjectOutputStream, Flowable<T>> observableFactory = new Function<ObjectOutputStream, Flowable<T>>() {
+        Function<ObjectOutputStream, Flowable<T>> flowableFactory = new Function<ObjectOutputStream, Flowable<T>>() {
 
             @Override
             public Flowable<T> apply(ObjectOutputStream oos) {
@@ -181,7 +181,7 @@ public final class Serialized {
             }
         };
         Consumer<ObjectOutputStream> disposeAction = Consumers.close();
-        return Flowable.using(resourceFactory, observableFactory, disposeAction, true);
+        return Flowable.using(resourceFactory, flowableFactory, disposeAction, true);
     }
 
     /**
@@ -255,7 +255,7 @@ public final class Serialized {
                     return new Output(new FileOutputStream(file, append), bufferSize);
                 }
             };
-            Function<Output, Flowable<T>> observableFactory = new Function<Output, Flowable<T>>() {
+            Function<Output, Flowable<T>> flowableFactory = new Function<Output, Flowable<T>>() {
 
                 @Override
                 public Flowable<T> apply(final Output output) {
@@ -268,7 +268,7 @@ public final class Serialized {
                 }
             };
             Consumer<Output> disposeAction = Consumers.close();
-            return Flowable.using(resourceFactory, observableFactory, disposeAction, true);
+            return Flowable.using(resourceFactory, flowableFactory, disposeAction, true);
         }
 
         public <T> Flowable<T> read(Class<T> cls, final File file) {
@@ -282,7 +282,7 @@ public final class Serialized {
                     return new Input(new FileInputStream(file), bufferSize);
                 }
             };
-            Function<Input, Flowable<T>> observableFactory = new Function<Input, Flowable<T>>() {
+            Function<Input, Flowable<T>> flowableFactory = new Function<Input, Flowable<T>>() {
 
                 @Override
                 public Flowable<T> apply(final Input input) {
@@ -290,7 +290,7 @@ public final class Serialized {
                 }
             };
             Consumer<Input> disposeAction = Consumers.close();
-            return Flowable.using(resourceFactory, observableFactory, disposeAction, true);
+            return Flowable.using(resourceFactory, flowableFactory, disposeAction, true);
         }
 
         public <T> Flowable<T> read(final Class<T> cls, final Input input) {
