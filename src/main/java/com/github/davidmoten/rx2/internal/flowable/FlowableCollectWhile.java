@@ -1,8 +1,6 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
-import java.util.Queue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -13,6 +11,8 @@ import io.reactivex.Flowable;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.BiPredicate;
+import io.reactivex.internal.fuseable.SimpleQueue;
+import io.reactivex.internal.queue.MpscLinkedQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 import io.reactivex.plugins.RxJavaPlugins;
@@ -53,7 +53,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 		private final Subscriber<? super R> child;
 		private final boolean emitRemainder;
 		private final AtomicLong requested = new AtomicLong();
-		private final Queue<R> queue = new ConcurrentLinkedQueue<R>();
+		private final SimpleQueue<R> queue = new MpscLinkedQueue<R>();
 
 		private Subscription parent;
 		private volatile R collection;
@@ -159,12 +159,20 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 					long e = 0;
 					while (e != r) {
 						if (cancelled) {
-							// TODO GC Nepotism?
 							queue.clear();
 							collection = null;
 							return;
 						}
-						R c = queue.poll();
+						R c = null;
+						try {
+							c = queue.poll();
+						} catch (Throwable err) {
+							Exceptions.throwIfFatal(err);
+							queue.clear();
+							collection = null;
+							child.onError(err);
+							return;
+						}
 						if (c == null) {
 							if (done) {
 								// `error` must be read AFTER `done` for
@@ -172,6 +180,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 								Throwable err = error;
 								if (err != null) {
 									error = null;
+									collection = null;
 									child.onError(err);
 									return;
 								} else {
@@ -199,14 +208,15 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 						}
 					}
 					if (e != 0L && r != Long.MAX_VALUE) {
-	                    requested.addAndGet(-e);
-	                }
+						requested.addAndGet(-e);
+					}
 					missed = addAndGet(-missed);
 					if (missed == 0) {
 						return;
 					}
 				}
 			}
+
 		}
 
 		@Override
