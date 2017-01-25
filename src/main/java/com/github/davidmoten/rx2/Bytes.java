@@ -89,7 +89,7 @@ public final class Bytes {
 	}
 
 	/**
-	 * Returns an Flowable stream of byte arrays from the given
+	 * Returns a Flowable stream of byte arrays from the given
 	 * {@link InputStream} of {@code 8192} bytes. The final byte array may be
 	 * less than {@code 8192} bytes.
 	 * 
