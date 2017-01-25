@@ -297,8 +297,8 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
                         break;
                     }
                 }
-                if (e > 0) {
-                    BackpressureHelper.produced(requested, e);
+                if (e != 0L && r != Long.MAX_VALUE) {
+                    requested.addAndGet(-e);
                 }
                 missed = addAndGet(-missed);
                 if (missed == 0) {
