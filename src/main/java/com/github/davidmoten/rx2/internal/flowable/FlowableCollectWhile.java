@@ -198,9 +198,9 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 							e++;
 						}
 					}
-					if (e > 0) {
-						BackpressureHelper.add(requested, -e);
-					}
+					if (e != 0L && r != Long.MAX_VALUE) {
+	                    requested.addAndGet(-e);
+	                }
 					missed = addAndGet(-missed);
 					if (missed == 0) {
 						return;
