@@ -166,16 +166,27 @@ public final class FlowableCollectWhileTest {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testBackpressure() {
-		Flowable.just(3, 4, 5) //
+		Flowable.just(3, 4, 5, 6, 7, 8) //
 		        .compose(FlowableTransformers. //
 		                toListWhile(BUFFER_TWO)) //
 		        .test(1) //
-		        .assertValue(Lists.newArrayList(3, 4)) //
-		        .assertNotTerminated();
+		        .assertValue(list(3, 4)) //
+		        .assertNotTerminated() //
+		        .requestMore(1) //
+		        .assertValues(list(3, 4), list(5, 6)) //
+		        .assertNotTerminated() //
+		        .requestMore(2) //
+		        .assertValues(list(3, 4), list(5, 6), list(7, 8)) //
+		        .assertComplete();
 	}
-	
+
+	private static List<Integer> list(Integer... values) {
+		return Lists.newArrayList(values);
+	}
+
 	private static final BiFunction<List<Integer>, Integer, List<Integer>> ADD = new BiFunction<List<Integer>, Integer, List<Integer>>() {
 
 		@Override

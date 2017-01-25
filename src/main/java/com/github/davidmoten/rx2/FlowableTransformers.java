@@ -137,20 +137,31 @@ public final class FlowableTransformers {
 	}
 
 	public static <T, R> FlowableTransformer<T, R> collectWhile(final Callable<R> collectionFactory,
-	        final BiFunction<? super R, ? super T, ? extends R> add,
-	        final BiPredicate<? super R, ? super T> condition) {
+	        final BiFunction<? super R, ? super T, ? extends R> add, final BiPredicate<? super R, ? super T> condition,
+	        final boolean emitRemainder) {
 		return new FlowableTransformer<T, R>() {
 
 			@Override
 			public Publisher<R> apply(Flowable<T> source) {
-				return new FlowableCollectWhile<T, R>(source, collectionFactory, add, condition);
+				return new FlowableCollectWhile<T, R>(source, collectionFactory, add, condition, emitRemainder);
 			}
 		};
 	}
 
+	public static <T, R> FlowableTransformer<T, R> collectWhile(final Callable<R> collectionFactory,
+	        final BiFunction<? super R, ? super T, ? extends R> add,
+	        final BiPredicate<? super R, ? super T> condition) {
+		return collectWhile(collectionFactory, add, condition, true);
+	}
+
+	public static <T> FlowableTransformer<T, List<T>> toListWhile(
+	        final BiPredicate<? super List<T>, ? super T> condition, boolean emitRemainder) {
+		return collectWhile(ListFactoryHolder.<T>factory(), ListFactoryHolder.<T>add(), condition, emitRemainder);
+	}
+
 	public static <T> FlowableTransformer<T, List<T>> toListWhile(
 	        final BiPredicate<? super List<T>, ? super T> condition) {
-		return collectWhile(ListFactoryHolder.<T>factory(), ListFactoryHolder.<T>add(), condition);
+		return toListWhile(condition, true);
 	}
 
 	private static final class ListFactoryHolder {

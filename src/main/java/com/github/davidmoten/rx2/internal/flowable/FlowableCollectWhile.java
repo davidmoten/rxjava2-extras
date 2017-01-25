@@ -23,20 +23,23 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 	private final Callable<R> collectionFactory;
 	private final BiFunction<? super R, ? super T, ? extends R> add;
 	private final BiPredicate<? super R, ? super T> condition;
+	private final boolean emitRemainder;
 
 	public FlowableCollectWhile(Flowable<T> source, Callable<R> collectionFactory,
-	        BiFunction<? super R, ? super T, ? extends R> add, BiPredicate<? super R, ? super T> condition) {
+	        BiFunction<? super R, ? super T, ? extends R> add, BiPredicate<? super R, ? super T> condition,
+	        boolean emitRemainder) {
 		super();
 		this.source = source;
 		this.collectionFactory = collectionFactory;
 		this.add = add;
 		this.condition = condition;
+		this.emitRemainder = emitRemainder;
 	}
 
 	@Override
 	protected void subscribeActual(Subscriber<? super R> child) {
 		CollectWhileSubscriber<T, R> subscriber = new CollectWhileSubscriber<T, R>(collectionFactory, add, condition,
-		        child);
+		        child, emitRemainder);
 		source.subscribe(subscriber);
 	}
 
@@ -48,6 +51,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 		private final BiFunction<? super R, ? super T, ? extends R> add;
 		private final BiPredicate<? super R, ? super T> condition;
 		private final Subscriber<? super R> child;
+		private final boolean emitRemainder;
 		private final AtomicLong requested = new AtomicLong();
 		private final Queue<R> queue = new ConcurrentLinkedQueue<R>();
 
@@ -59,11 +63,12 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 		private volatile boolean cancelled;
 
 		CollectWhileSubscriber(Callable<R> collectionFactory, BiFunction<? super R, ? super T, ? extends R> add,
-		        BiPredicate<? super R, ? super T> condition, Subscriber<? super R> child) {
+		        BiPredicate<? super R, ? super T> condition, Subscriber<? super R> child, boolean emitRemainder) {
 			this.collectionFactory = collectionFactory;
 			this.add = add;
 			this.condition = condition;
 			this.child = child;
+			this.emitRemainder = emitRemainder;
 		}
 
 		@Override
@@ -169,7 +174,9 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 									if (col != null) {
 										collection = null;
 										// ensure that the remainder is emitted
-										queue.offer(col);
+										if (emitRemainder) {
+											queue.offer(col);
+										}
 										// loop around again
 									} else {
 										child.onComplete();
