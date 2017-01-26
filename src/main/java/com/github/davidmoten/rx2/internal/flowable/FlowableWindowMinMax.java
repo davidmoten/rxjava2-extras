@@ -55,7 +55,7 @@ public final class FlowableWindowMinMax<T> extends Flowable<T> {
 		private final Map<Long, T> values;
 
 		// queue of indices
-		private final Deque<Long> q;
+		private final Deque<Long> indices;
 
 		private long count = 0;
 		private Subscription parent;
@@ -67,7 +67,7 @@ public final class FlowableWindowMinMax<T> extends Flowable<T> {
 			this.metric = metric;
 			this.child = child;
 			this.values = new HashMap<Long, T>(windowSize);
-			this.q = new ArrayDeque<Long>(windowSize);
+			this.indices = new ArrayDeque<Long>(windowSize);
 		}
 
 		@Override
@@ -81,13 +81,17 @@ public final class FlowableWindowMinMax<T> extends Flowable<T> {
 
 		@Override
 		public void request(long n) {
-			parent.request(n);
+			if (SubscriptionHelper.validate(n)) {
+				parent.request(n);
+			}
 		}
 
 		@Override
 		public void cancel() {
 			parent.cancel();
-			//TODO clear window?
+			// would be nice to clear the window here but would have performance
+			// impact because would need to worry about allowing concurrent
+			// changes to `indices` and `map`
 		}
 
 		@Override
@@ -109,12 +113,12 @@ public final class FlowableWindowMinMax<T> extends Flowable<T> {
 				// emit max
 
 				// head of queue is max
-				Long head = q.peekFirst();
+				Long head = indices.peekFirst();
 				final T value;
 				if (head == count - windowSize) {
 					// if window past that index then remove from map
-					values.remove(q.pollFirst());
-					value = values.get(q.peekFirst());
+					values.remove(indices.pollFirst());
+					value = values.get(indices.peekFirst());
 				} else {
 					value = values.get(head);
 				}
@@ -124,11 +128,11 @@ public final class FlowableWindowMinMax<T> extends Flowable<T> {
 
 		private void addToQueue(T t) {
 			Long v;
-			while ((v = q.peekLast()) != null && compare(t, values.get(v)) <= 0) {
-				values.remove(q.pollLast());
+			while ((v = indices.peekLast()) != null && compare(t, values.get(v)) <= 0) {
+				values.remove(indices.pollLast());
 			}
 			values.put(count, t);
-			q.offerLast(count);
+			indices.offerLast(count);
 		}
 
 		private int compare(T a, T b) {

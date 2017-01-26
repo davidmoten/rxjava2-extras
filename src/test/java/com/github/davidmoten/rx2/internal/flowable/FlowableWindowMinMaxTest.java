@@ -5,13 +5,16 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.Assert;
 import org.junit.Test;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
 import com.github.davidmoten.rx2.FlowableTransformers;
 
 import io.reactivex.Flowable;
-import io.reactivex.FlowableTransformer;
 
 public class FlowableWindowMinMaxTest {
 	@Test
@@ -66,6 +69,40 @@ public class FlowableWindowMinMaxTest {
 		        .compose(FlowableTransformers.<Integer>windowMax(2)) //
 		        .test() //
 		        .assertError(r);
+	}
+
+	@Test
+	public void testCancellation() {
+		final AtomicInteger count = new AtomicInteger();
+		Flowable.just(3, 2, 5) //
+		        .compose(FlowableTransformers.<Integer>windowMin(2)) //
+		        .subscribe(new Subscriber<Integer>() {
+
+			        private Subscription s;
+
+			        @Override
+			        public void onSubscribe(Subscription s) {
+				        this.s = s;
+				        s.request(Long.MAX_VALUE);
+			        }
+
+			        @Override
+			        public void onNext(Integer t) {
+				        count.incrementAndGet();
+				        s.cancel();
+			        }
+
+			        @Override
+			        public void onError(Throwable t) {
+
+			        }
+
+			        @Override
+			        public void onComplete() {
+
+			        }
+		        });
+		Assert.assertEquals(1, count.get());
 	}
 
 	@Test
