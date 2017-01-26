@@ -11,6 +11,7 @@ import org.junit.Test;
 import com.github.davidmoten.rx2.FlowableTransformers;
 
 import io.reactivex.Flowable;
+import io.reactivex.FlowableTransformer;
 
 public class FlowableWindowMinMaxTest {
 	@Test
@@ -67,4 +68,12 @@ public class FlowableWindowMinMaxTest {
 		        .assertError(r);
 	}
 
+	@Test
+	public void testExample() {
+		Flowable.just(3, 2, 5, 1, 6, 4) //
+		        .compose(FlowableTransformers.<Integer>windowMin(3)) //
+		        .test() //
+		        .assertValues(2, 1, 1, 1) //
+		        .assertComplete();
+	}
 }
