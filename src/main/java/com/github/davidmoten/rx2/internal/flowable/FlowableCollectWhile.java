@@ -74,8 +74,10 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 
 		@Override
 		public void onSubscribe(Subscription parent) {
-			this.parent = parent;
-			child.onSubscribe(this);
+			if (SubscriptionHelper.validate(this.parent, parent)) {
+				this.parent = parent;
+				child.onSubscribe(this);
+			}
 		}
 
 		@Override
