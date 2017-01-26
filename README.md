@@ -626,3 +626,8 @@ windowMin/Max
 Sliding window minimum/maximum:
 
 <img src="src/docs/windowMinMax.png?raw=true" />
+
+```java
+Flowable.just(3, 2, 5, 1, 6, 4)
+    .compose(FlowableTransformers.<Integer>windowMin(3))
+```
