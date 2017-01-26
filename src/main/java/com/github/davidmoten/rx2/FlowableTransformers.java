@@ -1,6 +1,7 @@
 package com.github.davidmoten.rx2;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -12,6 +13,8 @@ import com.github.davidmoten.rx2.internal.flowable.FlowableDoOnEmpty;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMapLast;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMatch;
 import com.github.davidmoten.rx2.internal.flowable.FlowableReverse;
+import com.github.davidmoten.rx2.internal.flowable.FlowableWindowMinMax;
+import com.github.davidmoten.rx2.internal.flowable.FlowableWindowMinMax.Metric;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStateMachine;
 import com.github.davidmoten.rx2.util.Pair;
 
@@ -57,9 +60,9 @@ public final class FlowableTransformers {
 	public static <T> FlowableTransformer<T, T> reverse() {
 		return (FlowableTransformer<T, T>) ReverseHolder.INSTANCE;
 	}
-	
+
 	private static final class ReverseHolder {
-		static final FlowableTransformer<Object,Object> INSTANCE = new FlowableTransformer<Object, Object>() {
+		static final FlowableTransformer<Object, Object> INSTANCE = new FlowableTransformer<Object, Object>() {
 
 			@Override
 			public Publisher<Object> apply(Flowable<Object> upstream) {
@@ -198,6 +201,49 @@ public final class FlowableTransformers {
 			return (BiFunction<List<T>, T, List<T>>) (BiFunction<?, ?, ?>) ADD;
 		}
 
+	}
+
+	public static <T extends Comparable<T>> FlowableTransformer<T, T> windowMax(final int windowSize) {
+		return windowMax(windowSize, FlowableTransformers.<T>naturalComparator());
+	}
+
+	public static <T> FlowableTransformer<T, T> windowMax(final int windowSize,
+	        final Comparator<? super T> comparator) {
+		return new FlowableTransformer<T, T>() {
+			@Override
+			public Flowable<T> apply(Flowable<T> source) {
+				return new FlowableWindowMinMax<T>(source, windowSize, comparator, Metric.MAX);
+			}
+		};
+	}
+
+	public static <T extends Comparable<T>> FlowableTransformer<T, T> windowMin(final int windowSize) {
+		return windowMin(windowSize, FlowableTransformers.<T>naturalComparator());
+	}
+
+	public static <T> FlowableTransformer<T, T> windowMin(final int windowSize,
+	        final Comparator<? super T> comparator) {
+		return new FlowableTransformer<T, T>() {
+			@Override
+			public Flowable<T> apply(Flowable<T> source) {
+				return new FlowableWindowMinMax<T>(source, windowSize, comparator, Metric.MIN);
+			}
+		};
+	}
+
+	private static class NaturalComparatorHolder {
+		static final Comparator<Comparable<Object>> INSTANCE = new Comparator<Comparable<Object>>() {
+
+			@Override
+			public int compare(Comparable<Object> o1, Comparable<Object> o2) {
+				return o1.compareTo(o2);
+			}
+		};
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <T extends Comparable<T>> Comparator<T> naturalComparator() {
+		return (Comparator<T>) (Comparator<?>) NaturalComparatorHolder.INSTANCE;
 	}
 
 }
