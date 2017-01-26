@@ -60,7 +60,7 @@ public final class FlowableWindowMinMax<T> extends Flowable<T> {
         private long count = 0;
         private Subscription parent;
 
-        public WindowMinMaxSubscriber(int windowSize, Comparator<? super T> comparator, Metric metric,
+        WindowMinMaxSubscriber(int windowSize, Comparator<? super T> comparator, Metric metric,
                 Subscriber<? super T> child) {
             this.windowSize = windowSize;
             this.comparator = comparator;
