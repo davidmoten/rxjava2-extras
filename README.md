@@ -123,6 +123,10 @@ FlowableTransformers
 
 [`toListWhile`](#tolistwhile)
 
+[`windowMin`](#windowminmax)
+
+[`windowMax`](#windowminmax)
+
 
 ObservableTransformers
 ---------------------------
@@ -617,3 +621,8 @@ produces
 
 See also `collectWhile`.
 
+windowMin/Max
+----------------------------
+Sliding window minimum/maximum:
+
+<img src="src/docs/windowMinMax.png?raw=true" />
