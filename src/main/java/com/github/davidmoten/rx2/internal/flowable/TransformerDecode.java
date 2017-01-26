@@ -44,8 +44,8 @@ public final class TransformerDecode {
             }
         };
 
-        return com.github.davidmoten.rx2.FlowableTransformers.stateMachine(initialState, transition,
-                completion, backpressureStrategy, batchSize);
+        return com.github.davidmoten.rx2.FlowableTransformers.stateMachine(initialState, transition, completion,
+                backpressureStrategy, batchSize);
     }
 
     private static final class Result {
@@ -59,8 +59,8 @@ public final class TransformerDecode {
 
     }
 
-    public static Result process(byte[] next, ByteBuffer last, boolean endOfInput,
-            CharsetDecoder decoder, FlowableEmitter<String> emitter) {
+    public static Result process(byte[] next, ByteBuffer last, boolean endOfInput, CharsetDecoder decoder,
+            FlowableEmitter<String> emitter) {
         if (emitter.isCancelled())
             return new Result(null, false);
 

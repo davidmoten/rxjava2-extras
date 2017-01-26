@@ -5,10 +5,10 @@ import org.junit.Test;
 import com.github.davidmoten.junit.Asserts;
 
 public class BiPredicatesTest {
-	
-	@Test
-	public void isUtilityClass() {
-		Asserts.assertIsUtilityClass(BiPredicates.class);
-	}
+
+    @Test
+    public void isUtilityClass() {
+        Asserts.assertIsUtilityClass(BiPredicates.class);
+    }
 
 }

@@ -47,7 +47,7 @@ public class SerializersTest {
                 .assertValue(4) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testDataSerializerWithUnboundedCapacity() {
         // Demonstrates DataSerializer usage
@@ -76,16 +76,16 @@ public class SerializersTest {
                 .assertValue(4) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testUtf8() {
         Flowable.just("abc") //
-        .compose(FlowableTransformers.onBackpressureBufferToFile() //
-                .serializerUtf8()) //
-        .test() //
-        .awaitDone(5, TimeUnit.SECONDS) //
-        .assertValue("abc") //
-        .assertComplete();
+                .compose(FlowableTransformers.onBackpressureBufferToFile() //
+                        .serializerUtf8()) //
+                .test() //
+                .awaitDone(5, TimeUnit.SECONDS) //
+                .assertValue("abc") //
+                .assertComplete();
     }
 
 }

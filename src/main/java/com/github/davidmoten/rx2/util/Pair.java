@@ -29,7 +29,7 @@ public class Pair<T, S> {
     public S right() {
         return b;
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -47,7 +47,7 @@ public class Pair<T, S> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        Pair<?,?> other = (Pair<?,?>) obj;
+        Pair<?, ?> other = (Pair<?, ?>) obj;
         if (a == null) {
             if (other.a != null)
                 return false;

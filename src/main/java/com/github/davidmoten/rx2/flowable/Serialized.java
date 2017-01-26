@@ -32,9 +32,9 @@ import io.reactivex.functions.Function;
 public final class Serialized {
 
     private static final int DEFAULT_BUFFER_SIZE = 8192;
-    
+
     private Serialized() {
-        //prevent instantiation
+        // prevent instantiation
     }
 
     /**
@@ -86,8 +86,7 @@ public final class Serialized {
         Callable<ObjectInputStream> resourceFactory = new Callable<ObjectInputStream>() {
             @Override
             public ObjectInputStream call() throws IOException {
-                return new ObjectInputStream(
-                        new BufferedInputStream(new FileInputStream(file), bufferSize));
+                return new ObjectInputStream(new BufferedInputStream(new FileInputStream(file), bufferSize));
             }
         };
         @SuppressWarnings("unchecked")
@@ -136,8 +135,7 @@ public final class Serialized {
      *            the generic type of the objects being serialized
      * @return re-emits the input stream
      */
-    public static <T extends Serializable> Flowable<T> write(Flowable<T> source,
-            final ObjectOutputStream oos) {
+    public static <T extends Serializable> Flowable<T> write(Flowable<T> source, final ObjectOutputStream oos) {
         return source.doOnNext(new Consumer<T>() {
 
             @Override
@@ -164,13 +162,12 @@ public final class Serialized {
      *            the generic type of the input stream
      * @return re-emits the input stream
      */
-    public static <T extends Serializable> Flowable<T> write(final Flowable<T> source,
-            final File file, final boolean append, final int bufferSize) {
+    public static <T extends Serializable> Flowable<T> write(final Flowable<T> source, final File file,
+            final boolean append, final int bufferSize) {
         Callable<ObjectOutputStream> resourceFactory = new Callable<ObjectOutputStream>() {
             @Override
             public ObjectOutputStream call() throws IOException {
-                return new ObjectOutputStream(
-                        new BufferedOutputStream(new FileOutputStream(file, append), bufferSize));
+                return new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file, append), bufferSize));
             }
         };
         Function<ObjectOutputStream, Flowable<T>> flowableFactory = new Function<ObjectOutputStream, Flowable<T>>() {
@@ -199,8 +196,8 @@ public final class Serialized {
      *            the generic type of the input stream
      * @return re-emits the input stream
      */
-    public static <T extends Serializable> Flowable<T> write(final Flowable<T> source,
-            final File file, final boolean append) {
+    public static <T extends Serializable> Flowable<T> write(final Flowable<T> source, final File file,
+            final boolean append) {
         return write(source, file, append, DEFAULT_BUFFER_SIZE);
     }
 
@@ -216,8 +213,7 @@ public final class Serialized {
      *            the generic type of the input stream
      * @return re-emits the input stream
      */
-    public static <T extends Serializable> Flowable<T> write(final Flowable<T> source,
-            final File file) {
+    public static <T extends Serializable> Flowable<T> write(final Flowable<T> source, final File file) {
         return write(source, file, false, DEFAULT_BUFFER_SIZE);
     }
 
@@ -247,8 +243,8 @@ public final class Serialized {
             return write(source, file, append, DEFAULT_BUFFER_SIZE);
         }
 
-        public <T> Flowable<T> write(final Flowable<T> source, final File file,
-                final boolean append, final int bufferSize) {
+        public <T> Flowable<T> write(final Flowable<T> source, final File file, final boolean append,
+                final int bufferSize) {
             Callable<Output> resourceFactory = new Callable<Output>() {
                 @Override
                 public Output call() throws FileNotFoundException {

@@ -100,7 +100,7 @@ public final class MemoryMappedFile {
     public void putByte(long pos, byte val) {
         unsafe.putByte(pos + addr, val);
     }
-    
+
     public void putInt(long pos, int val) {
         unsafe.putInt(pos + addr, val);
     }

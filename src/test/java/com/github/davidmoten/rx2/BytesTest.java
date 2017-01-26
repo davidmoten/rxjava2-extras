@@ -36,30 +36,27 @@ public class BytesTest {
 
                     @Override
                     public Flowable<String> apply(ZippedEntry entry) {
-                        return Flowable.just(entry.getName())
-                                .concatWith(Strings.from(entry.getInputStream()));
+                        return Flowable.just(entry.getName()).concatWith(Strings.from(entry.getInputStream()));
                     }
                 }).toList().blockingGet();
-        assertEquals(Arrays.asList("document1.txt", "hello there", "document2.txt",
-                "how are you going?"), list);
+        assertEquals(Arrays.asList("document1.txt", "hello there", "document2.txt", "how are you going?"), list);
     }
 
     @Test
     public void testUnzipPartial() {
         InputStream is = BytesTest.class.getResourceAsStream("/test.zip");
         assertNotNull(is);
-        List<String> list = Bytes.unzip(is)
-                .concatMap(new Function<ZippedEntry, Flowable<String>>() {
+        List<String> list = Bytes.unzip(is).concatMap(new Function<ZippedEntry, Flowable<String>>() {
 
-                    @Override
-                    public Flowable<String> apply(ZippedEntry entry) {
-                        try {
-                            return Flowable.just((char) entry.getInputStream().read() + "");
-                        } catch (IOException e) {
-                            return Flowable.error(e);
-                        }
-                    }
-                }).toList().blockingGet();
+            @Override
+            public Flowable<String> apply(ZippedEntry entry) {
+                try {
+                    return Flowable.just((char) entry.getInputStream().read() + "");
+                } catch (IOException e) {
+                    return Flowable.error(e);
+                }
+            }
+        }).toList().blockingGet();
         assertEquals(Arrays.asList("h", "h"), list);
     }
 
@@ -89,20 +86,19 @@ public class BytesTest {
 
     @Test
     public void testUnzipExtractSpecificFile() {
-        List<String> list = Bytes.unzip(new File("src/test/resources/test.zip"))
-                .filter(new Predicate<ZippedEntry>() {
+        List<String> list = Bytes.unzip(new File("src/test/resources/test.zip")).filter(new Predicate<ZippedEntry>() {
 
-                    @Override
-                    public boolean test(ZippedEntry entry) {
-                        return entry.getName().equals("document2.txt");
-                    }
-                }).concatMap(new Function<ZippedEntry, Flowable<String>>() {
+            @Override
+            public boolean test(ZippedEntry entry) {
+                return entry.getName().equals("document2.txt");
+            }
+        }).concatMap(new Function<ZippedEntry, Flowable<String>>() {
 
-                    @Override
-                    public Flowable<String> apply(ZippedEntry entry) {
-                        return Strings.from(entry.getInputStream());
-                    }
-                }).toList().blockingGet();
+            @Override
+            public Flowable<String> apply(ZippedEntry entry) {
+                return Strings.from(entry.getInputStream());
+            }
+        }).toList().blockingGet();
         assertEquals(Arrays.asList("how are you going?"), list);
     }
 

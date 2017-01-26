@@ -19,8 +19,7 @@ public final class Pages {
     private final int pageSize;
 
     // read queue must be SPSC because is added to from the write thread
-    private final SimplePlainQueue<Page> queue = new SpscLinkedArrayQueue<Page>(
-            QUEUE_INITIAL_CAPACITY);
+    private final SimplePlainQueue<Page> queue = new SpscLinkedArrayQueue<Page>(QUEUE_INITIAL_CAPACITY);
 
     Page writePage;
     int writePosition;

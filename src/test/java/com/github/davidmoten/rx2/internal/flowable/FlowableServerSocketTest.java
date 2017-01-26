@@ -53,11 +53,9 @@ public final class FlowableServerSocketTest {
     private static final String TEXT = "hello there";
 
     private static final int POOL_SIZE = 10;
-    private static final Scheduler scheduler = Schedulers
-            .from(Executors.newFixedThreadPool(POOL_SIZE));
+    private static final Scheduler scheduler = Schedulers.from(Executors.newFixedThreadPool(POOL_SIZE));
 
-    private static final Scheduler clientScheduler = Schedulers
-            .from(Executors.newFixedThreadPool(POOL_SIZE));
+    private static final Scheduler clientScheduler = Schedulers.from(Executors.newFixedThreadPool(POOL_SIZE));
 
     @Test
     public void testCloseQuietly() {
@@ -166,8 +164,7 @@ public final class FlowableServerSocketTest {
     }
 
     @Test
-    public void testEarlyUnsubscribe()
-            throws UnknownHostException, IOException, InterruptedException {
+    public void testEarlyUnsubscribe() throws UnknownHostException, IOException, InterruptedException {
         reset();
         TestSubscriber<Object> ts = TestSubscriber.create();
         final AtomicReference<byte[]> result = new AtomicReference<byte[]>();
@@ -186,13 +183,13 @@ public final class FlowableServerSocketTest {
                                     .toFlowable() //
                                     .doOnNext(Consumers.set(result)) //
                                     .doOnNext(new Consumer<byte[]>() {
-                                @Override
-                                public void accept(byte[] bytes) {
-                                    System.out.println(Thread.currentThread().getName() + ": "
-                                            + new String(bytes));
-                                }
-                            }) //
-                                    .onErrorResumeNext(Flowable.<byte[]> empty()) //
+                                        @Override
+                                        public void accept(byte[] bytes) {
+                                            System.out.println(
+                                                    Thread.currentThread().getName() + ": " + new String(bytes));
+                                        }
+                                    }) //
+                                    .onErrorResumeNext(Flowable.<byte[]>empty()) //
                                     .subscribeOn(scheduler);
                         }
                     }) //
@@ -213,8 +210,7 @@ public final class FlowableServerSocketTest {
     }
 
     @Test
-    public void testCancelDoesNotHaveToWaitForTimeout()
-            throws UnknownHostException, IOException, InterruptedException {
+    public void testCancelDoesNotHaveToWaitForTimeout() throws UnknownHostException, IOException, InterruptedException {
         reset();
         RxJavaPlugins.setErrorHandler(Consumers.printStackTrace());
         TestSubscriber<Object> ts = TestSubscriber.create();
@@ -232,18 +228,18 @@ public final class FlowableServerSocketTest {
                                     .toFlowable() //
                                     .doOnNext(Consumers.set(result)) //
                                     .map(new Function<byte[], String>() {
-                                @Override
-                                public String apply(byte[] bytes) {
-                                    return new String(bytes, UTF_8);
-                                }
-                            }) //
+                                        @Override
+                                        public String apply(byte[] bytes) {
+                                            return new String(bytes, UTF_8);
+                                        }
+                                    }) //
                                     .doOnNext(new Consumer<String>() {
-                                @Override
-                                public void accept(String s) {
-                                    System.out.println(Thread.currentThread().getName() + ": " + s);
-                                }
-                            }) //
-                                    .onErrorResumeNext(Flowable.<String> empty()) //
+                                        @Override
+                                        public void accept(String s) {
+                                            System.out.println(Thread.currentThread().getName() + ": " + s);
+                                        }
+                                    }) //
+                                    .onErrorResumeNext(Flowable.<String>empty()) //
                                     .subscribeOn(scheduler);
                         }
                     }).subscribeOn(scheduler) //
@@ -354,7 +350,7 @@ public final class FlowableServerSocketTest {
                                         e.printStackTrace();
                                     }
                                 }
-                                return Flowable.<Object> just(1);
+                                return Flowable.<Object>just(1);
                             }
                         }) //
                                 .timeout(30, TimeUnit.SECONDS) //
@@ -396,13 +392,13 @@ public final class FlowableServerSocketTest {
                                     .toFlowable() //
                                     .doOnNext(Consumers.set(result)) //
                                     .doOnNext(new Consumer<byte[]>() {
-                                @Override
-                                public void accept(byte[] bytes) {
-                                    System.out.println(Thread.currentThread().getName() + ": "
-                                            + new String(bytes));
-                                }
-                            }) //
-                                    .onErrorResumeNext(Flowable.<byte[]> empty()) //
+                                        @Override
+                                        public void accept(byte[] bytes) {
+                                            System.out.println(
+                                                    Thread.currentThread().getName() + ": " + new String(bytes));
+                                        }
+                                    }) //
+                                    .onErrorResumeNext(Flowable.<byte[]>empty()) //
                                     .subscribeOn(scheduler);
                         }
                     }).subscribeOn(scheduler) //
@@ -431,8 +427,7 @@ public final class FlowableServerSocketTest {
     }
 
     @Test
-    public void testAcceptSocketRejectsAlways()
-            throws UnknownHostException, IOException, InterruptedException {
+    public void testAcceptSocketRejectsAlways() throws UnknownHostException, IOException, InterruptedException {
         reset();
         TestSubscriber<Object> ts = TestSubscriber.create();
         try {
@@ -471,14 +466,14 @@ public final class FlowableServerSocketTest {
                                 .to(Bytes.collect()) //
                                 .doAfterSuccess(new Consumer<byte[]>() {
 
-                            @Override
-                            public void accept(byte[] bytes) {
-                                System.out.println(Thread.currentThread().getName() + ": "
-                                        + new String(bytes).trim());
-                            }
-                        }) //
+                                    @Override
+                                    public void accept(byte[] bytes) {
+                                        System.out.println(
+                                                Thread.currentThread().getName() + ": " + new String(bytes).trim());
+                                    }
+                                }) //
                                 .toFlowable() //
-                                .onErrorResumeNext(Flowable.<byte[]> empty()) //
+                                .onErrorResumeNext(Flowable.<byte[]>empty()) //
                                 .subscribeOn(scheduler);
                     }
                 }).subscribeOn(scheduler) //

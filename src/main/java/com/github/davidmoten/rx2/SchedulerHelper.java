@@ -28,8 +28,7 @@ public final class SchedulerHelper {
         return e.getClassName() + ":" + e.getMethodName() + ":" + e.getLineNumber();
     }
 
-    public static void blockUntilWorkFinished(Scheduler scheduler, int numThreads, long timeout,
-            TimeUnit unit) {
+    public static void blockUntilWorkFinished(Scheduler scheduler, int numThreads, long timeout, TimeUnit unit) {
         final CountDownLatch latch = new CountDownLatch(numThreads);
         for (int i = 1; i <= numThreads; i++) {
             final Worker worker = scheduler.createWorker();

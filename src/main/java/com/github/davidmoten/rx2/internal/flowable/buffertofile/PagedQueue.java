@@ -11,8 +11,7 @@ import com.github.davidmoten.guavamini.Preconditions;
 // non-final class for unit testing
 public class PagedQueue extends AtomicInteger {
 
-    private static final boolean isLittleEndian = ByteOrder
-            .nativeOrder() == ByteOrder.LITTLE_ENDIAN;
+    private static final boolean isLittleEndian = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
 
     private static final int EXTRA_PADDING_LIMIT = 64;
     private static final int SIZE_MESSAGE_SIZE_FIELD = 4;
@@ -20,8 +19,8 @@ public class PagedQueue extends AtomicInteger {
     private static final int SIZE_MESSAGE_TYPE_FIELD = 1;
     private static final int ALIGN_BYTES = 4;
     private static final int MAX_PADDING_PER_FULL_MESSAGE = 32;
-    private static final int SIZE_HEADER_PRIMARY_PART = SIZE_MESSAGE_SIZE_FIELD
-            + SIZE_MESSAGE_TYPE_FIELD + SIZE_PADDING_SIZE_FIELD;
+    private static final int SIZE_HEADER_PRIMARY_PART = SIZE_MESSAGE_SIZE_FIELD + SIZE_MESSAGE_TYPE_FIELD
+            + SIZE_PADDING_SIZE_FIELD;
 
     private final Pages pages;
 
@@ -98,8 +97,8 @@ public class PagedQueue extends AtomicInteger {
         return padding;
     }
 
-    private void write(byte[] bytes, int offset, int length, int padding,
-            final MessageType messageType, int totalLength) {
+    private void write(byte[] bytes, int offset, int length, int padding, final MessageType messageType,
+            int totalLength) {
         Preconditions.checkArgument(length != 0);
         pages.markForRewriteAndAdvance4Bytes();// messageSize left as 0
         // storeFence not required at this point like Aeron uses.
@@ -169,8 +168,7 @@ public class PagedQueue extends AtomicInteger {
                     return null;
                 } else {
                     if (readingFragments) {
-                        System.arraycopy(result, 0, messageBytesAccumulated, indexBytesAccumulated,
-                                result.length);
+                        System.arraycopy(result, 0, messageBytesAccumulated, indexBytesAccumulated, result.length);
                         indexBytesAccumulated += result.length;
                         if (indexBytesAccumulated == messageBytesAccumulated.length) {
                             readingFragments = false;

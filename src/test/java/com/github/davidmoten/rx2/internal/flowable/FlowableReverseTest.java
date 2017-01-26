@@ -26,7 +26,7 @@ public final class FlowableReverseTest {
     @Test
     public void testOne() {
         Flowable.just(1) //
-                .compose(FlowableTransformers.<Integer> reverse()) //
+                .compose(FlowableTransformers.<Integer>reverse()) //
                 .test() //
                 .assertValue(1) //
                 .assertComplete();
@@ -35,7 +35,7 @@ public final class FlowableReverseTest {
     @Test
     public void testMany() {
         Flowable.just(1, 2, 3, 4, 5) //
-                .compose(FlowableTransformers.<Integer> reverse()) //
+                .compose(FlowableTransformers.<Integer>reverse()) //
                 .test() //
                 .assertValues(5, 4, 3, 2, 1) //
                 .assertComplete();

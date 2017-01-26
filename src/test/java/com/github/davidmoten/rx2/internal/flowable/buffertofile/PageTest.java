@@ -22,14 +22,14 @@ public class PageTest {
         Assert.assertArrayEquals(new byte[] { 2, 3 }, a);
         page.close();
     }
-    
+
     @Test
     public void testPageSize() {
         Page page = new Page(new File("target/p1"), 100);
         assertEquals(100, page.length());
         page.close();
     }
-    
+
     @Test
     public void testPagePrintln() {
         Page.println("boo");

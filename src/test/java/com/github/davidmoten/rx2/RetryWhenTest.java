@@ -44,8 +44,7 @@ public class RetryWhenTest {
                 // force error after 3 emissions
                 .concatWith(Flowable.<Integer>error(ex))
                 // retry with backoff
-                .retryWhen(RetryWhen.maxRetries(5).action(log)
-                        .exponentialBackoff(10, TimeUnit.MILLISECONDS).build())
+                .retryWhen(RetryWhen.maxRetries(5).action(log).exponentialBackoff(10, TimeUnit.MILLISECONDS).build())
                 // go
                 .subscribe(ts);
 
@@ -65,8 +64,8 @@ public class RetryWhenTest {
                 // force error after 3 emissions
                 .concatWith(Flowable.<Integer>error(ex))
                 // retry with backoff
-                .retryWhen(RetryWhen.maxRetries(2).action(log)
-                        .exponentialBackoff(1, TimeUnit.MINUTES).scheduler(scheduler).build())
+                .retryWhen(RetryWhen.maxRetries(2).action(log).exponentialBackoff(1, TimeUnit.MINUTES)
+                        .scheduler(scheduler).build())
                 // go
                 .subscribe(ts);
         ts.assertValues(1, 2);
@@ -93,9 +92,8 @@ public class RetryWhenTest {
                 // force error after 3 emissions
                 .concatWith(Flowable.<Integer>error(ex))
                 // retry with backoff
-                .retryWhen(RetryWhen.maxRetries(2).action(log)
-                        .exponentialBackoff(1, TimeUnit.MINUTES).scheduler(scheduler)
-                        .failWhenInstanceOf(IllegalArgumentException.class).build())
+                .retryWhen(RetryWhen.maxRetries(2).action(log).exponentialBackoff(1, TimeUnit.MINUTES)
+                        .scheduler(scheduler).failWhenInstanceOf(IllegalArgumentException.class).build())
                 // go
                 .subscribe(ts);
         ts.assertValues(1, 2);
@@ -112,9 +110,8 @@ public class RetryWhenTest {
                 // force error after 3 emissions
                 .concatWith(Flowable.<Integer>error(ex))
                 // retry with backoff
-                .retryWhen(RetryWhen.maxRetries(2).action(log)
-                        .exponentialBackoff(1, TimeUnit.MINUTES).scheduler(scheduler)
-                        .retryWhenInstanceOf(SQLException.class).build())
+                .retryWhen(RetryWhen.maxRetries(2).action(log).exponentialBackoff(1, TimeUnit.MINUTES)
+                        .scheduler(scheduler).retryWhenInstanceOf(SQLException.class).build())
                 // go
                 .subscribe(ts);
         ts.assertValues(1, 2);
@@ -131,9 +128,8 @@ public class RetryWhenTest {
                 // force error after 3 emissions
                 .concatWith(Flowable.<Integer>error(ex))
                 // retry with backoff
-                .retryWhen(RetryWhen.maxRetries(2).action(log)
-                        .exponentialBackoff(1, TimeUnit.MINUTES).scheduler(scheduler)
-                        .retryWhenInstanceOf(IllegalArgumentException.class).build())
+                .retryWhen(RetryWhen.maxRetries(2).action(log).exponentialBackoff(1, TimeUnit.MINUTES)
+                        .scheduler(scheduler).retryWhenInstanceOf(IllegalArgumentException.class).build())
                 // go
                 .subscribe(ts);
         ts.assertValues(1, 2);
@@ -164,9 +160,8 @@ public class RetryWhenTest {
                 // force error after 3 emissions
                 .concatWith(Flowable.<Integer>error(ex))
                 // retry with backoff
-                .retryWhen(
-                        RetryWhen.maxRetries(2).action(log).exponentialBackoff(1, TimeUnit.MINUTES)
-                                .scheduler(scheduler).retryIf(predicate).build())
+                .retryWhen(RetryWhen.maxRetries(2).action(log).exponentialBackoff(1, TimeUnit.MINUTES)
+                        .scheduler(scheduler).retryIf(predicate).build())
                 // go
                 .subscribe(ts);
         ts.assertValues(1, 2);
@@ -183,9 +178,8 @@ public class RetryWhenTest {
                 // force error after 3 emissions
                 .concatWith(Flowable.<Integer>error(ex))
                 // retry with backoff
-                .retryWhen(
-                        RetryWhen.maxRetries(2).action(log).exponentialBackoff(1, TimeUnit.MINUTES)
-                                .scheduler(scheduler).retryIf(predicate).build())
+                .retryWhen(RetryWhen.maxRetries(2).action(log).exponentialBackoff(1, TimeUnit.MINUTES)
+                        .scheduler(scheduler).retryIf(predicate).build())
                 // go
                 .subscribe(ts);
         ts.assertValues(1, 2);

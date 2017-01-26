@@ -11,13 +11,12 @@ public class PredicatesTest {
     public void isUtilityClass() {
         Asserts.assertIsUtilityClass(Predicates.class);
     }
-    
+
     @Test
     public void testAlwaysFalse() throws Exception {
         Assert.assertFalse(Predicates.alwaysFalse().test(new Object()));
     }
-    
-    
+
     @Test
     public void testAlwaysTrue() throws Exception {
         Assert.assertTrue(Predicates.alwaysTrue().test(new Object()));

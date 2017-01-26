@@ -35,8 +35,7 @@ public final class FlowableStringSplitSimple extends Flowable<String> {
     }
 
     @SuppressWarnings("serial")
-    private static final class StringSplitSubscriber extends AtomicLong
-            implements Subscriber<String>, Subscription {
+    private static final class StringSplitSubscriber extends AtomicLong implements Subscriber<String>, Subscription {
 
         private final Subscriber<? super String> actual;
         // queue of notifications

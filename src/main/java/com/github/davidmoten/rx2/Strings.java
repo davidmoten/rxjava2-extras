@@ -136,8 +136,7 @@ public final class Strings {
         return from(resourceFactory);
     }
 
-    public static Flowable<String> fromClasspath(final Class<?> cls, final String resource,
-            final Charset charset) {
+    public static Flowable<String> fromClasspath(final Class<?> cls, final String resource, final Charset charset) {
         Preconditions.checkNotNull(resource);
         Preconditions.checkNotNull(charset);
         Callable<Reader> resourceFactory = new Callable<Reader>() {
@@ -232,8 +231,8 @@ public final class Strings {
         });
     }
 
-    public static Flowable<List<String>> splitLinesSkipComments(InputStream is, Charset charset,
-            final String delimiter, final String commentPrefix) {
+    public static Flowable<List<String>> splitLinesSkipComments(InputStream is, Charset charset, final String delimiter,
+            final String commentPrefix) {
         return from(is, charset) //
                 .compose(Strings.split("\n", BackpressureStrategy.BUFFER, 1)) //
                 .filter(new Predicate<String>() {
@@ -288,13 +287,13 @@ public final class Strings {
         return split(pattern, BackpressureStrategy.BUFFER, 128);
     }
 
-    public static FlowableTransformer<String, String> split(String pattern,
-            BackpressureStrategy backpressureStrategy, int requestBatchSize) {
+    public static FlowableTransformer<String, String> split(String pattern, BackpressureStrategy backpressureStrategy,
+            int requestBatchSize) {
         return TransformerStringSplit.split(pattern, null, backpressureStrategy, requestBatchSize);
     }
 
-    public static FlowableTransformer<String, String> split(Pattern pattern,
-            BackpressureStrategy backpressureStrategy, int batchSize) {
+    public static FlowableTransformer<String, String> split(Pattern pattern, BackpressureStrategy backpressureStrategy,
+            int batchSize) {
         return TransformerStringSplit.split(null, pattern, backpressureStrategy, batchSize);
     }
 
@@ -333,10 +332,10 @@ public final class Strings {
     }
 
     /**
-     * Splits on a string delimiter, not a pattern. Is slower than
-     * RxJavaString 1.1.1 implementation on benchmarks below but requests
-     * minimally from upstream and is potentially much faster when the stream is
-     * significantly truncated (for example by downstream
+     * Splits on a string delimiter, not a pattern. Is slower than RxJavaString
+     * 1.1.1 implementation on benchmarks below but requests minimally from
+     * upstream and is potentially much faster when the stream is significantly
+     * truncated (for example by downstream
      * {@code .take(), .takeUntil(), elementAt()}.
      * 
      * <pre>
@@ -353,7 +352,8 @@ public final class Strings {
      * 
      * @param delimiter
      *            string delimiter
-     * @param <T> type being streamed
+     * @param <T>
+     *            type being streamed
      * @return stream split by delimiter
      */
     @Experimental

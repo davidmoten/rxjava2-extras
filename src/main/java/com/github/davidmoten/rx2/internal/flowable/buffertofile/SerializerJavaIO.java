@@ -13,7 +13,7 @@ public final class SerializerJavaIO<T extends Serializable> implements Serialize
 
     @Override
     public byte[] serialize(Serializable t) throws IOException {
-        ByteArrayOutputStream bos= new ByteArrayOutputStream();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(bos);
         oos.writeObject(t);
         bos.close();

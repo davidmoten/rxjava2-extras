@@ -32,8 +32,7 @@ public final class FlowableMatch<A, B, K, C> extends Flowable<C> {
     private final long requestSize;
 
     public FlowableMatch(Flowable<A> a, Flowable<B> b, Function<? super A, ? extends K> aKey,
-            Function<? super B, ? extends K> bKey, BiFunction<? super A, ? super B, C> combiner,
-            long requestSize) {
+            Function<? super B, ? extends K> bKey, BiFunction<? super A, ? super B, C> combiner, long requestSize) {
         Preconditions.checkNotNull(a, "a should not be null");
         Preconditions.checkNotNull(b, "b should not be null");
         Preconditions.checkNotNull(aKey, "aKey cannot be null");
@@ -50,8 +49,8 @@ public final class FlowableMatch<A, B, K, C> extends Flowable<C> {
 
     @Override
     protected void subscribeActual(Subscriber<? super C> child) {
-        MatchCoordinator<A, B, K, C> coordinator = new MatchCoordinator<A, B, K, C>(aKey, bKey,
-                combiner, requestSize, child);
+        MatchCoordinator<A, B, K, C> coordinator = new MatchCoordinator<A, B, K, C>(aKey, bKey, combiner, requestSize,
+                child);
         child.onSubscribe(coordinator);
         coordinator.subscribe(a, b);
     }
@@ -61,8 +60,7 @@ public final class FlowableMatch<A, B, K, C> extends Flowable<C> {
     }
 
     @SuppressWarnings("serial")
-    private static final class MatchCoordinator<A, B, K, C> extends AtomicInteger
-            implements Receiver, Subscription {
+    private static final class MatchCoordinator<A, B, K, C> extends AtomicInteger implements Receiver, Subscription {
         private final Map<K, Queue<A>> as = new HashMap<K, Queue<A>>();
         private final Map<K, Queue<B>> bs = new HashMap<K, Queue<B>>();
         private final Function<? super A, ? extends K> aKey;
@@ -90,9 +88,8 @@ public final class FlowableMatch<A, B, K, C> extends Flowable<C> {
 
         private volatile boolean cancelled = false;
 
-        MatchCoordinator(Function<? super A, ? extends K> aKey,
-                Function<? super B, ? extends K> bKey, BiFunction<? super A, ? super B, C> combiner,
-                long requestSize, Subscriber<? super C> child) {
+        MatchCoordinator(Function<? super A, ? extends K> aKey, Function<? super B, ? extends K> bKey,
+                BiFunction<? super A, ? super B, C> combiner, long requestSize, Subscriber<? super C> child) {
             this.aKey = aKey;
             this.bKey = bKey;
             this.combiner = combiner;
@@ -383,8 +380,7 @@ public final class FlowableMatch<A, B, K, C> extends Flowable<C> {
     }
 
     @SuppressWarnings("serial")
-    static final class MySubscriber<T, K> extends AtomicReference<Subscription>
-            implements Subscription, Subscriber<T> {
+    static final class MySubscriber<T, K> extends AtomicReference<Subscription> implements Subscription, Subscriber<T> {
 
         private final Receiver receiver;
         private final Source source;

@@ -16,8 +16,7 @@ public final class StateMachine {
         // prevent instantiation
     }
 
-    public interface Transition<State, In, Out>
-            extends Function3<State, In, FlowableEmitter<Out>, State> {
+    public interface Transition<State, In, Out> extends Function3<State, In, FlowableEmitter<Out>, State> {
 
         // override so IDEs have better suggestions for parameters
         @Override
@@ -61,8 +60,7 @@ public final class StateMachine {
             this.initialState = initialState;
         }
 
-        public <In, Out> Builder3<State, In, Out> transition(
-                Transition<State, In, Out> transition) {
+        public <In, Out> Builder3<State, In, Out> transition(Transition<State, In, Out> transition) {
             return new Builder3<State, In, Out>(initialState, transition);
         }
 
@@ -88,8 +86,7 @@ public final class StateMachine {
             return this;
         }
 
-        public Builder3<State, In, Out> backpressureStrategy(
-                BackpressureStrategy backpressureStrategy) {
+        public Builder3<State, In, Out> backpressureStrategy(BackpressureStrategy backpressureStrategy) {
             this.backpressureStrategy = backpressureStrategy;
             return this;
         }
@@ -100,8 +97,8 @@ public final class StateMachine {
         }
 
         public FlowableTransformer<In, Out> build() {
-            return FlowableTransformers.stateMachine(initialState, transition, completion,
-                    backpressureStrategy, requestBatchSize);
+            return FlowableTransformers.stateMachine(initialState, transition, completion, backpressureStrategy,
+                    requestBatchSize);
         }
 
     }

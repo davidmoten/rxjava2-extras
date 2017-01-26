@@ -29,7 +29,7 @@ public class SerializedTest {
         Serialized.write(source, file).subscribe();
         assertTrue(file.exists());
         assertTrue(file.length() > 0);
-        List<Integer> list = Serialized.<Integer> read(file).toList().blockingGet();
+        List<Integer> list = Serialized.<Integer>read(file).toList().blockingGet();
         assertEquals(Arrays.asList(1, 2, 3), list);
     }
 
@@ -41,7 +41,7 @@ public class SerializedTest {
         Serialized.write(source, file, false, 1).subscribe();
         assertTrue(file.exists());
         assertTrue(file.length() > 0);
-        List<Integer> list = Serialized.<Integer> read(file, 1).toList().blockingGet();
+        List<Integer> list = Serialized.<Integer>read(file, 1).toList().blockingGet();
         assertEquals(Arrays.asList(1, 2, 3), list);
     }
 
@@ -52,7 +52,7 @@ public class SerializedTest {
         Flowable<Integer> source = Flowable.empty();
         Serialized.write(source, file).subscribe();
         assertTrue(file.exists());
-        List<Integer> list = Serialized.<Integer> read(file).toList().blockingGet();
+        List<Integer> list = Serialized.<Integer>read(file).toList().blockingGet();
         assertTrue(list.isEmpty());
     }
 
@@ -64,8 +64,7 @@ public class SerializedTest {
         Serialized.kryo().write(source, file).subscribe();
         assertTrue(file.exists());
         assertTrue(file.length() > 0);
-        List<Integer> list = Serialized.kryo().read(Integer.class, file).toList()
-                .blockingGet();
+        List<Integer> list = Serialized.kryo().read(Integer.class, file).toList().blockingGet();
         assertEquals(Arrays.asList(1, 2, 3), list);
     }
 
@@ -76,8 +75,7 @@ public class SerializedTest {
         Flowable<Integer> source = Flowable.empty();
         Serialized.kryo().write(source, file).subscribe();
         assertTrue(file.exists());
-        List<Integer> list = Serialized.kryo().read(Integer.class, file).toList()
-                .blockingGet();
+        List<Integer> list = Serialized.kryo().read(Integer.class, file).toList().blockingGet();
         assertTrue(list.isEmpty());
     }
 
@@ -88,8 +86,7 @@ public class SerializedTest {
         Flowable<Person> source = Flowable.just(new Person("fred", 24), new Person("jane", 32));
         Serialized.kryo().write(source, file).subscribe();
         assertTrue(file.exists());
-        List<Person> list = Serialized.kryo().read(Person.class, file).toList()
-                .blockingGet();
+        List<Person> list = Serialized.kryo().read(Person.class, file).toList().blockingGet();
         assertEquals(2, list.size());
         assertEquals("fred", list.get(0).name);
         assertEquals(24, list.get(0).age);

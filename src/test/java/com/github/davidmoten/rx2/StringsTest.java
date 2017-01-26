@@ -22,8 +22,7 @@ public class StringsTest {
 
     @Test
     public void testMultibyteSpanningTwoBuffers() {
-        Flowable<byte[]> src = Flowable.just(new byte[] { (byte) 0xc2 },
-                new byte[] { (byte) 0xa1 });
+        Flowable<byte[]> src = Flowable.just(new byte[] { (byte) 0xc2 }, new byte[] { (byte) 0xa1 });
         String out = decode(src, "UTF-8").blockingSingle();
 
         assertEquals("\u00A1", out);
@@ -90,13 +89,12 @@ public class StringsTest {
     @Test
     public void testFromClasspath() {
         String expected = "hello world\nincoming message";
-        assertEquals(expected, Strings.fromClasspath("/test2.txt")
-                .reduce(new BiFunction<String, String, String>() {
-                    @Override
-                    public String apply(String a, String b) {
-                        return a + b;
-                    }
-                }).blockingGet());
+        assertEquals(expected, Strings.fromClasspath("/test2.txt").reduce(new BiFunction<String, String, String>() {
+            @Override
+            public String apply(String a, String b) {
+                return a + b;
+            }
+        }).blockingGet());
     }
 
     @Test
@@ -155,7 +153,7 @@ public class StringsTest {
     @Test
     public void testStrings() {
         Flowable.just(12, 34) //
-                .compose(Strings.<Integer> strings()) //
+                .compose(Strings.<Integer>strings()) //
                 .test() //
                 .assertValues("12", "34") //
                 .assertComplete();
@@ -163,15 +161,13 @@ public class StringsTest {
 
     @Test
     public void testFromFile() {
-        Strings.from(new File("src/test/resources/test3.txt")).test().assertValue("hello there")
-                .assertComplete();
+        Strings.from(new File("src/test/resources/test3.txt")).test().assertValue("hello there").assertComplete();
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void testSplitLinesWithComments() {
-        Strings.splitLinesSkipComments(StringsTest.class.getResourceAsStream("/test4.txt"),
-                Strings.UTF_8, ",", "#") //
+        Strings.splitLinesSkipComments(StringsTest.class.getResourceAsStream("/test4.txt"), Strings.UTF_8, ",", "#") //
                 .test() //
                 .assertValues(Lists.newArrayList("23", "176", "FRED"), //
                         Lists.newArrayList("13", "130", "JOHN"))

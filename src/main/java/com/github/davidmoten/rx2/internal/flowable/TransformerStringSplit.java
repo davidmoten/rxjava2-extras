@@ -18,9 +18,8 @@ public final class TransformerStringSplit {
         // prevent instantiation
     }
 
-    public static <T> FlowableTransformer<String, String> split(final String pattern,
-            final Pattern compiledPattern, final BackpressureStrategy backpressureStrategy,
-            int batchSize) {
+    public static <T> FlowableTransformer<String, String> split(final String pattern, final Pattern compiledPattern,
+            final BackpressureStrategy backpressureStrategy, int batchSize) {
         Callable<String> initialState = Callables.constant(null);
         Function3<String, String, FlowableEmitter<String>, String> transition = new Function3<String, String, FlowableEmitter<String>, String>() {
 
@@ -66,8 +65,7 @@ public final class TransformerStringSplit {
                 return true;
             }
         };
-        return FlowableTransformers.stateMachine(initialState, transition, completion, backpressureStrategy,
-                batchSize);
+        return FlowableTransformers.stateMachine(initialState, transition, completion, backpressureStrategy, batchSize);
     }
 
 }

@@ -29,273 +29,273 @@ import io.reactivex.subscribers.TestSubscriber;
 
 public final class FlowableCollectWhileTest {
 
-	private static final BiPredicate<List<Integer>, Integer> BUFFER_TWO = new BiPredicate<List<Integer>, Integer>() {
+    private static final BiPredicate<List<Integer>, Integer> BUFFER_TWO = new BiPredicate<List<Integer>, Integer>() {
 
-		@Override
-		public boolean test(List<Integer> list, Integer t) throws Exception {
-			return list.size() <= 1;
-		}
-	};
+        @Override
+        public boolean test(List<Integer> list, Integer t) throws Exception {
+            return list.size() <= 1;
+        }
+    };
 
-	@Test
-	public void testEmpty() {
-		Flowable.<Integer>empty() //
-		        .compose(FlowableTransformers. //
-		                toListWhile(BUFFER_TWO)) //
-		        .test() //
-		        .assertNoValues() //
-		        .assertComplete();
-	}
+    @Test
+    public void testEmpty() {
+        Flowable.<Integer>empty() //
+                .compose(FlowableTransformers. //
+                        toListWhile(BUFFER_TWO)) //
+                .test() //
+                .assertNoValues() //
+                .assertComplete();
+    }
 
-	@Test
-	public void testOne() {
-		Flowable.just(3) //
-		        .compose(FlowableTransformers. //
-		                toListWhile(BUFFER_TWO)) //
-		        .test() //
-		        .assertValue(Lists.newArrayList(3)) //
-		        .assertComplete();
-	}
+    @Test
+    public void testOne() {
+        Flowable.just(3) //
+                .compose(FlowableTransformers. //
+                        toListWhile(BUFFER_TWO)) //
+                .test() //
+                .assertValue(Lists.newArrayList(3)) //
+                .assertComplete();
+    }
 
-	@Test
-	public void testTwo() {
-		Flowable.just(3, 4) //
-		        .compose(FlowableTransformers. //
-		                toListWhile(BUFFER_TWO)) //
-		        .test() //
-		        .assertValue(Lists.newArrayList(3, 4)) //
-		        .assertComplete();
-	}
+    @Test
+    public void testTwo() {
+        Flowable.just(3, 4) //
+                .compose(FlowableTransformers. //
+                        toListWhile(BUFFER_TWO)) //
+                .test() //
+                .assertValue(Lists.newArrayList(3, 4)) //
+                .assertComplete();
+    }
 
-	@SuppressWarnings("unchecked")
-	@Test
-	public void testThree() {
-		Flowable.just(3, 4, 5) //
-		        .compose(FlowableTransformers. //
-		                toListWhile(BUFFER_TWO)) //
-		        .test() //
-		        .assertValues(Lists.newArrayList(3, 4), Lists.newArrayList(5)) //
-		        .assertComplete();
-	}
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testThree() {
+        Flowable.just(3, 4, 5) //
+                .compose(FlowableTransformers. //
+                        toListWhile(BUFFER_TWO)) //
+                .test() //
+                .assertValues(Lists.newArrayList(3, 4), Lists.newArrayList(5)) //
+                .assertComplete();
+    }
 
-	@Test
-	public void testFactoryReturnsNullShouldEmitNPE() {
-		Flowable.just(3) //
-		        .compose(FlowableTransformers. //
-		                collectWhile(Callables.<List<Integer>>toNull(), BiFunctions.constant(new ArrayList<Integer>()),
-		                        BUFFER_TWO)) //
-		        .test() //
-		        .assertNoValues() //
-		        .assertError(NullPointerException.class);
-	}
+    @Test
+    public void testFactoryReturnsNullShouldEmitNPE() {
+        Flowable.just(3) //
+                .compose(FlowableTransformers. //
+                        collectWhile(Callables.<List<Integer>>toNull(), BiFunctions.constant(new ArrayList<Integer>()),
+                                BUFFER_TWO)) //
+                .test() //
+                .assertNoValues() //
+                .assertError(NullPointerException.class);
+    }
 
-	@Test
-	public void testAddReturnsNullShouldEmitNPE() {
-		Flowable.just(3) //
-		        .compose(FlowableTransformers. //
-		                collectWhile(Callables.<List<Integer>>toNull(),
-		                        BiFunctions.<List<Integer>, Integer, List<Integer>>toNull(), BUFFER_TWO)) //
-		        .test() //
-		        .assertNoValues() //
-		        .assertError(NullPointerException.class);
-	}
+    @Test
+    public void testAddReturnsNullShouldEmitNPE() {
+        Flowable.just(3) //
+                .compose(FlowableTransformers. //
+                        collectWhile(Callables.<List<Integer>>toNull(),
+                                BiFunctions.<List<Integer>, Integer, List<Integer>>toNull(), BUFFER_TWO)) //
+                .test() //
+                .assertNoValues() //
+                .assertError(NullPointerException.class);
+    }
 
-	@Test
-	public void testAddReturnsNull() {
-		Flowable.just(3) //
-		        .compose(FlowableTransformers. //
-		                collectWhile( //
-		                        Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()),
-		                        BiFunctions.<List<Integer>, Integer, List<Integer>>toNull(), //
-		                        BUFFER_TWO)) //
-		        .test() //
-		        .assertNoValues() //
-		        .assertError(NullPointerException.class);
-	}
+    @Test
+    public void testAddReturnsNull() {
+        Flowable.just(3) //
+                .compose(FlowableTransformers. //
+                        collectWhile( //
+                                Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()),
+                                BiFunctions.<List<Integer>, Integer, List<Integer>>toNull(), //
+                                BUFFER_TWO)) //
+                .test() //
+                .assertNoValues() //
+                .assertError(NullPointerException.class);
+    }
 
-	@Test
-	public void testAddThrows() {
-		Flowable.just(3) //
-		        .compose(FlowableTransformers. //
-		                collectWhile( //
-		                        Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()),
-		                        BiFunctions.<List<Integer>, Integer, List<Integer>>throwing(), //
-		                        BUFFER_TWO)) //
-		        .test() //
-		        .assertNoValues() //
-		        .assertError(ThrowingException.class);
-	}
+    @Test
+    public void testAddThrows() {
+        Flowable.just(3) //
+                .compose(FlowableTransformers. //
+                        collectWhile( //
+                                Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()),
+                                BiFunctions.<List<Integer>, Integer, List<Integer>>throwing(), //
+                                BUFFER_TWO)) //
+                .test() //
+                .assertNoValues() //
+                .assertError(ThrowingException.class);
+    }
 
-	@Test
-	public void testConditionThrows() {
-		Flowable.just(3) //
-		        .compose(FlowableTransformers. //
-		                collectWhile( //
-		                        Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()), ADD, //
-		                        BiPredicates.throwing())) //
-		        .test() //
-		        .assertNoValues() //
-		        .assertError(ThrowingException.class);
-	}
+    @Test
+    public void testConditionThrows() {
+        Flowable.just(3) //
+                .compose(FlowableTransformers. //
+                        collectWhile( //
+                                Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()), ADD, //
+                                BiPredicates.throwing())) //
+                .test() //
+                .assertNoValues() //
+                .assertError(ThrowingException.class);
+    }
 
-	@Test
-	public void testDoesNotEmitAfterErrorInOnNextIfUpstreamDoesNotHonourCancellationImmediately() {
-		Burst.items(1, 2).create() //
-		        .compose(FlowableTransformers. //
-		                collectWhile( //
-		                        Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()), ADD, //
-		                        BiPredicates.throwing())) //
-		        .test() //
-		        .assertNoValues() //
-		        .assertError(ThrowingException.class);
-	}
+    @Test
+    public void testDoesNotEmitAfterErrorInOnNextIfUpstreamDoesNotHonourCancellationImmediately() {
+        Burst.items(1, 2).create() //
+                .compose(FlowableTransformers. //
+                        collectWhile( //
+                                Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()), ADD, //
+                                BiPredicates.throwing())) //
+                .test() //
+                .assertNoValues() //
+                .assertError(ThrowingException.class);
+    }
 
-	@Test
-	public void testDoesNotTwoErrorsIfUpstreamDoesNotHonourCancellationImmediately() {
-		try {
-			List<Throwable> list = new CopyOnWriteArrayList<Throwable>();
-			RxJavaPlugins.setErrorHandler(Consumers.addTo(list));
-			Burst.items(1).error(new ThrowingException())//
-			        .compose(FlowableTransformers. //
-			                collectWhile( //
-			                        Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()), ADD, //
-			                        BiPredicates.throwing())) //
-			        .test() //
-			        .assertNoValues() //
-			        .assertError(ThrowingException.class);
-			assertEquals(1, list.size());
-			assertTrue(list.get(0) instanceof ThrowingException);
-		} finally {
-			RxJavaPlugins.reset();
-		}
-	}
+    @Test
+    public void testDoesNotTwoErrorsIfUpstreamDoesNotHonourCancellationImmediately() {
+        try {
+            List<Throwable> list = new CopyOnWriteArrayList<Throwable>();
+            RxJavaPlugins.setErrorHandler(Consumers.addTo(list));
+            Burst.items(1).error(new ThrowingException())//
+                    .compose(FlowableTransformers. //
+                            collectWhile( //
+                                    Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()), ADD, //
+                                    BiPredicates.throwing())) //
+                    .test() //
+                    .assertNoValues() //
+                    .assertError(ThrowingException.class);
+            assertEquals(1, list.size());
+            assertTrue(list.get(0) instanceof ThrowingException);
+        } finally {
+            RxJavaPlugins.reset();
+        }
+    }
 
-	@SuppressWarnings("unchecked")
-	@Test
-	public void testBackpressure() {
-		Flowable.just(3, 4, 5, 6, 7, 8) //
-		        .compose(FlowableTransformers. //
-		                toListWhile(BUFFER_TWO)) //
-		        .test(1) //
-		        .assertValue(list(3, 4)) //
-		        .assertNotTerminated() //
-		        .requestMore(1) //
-		        .assertValues(list(3, 4), list(5, 6)) //
-		        .assertNotTerminated() //
-		        .requestMore(2) //
-		        .assertValues(list(3, 4), list(5, 6), list(7, 8)) //
-		        .assertComplete();
-	}
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testBackpressure() {
+        Flowable.just(3, 4, 5, 6, 7, 8) //
+                .compose(FlowableTransformers. //
+                        toListWhile(BUFFER_TWO)) //
+                .test(1) //
+                .assertValue(list(3, 4)) //
+                .assertNotTerminated() //
+                .requestMore(1) //
+                .assertValues(list(3, 4), list(5, 6)) //
+                .assertNotTerminated() //
+                .requestMore(2) //
+                .assertValues(list(3, 4), list(5, 6), list(7, 8)) //
+                .assertComplete();
+    }
 
-	@Test
-	public void testBackpressureAndCancel() {
+    @Test
+    public void testBackpressureAndCancel() {
 
-		TestSubscriber<List<Integer>> ts = Flowable.just(3, 4, 5, 6, 7, 8) //
-		        .compose(FlowableTransformers. //
-		                toListWhile(BUFFER_TWO)) //
-		        .test(1) //
-		        .assertValue(list(3, 4)) //
-		        .assertNotTerminated();
-		ts.cancel(); //
-		ts.requestMore(Long.MAX_VALUE) //
-		        .assertValueCount(1) //
-		        .assertNotTerminated();
-	}
+        TestSubscriber<List<Integer>> ts = Flowable.just(3, 4, 5, 6, 7, 8) //
+                .compose(FlowableTransformers. //
+                        toListWhile(BUFFER_TWO)) //
+                .test(1) //
+                .assertValue(list(3, 4)) //
+                .assertNotTerminated();
+        ts.cancel(); //
+        ts.requestMore(Long.MAX_VALUE) //
+                .assertValueCount(1) //
+                .assertNotTerminated();
+    }
 
-	@SuppressWarnings("unchecked")
-	@Test
-	public void testRequestWhileProcessingOnNext() {
-		final List<List<Integer>> list = new ArrayList<List<Integer>>();
-		Subscriber<List<Integer>> subscriber = new Subscriber<List<Integer>>() {
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testRequestWhileProcessingOnNext() {
+        final List<List<Integer>> list = new ArrayList<List<Integer>>();
+        Subscriber<List<Integer>> subscriber = new Subscriber<List<Integer>>() {
 
-			private Subscription parent;
+            private Subscription parent;
 
-			@Override
-			public void onSubscribe(Subscription s) {
-				this.parent = s;
-				parent.request(1);
-			}
+            @Override
+            public void onSubscribe(Subscription s) {
+                this.parent = s;
+                parent.request(1);
+            }
 
-			@Override
-			public void onNext(List<Integer> a) {
-				list.add(a);
-				parent.request(1);
-			}
+            @Override
+            public void onNext(List<Integer> a) {
+                list.add(a);
+                parent.request(1);
+            }
 
-			@Override
-			public void onError(Throwable e) {
-			}
+            @Override
+            public void onError(Throwable e) {
+            }
 
-			@Override
-			public void onComplete() {
+            @Override
+            public void onComplete() {
 
-			}
-		};
-		Flowable.just(3, 4, 5, 6) //
-		        .compose(FlowableTransformers. //
-		                toListWhile(BUFFER_TWO)) //
-		        .subscribe(subscriber);
-		assertEquals(list, Arrays.asList(list(3, 4), list(5, 6)));
-	}
+            }
+        };
+        Flowable.just(3, 4, 5, 6) //
+                .compose(FlowableTransformers. //
+                        toListWhile(BUFFER_TWO)) //
+                .subscribe(subscriber);
+        assertEquals(list, Arrays.asList(list(3, 4), list(5, 6)));
+    }
 
-	@SuppressWarnings("unchecked")
-	@Test
-	public void testCancelWhileProcessingOnNext() {
-		final List<List<Integer>> list = new ArrayList<List<Integer>>();
-		Subscriber<List<Integer>> subscriber = new Subscriber<List<Integer>>() {
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testCancelWhileProcessingOnNext() {
+        final List<List<Integer>> list = new ArrayList<List<Integer>>();
+        Subscriber<List<Integer>> subscriber = new Subscriber<List<Integer>>() {
 
-			private Subscription parent;
+            private Subscription parent;
 
-			@Override
-			public void onSubscribe(Subscription s) {
-				this.parent = s;
-				parent.request(2);
-			}
+            @Override
+            public void onSubscribe(Subscription s) {
+                this.parent = s;
+                parent.request(2);
+            }
 
-			@Override
-			public void onNext(List<Integer> a) {
-				list.add(a);
-				parent.cancel();
-			}
+            @Override
+            public void onNext(List<Integer> a) {
+                list.add(a);
+                parent.cancel();
+            }
 
-			@Override
-			public void onError(Throwable e) {
-			}
+            @Override
+            public void onError(Throwable e) {
+            }
 
-			@Override
-			public void onComplete() {
+            @Override
+            public void onComplete() {
 
-			}
-		};
-		Flowable.just(3, 4, 5, 6) //
-		        .compose(FlowableTransformers. //
-		                toListWhile(BUFFER_TWO)) //
-		        .subscribe(subscriber);
-		assertEquals(list, Arrays.asList(list(3, 4)));
-	}
+            }
+        };
+        Flowable.just(3, 4, 5, 6) //
+                .compose(FlowableTransformers. //
+                        toListWhile(BUFFER_TWO)) //
+                .subscribe(subscriber);
+        assertEquals(list, Arrays.asList(list(3, 4)));
+    }
 
-	@SuppressWarnings("unchecked")
-	@Test
-	public void testWhenEmitRemainderFalse() {
-		Flowable.just(3, 4, 5) //
-		        .compose(FlowableTransformers. //
-		                toListWhile(BUFFER_TWO, false)) //
-		        .test() //
-		        .assertValues(Lists.newArrayList(3, 4)) //
-		        .assertComplete();
-	}
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testWhenEmitRemainderFalse() {
+        Flowable.just(3, 4, 5) //
+                .compose(FlowableTransformers. //
+                        toListWhile(BUFFER_TWO, false)) //
+                .test() //
+                .assertValues(Lists.newArrayList(3, 4)) //
+                .assertComplete();
+    }
 
-	private static List<Integer> list(Integer... values) {
-		return Lists.newArrayList(values);
-	}
+    private static List<Integer> list(Integer... values) {
+        return Lists.newArrayList(values);
+    }
 
-	private static final BiFunction<List<Integer>, Integer, List<Integer>> ADD = new BiFunction<List<Integer>, Integer, List<Integer>>() {
+    private static final BiFunction<List<Integer>, Integer, List<Integer>> ADD = new BiFunction<List<Integer>, Integer, List<Integer>>() {
 
-		@Override
-		public List<Integer> apply(List<Integer> list, Integer t) throws Exception {
-			list.add(t);
-			return list;
-		}
-	};
+        @Override
+        public List<Integer> apply(List<Integer> list, Integer t) throws Exception {
+            list.add(t);
+            return list;
+        }
+    };
 
 }

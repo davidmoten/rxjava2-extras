@@ -13,13 +13,12 @@ public class SerializerJavaIOTest {
     public void testNoHeader() throws IOException, ClassNotFoundException {
         Serializers.javaIO().deserialize(new byte[] {});
     }
-    
+
     @Test(expected = IOException.class)
     public void testProblemAfterHeader() throws IOException, ClassNotFoundException {
         byte[] bytes = Serializers.javaIO().serialize(10);
-        bytes = Arrays.copyOf(bytes, bytes.length-1);
+        bytes = Arrays.copyOf(bytes, bytes.length - 1);
         Serializers.javaIO().deserialize(bytes);
     }
-
 
 }

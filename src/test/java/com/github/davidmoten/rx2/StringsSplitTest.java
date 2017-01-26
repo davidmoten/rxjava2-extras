@@ -21,8 +21,7 @@ import io.reactivex.subscribers.TestSubscriber;
 public class StringsSplitTest {
     @Test
     public void testSplitLongPattern() {
-        Iterator<String> iter = Strings.split(Flowable.just("asdfqw", "erasdf"), "qwer")
-                .blockingIterable().iterator();
+        Iterator<String> iter = Strings.split(Flowable.just("asdfqw", "erasdf"), "qwer").blockingIterable().iterator();
         assertTrue(iter.hasNext());
         assertEquals("asdf", iter.next());
         assertTrue(iter.hasNext());
@@ -32,7 +31,7 @@ public class StringsSplitTest {
 
     @Test
     public void testSplitEmpty() {
-        Flowable.<String> empty() //
+        Flowable.<String>empty() //
                 .compose(Strings.split("\n")) //
                 .test() //
                 .assertNoValues() //
@@ -41,7 +40,7 @@ public class StringsSplitTest {
 
     @Test(timeout = 5000)
     public void testSplitSimpleEmpty() {
-        Flowable.<String> empty() //
+        Flowable.<String>empty() //
                 .compose(Strings.splitSimple("\n")) //
                 .test() //
                 .assertNoValues() //
@@ -165,7 +164,7 @@ public class StringsSplitTest {
 
     @Test
     public void testSplitSimpleError() {
-        Flowable.<String> error(new IOException()) //
+        Flowable.<String>error(new IOException()) //
                 .compose(Strings.splitSimple(":")).test() //
                 .assertNoValues() //
                 .assertError(IOException.class);
@@ -242,5 +241,5 @@ public class StringsSplitTest {
     public void testLong() {
         Flowable.just(Benchmarks.lines).compose(Strings.splitSimple("\n")).blockingLast();
     }
-    
+
 }

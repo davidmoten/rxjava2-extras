@@ -30,18 +30,18 @@ public final class Serializers {
     }
 
     public static Serializer<String> utf8() {
-        //TODO use holder 
+        // TODO use holder
         return string(UTF_8);
     }
 
     public static Serializer<String> string(Charset charset) {
         return new SerializerString(charset);
     }
-    
-    public static <T> Serializer<T> from(DataSerializer<T> ds){
+
+    public static <T> Serializer<T> from(DataSerializer<T> ds) {
         return new WrappedDataSerializer<T>(ds);
     }
-    
+
     private static final class WrappedDataSerializer<T> implements Serializer<T> {
 
         private final DataSerializer<T> ds;
@@ -74,6 +74,5 @@ public final class Serializers {
         }
 
     }
-    
-    
+
 }

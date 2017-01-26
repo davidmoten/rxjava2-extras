@@ -24,9 +24,9 @@ public final class Functions {
     public static <T> Function<T, T> identity() {
         return (Function<T, T>) IdentityHolder.INSTANCE;
     }
-    
+
     private static final class IdentityHolder {
-        static final Function<Object,Object> INSTANCE = new Function<Object, Object>() {
+        static final Function<Object, Object> INSTANCE = new Function<Object, Object>() {
 
             @Override
             public Object apply(Object t) throws Exception {
@@ -34,9 +34,9 @@ public final class Functions {
             }
         };
     }
-    
+
     public static <T, R> Function<T, R> throwing() {
-        //TODO make holder
+        // TODO make holder
         return new Function<T, R>() {
 
             @Override

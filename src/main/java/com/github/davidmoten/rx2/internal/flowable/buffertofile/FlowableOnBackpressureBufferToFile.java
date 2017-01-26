@@ -29,8 +29,8 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
     private final Options options;
     private final Serializer<T> serializer;
 
-    public FlowableOnBackpressureBufferToFile(Flowable<T> source, Observable<T> source2,
-            Options options, Serializer<T> serializer) {
+    public FlowableOnBackpressureBufferToFile(Flowable<T> source, Observable<T> source2, Options options,
+            Serializer<T> serializer) {
         // only one source should be defined
         Preconditions.checkArgument((source != null) ^ (source2 != null));
         this.source = source;
@@ -44,11 +44,9 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
         PagedQueue queue = new PagedQueue(options.fileFactory(), options.pageSizeBytes());
         Worker worker = options.scheduler().createWorker();
         if (source != null) {
-            source.subscribe(
-                    new BufferToFileSubscriberFlowable<T>(child, queue, serializer, worker));
+            source.subscribe(new BufferToFileSubscriberFlowable<T>(child, queue, serializer, worker));
         } else {
-            source2.subscribe(
-                    new BufferToFileSubscriberObservable<T>(child, queue, serializer, worker));
+            source2.subscribe(new BufferToFileSubscriberObservable<T>(child, queue, serializer, worker));
         }
     }
 
@@ -60,8 +58,8 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
         private Subscription parent;
 
         @VisibleForTesting
-        public BufferToFileSubscriberFlowable(Subscriber<? super T> child, PagedQueue queue,
-                Serializer<T> serializer, Worker worker) {
+        public BufferToFileSubscriberFlowable(Subscriber<? super T> child, PagedQueue queue, Serializer<T> serializer,
+                Worker worker) {
             super(child, queue, serializer, worker);
         }
 
@@ -118,8 +116,8 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
 
         private Disposable parent;
 
-        BufferToFileSubscriberObservable(Subscriber<? super T> child, PagedQueue queue,
-                Serializer<T> serializer, Worker worker) {
+        BufferToFileSubscriberObservable(Subscriber<? super T> child, PagedQueue queue, Serializer<T> serializer,
+                Worker worker) {
             super(child, queue, serializer, worker);
         }
 
@@ -185,8 +183,7 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
         // `done` is read. Thus doesn't need to be volatile.
         private Throwable error;
 
-        BufferToFileSubscriber(Subscriber<? super T> child, PagedQueue queue,
-                Serializer<T> serializer, Worker worker) {
+        BufferToFileSubscriber(Subscriber<? super T> child, PagedQueue queue, Serializer<T> serializer, Worker worker) {
             this.child = child;
             this.queue = queue;
             this.serializer = serializer;

@@ -28,21 +28,19 @@ public final class IO {
         });
     }
 
-    public static ServerSocketBuilder serverSocketAutoAllocatePort(
-            final Consumer<Integer> onAllocated) {
+    public static ServerSocketBuilder serverSocketAutoAllocatePort(final Consumer<Integer> onAllocated) {
         return serverSocket(new Callable<ServerSocket>() {
 
             @Override
             public ServerSocket call() throws Exception {
-                    ServerSocket ss = new ServerSocket(0);
-                    onAllocated.accept(ss.getLocalPort());
-                    return ss;
+                ServerSocket ss = new ServerSocket(0);
+                onAllocated.accept(ss.getLocalPort());
+                return ss;
             }
         });
     }
 
-    public static ServerSocketBuilder serverSocket(
-            Callable<? extends ServerSocket> serverSocketFactory) {
+    public static ServerSocketBuilder serverSocket(Callable<? extends ServerSocket> serverSocketFactory) {
         return new ServerSocketBuilder(serverSocketFactory);
     }
 
@@ -85,8 +83,8 @@ public final class IO {
         }
 
         public Flowable<Flowable<byte[]>> create() {
-            return FlowableServerSocket.create(serverSocketFactory, readTimeoutMs, bufferSize,
-                    preAcceptAction, acceptTimeoutMs, acceptSocket);
+            return FlowableServerSocket.create(serverSocketFactory, readTimeoutMs, bufferSize, preAcceptAction,
+                    acceptTimeoutMs, acceptSocket);
         }
 
     }

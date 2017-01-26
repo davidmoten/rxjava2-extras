@@ -24,128 +24,128 @@ import io.reactivex.internal.subscriptions.SubscriptionHelper;
  */
 public final class FlowableWindowMinMax<T> extends Flowable<T> {
 
-	private final Flowable<T> source;
-	private final int windowSize;
-	private final Comparator<? super T> comparator;
-	private final Metric metric;
+    private final Flowable<T> source;
+    private final int windowSize;
+    private final Comparator<? super T> comparator;
+    private final Metric metric;
 
-	public FlowableWindowMinMax(Flowable<T> source, int windowSize, Comparator<? super T> comparator, Metric metric) {
-		Preconditions.checkArgument(windowSize > 0, "windowSize must be greater than zero");
-		Preconditions.checkNotNull(comparator, "comparator cannot be null");
-		Preconditions.checkNotNull(metric, "metric cannot be null");
-		this.source = source;
-		this.windowSize = windowSize;
-		this.comparator = comparator;
-		this.metric = metric;
-	}
+    public FlowableWindowMinMax(Flowable<T> source, int windowSize, Comparator<? super T> comparator, Metric metric) {
+        Preconditions.checkArgument(windowSize > 0, "windowSize must be greater than zero");
+        Preconditions.checkNotNull(comparator, "comparator cannot be null");
+        Preconditions.checkNotNull(metric, "metric cannot be null");
+        this.source = source;
+        this.windowSize = windowSize;
+        this.comparator = comparator;
+        this.metric = metric;
+    }
 
-	@Override
-	protected void subscribeActual(org.reactivestreams.Subscriber<? super T> child) {
-		source.subscribe(new WindowMinMaxSubscriber<T>(windowSize, comparator, metric, child));
-	}
+    @Override
+    protected void subscribeActual(org.reactivestreams.Subscriber<? super T> child) {
+        source.subscribe(new WindowMinMaxSubscriber<T>(windowSize, comparator, metric, child));
+    }
 
-	private static final class WindowMinMaxSubscriber<T> implements Subscriber<T>, Subscription {
+    private static final class WindowMinMaxSubscriber<T> implements Subscriber<T>, Subscription {
 
-		private final int windowSize;
-		private final Comparator<? super T> comparator;
-		private final Metric metric;
-		private final Subscriber<? super T> child;
+        private final int windowSize;
+        private final Comparator<? super T> comparator;
+        private final Metric metric;
+        private final Subscriber<? super T> child;
 
-		// map index to value
-		private final Map<Long, T> values;
+        // map index to value
+        private final Map<Long, T> values;
 
-		// queue of indices
-		private final Deque<Long> indices;
+        // queue of indices
+        private final Deque<Long> indices;
 
-		private long count = 0;
-		private Subscription parent;
+        private long count = 0;
+        private Subscription parent;
 
-		public WindowMinMaxSubscriber(int windowSize, Comparator<? super T> comparator, Metric metric,
-		        Subscriber<? super T> child) {
-			this.windowSize = windowSize;
-			this.comparator = comparator;
-			this.metric = metric;
-			this.child = child;
-			this.values = new HashMap<Long, T>(windowSize);
-			this.indices = new ArrayDeque<Long>(windowSize);
-		}
+        public WindowMinMaxSubscriber(int windowSize, Comparator<? super T> comparator, Metric metric,
+                Subscriber<? super T> child) {
+            this.windowSize = windowSize;
+            this.comparator = comparator;
+            this.metric = metric;
+            this.child = child;
+            this.values = new HashMap<Long, T>(windowSize);
+            this.indices = new ArrayDeque<Long>(windowSize);
+        }
 
-		@Override
-		public void onSubscribe(Subscription parent) {
-			if (SubscriptionHelper.validate(this.parent, parent)) {
-				this.parent = parent;
-				child.onSubscribe(this);
-				parent.request(windowSize - 1);
-			}
-		}
+        @Override
+        public void onSubscribe(Subscription parent) {
+            if (SubscriptionHelper.validate(this.parent, parent)) {
+                this.parent = parent;
+                child.onSubscribe(this);
+                parent.request(windowSize - 1);
+            }
+        }
 
-		@Override
-		public void request(long n) {
-			if (SubscriptionHelper.validate(n)) {
-				parent.request(n);
-			}
-		}
+        @Override
+        public void request(long n) {
+            if (SubscriptionHelper.validate(n)) {
+                parent.request(n);
+            }
+        }
 
-		@Override
-		public void cancel() {
-			parent.cancel();
-			// would be nice to clear the window here but would have performance
-			// impact because would need to worry about allowing concurrent
-			// changes to `indices` and `map`
-		}
+        @Override
+        public void cancel() {
+            parent.cancel();
+            // would be nice to clear the window here but would have performance
+            // impact because would need to worry about allowing concurrent
+            // changes to `indices` and `map`
+        }
 
-		@Override
-		public void onComplete() {
-			child.onComplete();
-		}
+        @Override
+        public void onComplete() {
+            child.onComplete();
+        }
 
-		@Override
-		public void onError(Throwable e) {
-			child.onError(e);
-		}
+        @Override
+        public void onError(Throwable e) {
+            child.onError(e);
+        }
 
-		@Override
-		public void onNext(T t) {
-			count++;
-			// add to queue
-			addToQueue(t);
-			if (count >= windowSize) {
-				// emit max
+        @Override
+        public void onNext(T t) {
+            count++;
+            // add to queue
+            addToQueue(t);
+            if (count >= windowSize) {
+                // emit max
 
-				// head of queue is max
-				Long head = indices.peekFirst();
-				final T value;
-				if (head == count - windowSize) {
-					// if window past that index then remove from map
-					values.remove(indices.pollFirst());
-					value = values.get(indices.peekFirst());
-				} else {
-					value = values.get(head);
-				}
-				child.onNext(value);
-			}
-		}
+                // head of queue is max
+                Long head = indices.peekFirst();
+                final T value;
+                if (head == count - windowSize) {
+                    // if window past that index then remove from map
+                    values.remove(indices.pollFirst());
+                    value = values.get(indices.peekFirst());
+                } else {
+                    value = values.get(head);
+                }
+                child.onNext(value);
+            }
+        }
 
-		private void addToQueue(T t) {
-			Long v;
-			while ((v = indices.peekLast()) != null && compare(t, values.get(v)) <= 0) {
-				values.remove(indices.pollLast());
-			}
-			values.put(count, t);
-			indices.offerLast(count);
-		}
+        private void addToQueue(T t) {
+            Long v;
+            while ((v = indices.peekLast()) != null && compare(t, values.get(v)) <= 0) {
+                values.remove(indices.pollLast());
+            }
+            values.put(count, t);
+            indices.offerLast(count);
+        }
 
-		private int compare(T a, T b) {
-			if (metric == Metric.MIN) {
-				return comparator.compare(a, b);
-			} else {
-				return comparator.compare(b, a);
-			}
-		}
-	}
+        private int compare(T a, T b) {
+            if (metric == Metric.MIN) {
+                return comparator.compare(a, b);
+            } else {
+                return comparator.compare(b, a);
+            }
+        }
+    }
 
-	public enum Metric {
-		MIN, MAX;
-	}
+    public enum Metric {
+        MIN, MAX;
+    }
 
 }

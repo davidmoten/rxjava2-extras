@@ -25,13 +25,12 @@ public final class FlowableServerSocket {
         // prevent instantiation
     }
 
-    public static Flowable<Flowable<byte[]>> create(
-            final Callable<? extends ServerSocket> serverSocketFactory, final int timeoutMs,
-            final int bufferSize, Action preAcceptAction, int acceptTimeoutMs,
+    public static Flowable<Flowable<byte[]>> create(final Callable<? extends ServerSocket> serverSocketFactory,
+            final int timeoutMs, final int bufferSize, Action preAcceptAction, int acceptTimeoutMs,
             Predicate<? super Socket> acceptSocket) {
-        Function<ServerSocket, Flowable<Flowable<byte[]>>> FlowableFactory = createFlowableFactory(
-                timeoutMs, bufferSize, preAcceptAction, acceptSocket);
-        return Flowable.<Flowable<byte[]>, ServerSocket> using( //
+        Function<ServerSocket, Flowable<Flowable<byte[]>>> FlowableFactory = createFlowableFactory(timeoutMs,
+                bufferSize, preAcceptAction, acceptSocket);
+        return Flowable.<Flowable<byte[]>, ServerSocket>using( //
                 createServerSocketFactory(serverSocketFactory, acceptTimeoutMs), //
                 FlowableFactory, //
                 new Consumer<ServerSocket>() {
@@ -55,41 +54,37 @@ public final class FlowableServerSocket {
         };
     }
 
-    private static ServerSocket createServerSocket(
-            Callable<? extends ServerSocket> serverSocketCreator, long timeoutMs) throws Exception {
+    private static ServerSocket createServerSocket(Callable<? extends ServerSocket> serverSocketCreator, long timeoutMs)
+            throws Exception {
         ServerSocket s = serverSocketCreator.call();
         s.setSoTimeout((int) timeoutMs);
         return s;
     }
 
-    private static Function<ServerSocket, Flowable<Flowable<byte[]>>> createFlowableFactory(
-            final int timeoutMs, final int bufferSize, final Action preAcceptAction,
-            final Predicate<? super Socket> acceptSocket) {
+    private static Function<ServerSocket, Flowable<Flowable<byte[]>>> createFlowableFactory(final int timeoutMs,
+            final int bufferSize, final Action preAcceptAction, final Predicate<? super Socket> acceptSocket) {
         return new Function<ServerSocket, Flowable<Flowable<byte[]>>>() {
             @Override
             public Flowable<Flowable<byte[]>> apply(ServerSocket serverSocket) {
-                return createServerSocketFlowable(serverSocket, timeoutMs, bufferSize,
-                        preAcceptAction, acceptSocket);
+                return createServerSocketFlowable(serverSocket, timeoutMs, bufferSize, preAcceptAction, acceptSocket);
             }
         };
     }
 
-    private static Flowable<Flowable<byte[]>> createServerSocketFlowable(
-            final ServerSocket serverSocket, final long timeoutMs, final int bufferSize,
-            final Action preAcceptAction, final Predicate<? super Socket> acceptSocket) {
+    private static Flowable<Flowable<byte[]>> createServerSocketFlowable(final ServerSocket serverSocket,
+            final long timeoutMs, final int bufferSize, final Action preAcceptAction,
+            final Predicate<? super Socket> acceptSocket) {
         return Flowable.generate( //
                 new Consumer<Emitter<Flowable<byte[]>>>() {
                     @Override
                     public void accept(Emitter<Flowable<byte[]>> emitter) throws Exception {
-                        acceptConnection(timeoutMs, bufferSize, serverSocket, emitter,
-                                preAcceptAction, acceptSocket);
+                        acceptConnection(timeoutMs, bufferSize, serverSocket, emitter, preAcceptAction, acceptSocket);
                     }
                 });
     }
 
     private static void acceptConnection(long timeoutMs, int bufferSize, ServerSocket ss,
-            Emitter<Flowable<byte[]>> emitter, Action preAcceptAction,
-            Predicate<? super Socket> acceptSocket) {
+            Emitter<Flowable<byte[]>> emitter, Action preAcceptAction, Predicate<? super Socket> acceptSocket) {
         Socket socket;
         while (true) {
             try {
@@ -109,8 +104,7 @@ public final class FlowableServerSocket {
                 // just end up in RxJavaPlugins.onError as a stack trace in the
                 // console.
                 if (e instanceof SocketException && ("Socket closed".equals(e.getMessage())
-                        || "Socket operation on nonsocket: configureBlocking"
-                                .equals(e.getMessage()))) {
+                        || "Socket operation on nonsocket: configureBlocking".equals(e.getMessage()))) {
                     break;
                 } else {
                     // unknown problem
@@ -130,8 +124,7 @@ public final class FlowableServerSocket {
         }
     }
 
-    private static Flowable<byte[]> createSocketFlowable(final Socket socket, long timeoutMs,
-            final int bufferSize) {
+    private static Flowable<byte[]> createSocketFlowable(final Socket socket, long timeoutMs, final int bufferSize) {
         setTimeout(socket, timeoutMs);
         return Flowable.using( //
                 new Callable<InputStream>() {

@@ -168,8 +168,7 @@ public class FlowableMatchTest {
         final AtomicBoolean terminal = new AtomicBoolean();
         matchThem(a, b) //
                 .doOnTerminate(Actions.setToTrue(terminal)) //
-                .doOnNext(Consumers.println())
-                .subscribe(new Subscriber<Integer>() {
+                .doOnNext(Consumers.println()).subscribe(new Subscriber<Integer>() {
 
                     private Subscription s;
 
@@ -212,10 +211,7 @@ public class FlowableMatchTest {
     public void testKeyFunctionAThrowsResultsInErrorEmission() {
         Flowable<Integer> a = Flowable.just(1);
         Flowable<Integer> b = Flowable.just(1);
-        Flowables
-                .match(a, b, Functions.<Integer, Integer>throwing(), Functions.<Integer>identity(),
-                        COMBINER)
-                .test() //
+        Flowables.match(a, b, Functions.<Integer, Integer>throwing(), Functions.<Integer>identity(), COMBINER).test() //
                 .assertNoValues() //
                 .assertError(ThrowingException.class);
     }
@@ -285,8 +281,7 @@ public class FlowableMatchTest {
                 }
             });
             Flowable<Integer> b = Flowable.range(1, n);
-            boolean equals = Flowable.sequenceEqual(matchThem(a, b).sorted(), Flowable.range(1, n))
-                    .blockingGet();
+            boolean equals = Flowable.sequenceEqual(matchThem(a, b).sorted(), Flowable.range(1, n)).blockingGet();
             assertTrue(equals);
         }
     }
@@ -325,8 +320,7 @@ public class FlowableMatchTest {
     }
 
     private static Flowable<Integer> matchThem(Flowable<Integer> a, Flowable<Integer> b) {
-        return a.compose(
-                FlowableTransformers.matchWith(b, Functions.identity(), Functions.identity(), COMBINER));
+        return a.compose(FlowableTransformers.matchWith(b, Functions.identity(), Functions.identity(), COMBINER));
     }
 
     private static void match(Flowable<Integer> a, Flowable<Integer> b, Integer... expected) {

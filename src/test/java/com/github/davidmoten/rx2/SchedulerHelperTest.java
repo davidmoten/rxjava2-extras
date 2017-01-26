@@ -32,7 +32,7 @@ public class SchedulerHelperTest {
         });
         assertEquals(main + "|schedId=[boo]", b.toString());
     }
-    
+
     @Test
     public void testDispose() {
         Scheduler s = SchedulerHelper.withThreadId(Schedulers.trampoline(), "boo");
@@ -42,7 +42,6 @@ public class SchedulerHelperTest {
         Assert.assertTrue(w.isDisposed());
     }
 
-    
     @Test
     public void testWithCallSite() {
         Scheduler s = SchedulerHelper.withThreadIdFromCallSite(Schedulers.trampoline());
@@ -56,8 +55,8 @@ public class SchedulerHelperTest {
             }
         });
         System.out.println(b);
-        assertEquals(
-                main + "|schedId=[com.github.davidmoten.rx2.SchedulerHelperTest:testWithCallSite:48]", b.toString());
+        assertEquals(main + "|schedId=[com.github.davidmoten.rx2.SchedulerHelperTest:testWithCallSite:48]",
+                b.toString());
     }
 
 }

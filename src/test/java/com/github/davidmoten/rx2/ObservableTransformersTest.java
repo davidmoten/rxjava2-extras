@@ -10,5 +10,5 @@ public class ObservableTransformersTest {
     public void isUtilityClass() {
         Asserts.assertIsUtilityClass(ObservableTransformers.class);
     }
-    
+
 }

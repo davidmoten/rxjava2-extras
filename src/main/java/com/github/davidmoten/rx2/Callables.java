@@ -18,14 +18,15 @@ public final class Callables {
         };
     }
 
-	public static <T> Callable<T> toNull() {
-		//TODO make holder
-		return new Callable<T>() {
+    public static <T> Callable<T> toNull() {
+        // TODO make holder
+        return new Callable<T>() {
 
-			@Override
-			public T call() throws Exception {
-				return null;
-			}};
-	}
+            @Override
+            public T call() throws Exception {
+                return null;
+            }
+        };
+    }
 
 }

@@ -31,13 +31,11 @@ public class StateMachineTest {
 
     @Test
     public void testBuilder() {
-        FlowableTransformer<Integer, String> collectIntoStringsOfMinLength3 = FlowableTransformers
-                .stateMachine() //
+        FlowableTransformer<Integer, String> collectIntoStringsOfMinLength3 = FlowableTransformers.stateMachine() //
                 .initialState("") //
                 .transition(new Transition<String, Integer, String>() {
                     @Override
-                    public String apply(String state, Integer value,
-                            FlowableEmitter<String> emitter) {
+                    public String apply(String state, Integer value, FlowableEmitter<String> emitter) {
                         String state2 = state + value;
                         if (state2.length() >= 3) {
                             emitter.onNext(state2.substring(0, 3));
@@ -59,8 +57,7 @@ public class StateMachineTest {
                 .requestBatchSize(128) //
                 .build();
 
-        List<String> list = Flowable.range(1, 13).compose(collectIntoStringsOfMinLength3).toList()
-                .blockingGet();
+        List<String> list = Flowable.range(1, 13).compose(collectIntoStringsOfMinLength3).toList().blockingGet();
         assertEquals(Arrays.asList("123", "456", "789", "101", "112", "13"), list);
 
     }

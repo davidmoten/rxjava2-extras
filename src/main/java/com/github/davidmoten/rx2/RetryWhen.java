@@ -38,12 +38,11 @@ public final class RetryWhen {
     private RetryWhen() {
         // prevent instantiation
     }
-    
+
     private static final long NO_MORE_DELAYS = -1;
 
     private static Function<Flowable<? extends Throwable>, Flowable<Object>> notificationHandler(
-            final Flowable<Long> delays, final Scheduler scheduler,
-            final Consumer<? super ErrorAndDuration> action,
+            final Flowable<Long> delays, final Scheduler scheduler, final Consumer<? super ErrorAndDuration> action,
             final List<Class<? extends Throwable>> retryExceptions,
             final List<Class<? extends Throwable>> failExceptions,
             final Predicate<? super Throwable> exceptionPredicate) {
@@ -55,8 +54,7 @@ public final class RetryWhen {
     }
 
     private static Function<Flowable<? extends Throwable>, Flowable<Object>> createNotificationHandler(
-            final Flowable<Long> delays, final Scheduler scheduler,
-            final Consumer<? super ErrorAndDuration> action,
+            final Flowable<Long> delays, final Scheduler scheduler, final Consumer<? super ErrorAndDuration> action,
             final Function<ErrorAndDuration, Flowable<ErrorAndDuration>> checkExceptions) {
         return new Function<Flowable<? extends Throwable>, Flowable<Object>>() {
 
@@ -68,8 +66,7 @@ public final class RetryWhen {
                 // will be fixed
                 return (Flowable<Object>) (Flowable<?>) errors
                         // zip with delays, use -1 to signal completion
-                        .zipWith(delays.concatWith(Flowable.just(NO_MORE_DELAYS)),
-                                TO_ERROR_AND_DURATION)
+                        .zipWith(delays.concatWith(Flowable.just(NO_MORE_DELAYS)), TO_ERROR_AND_DURATION)
                         // check retry and non-retry exceptions
                         .flatMap(checkExceptions)
                         // perform user action (for example log that a
@@ -81,8 +78,7 @@ public final class RetryWhen {
         };
     }
 
-    private static Consumer<ErrorAndDuration> callActionExceptForLast(
-            final Consumer<? super ErrorAndDuration> action) {
+    private static Consumer<ErrorAndDuration> callActionExceptForLast(final Consumer<? super ErrorAndDuration> action) {
         return new Consumer<ErrorAndDuration>() {
             @Override
             public void accept(ErrorAndDuration e) throws Exception {
@@ -128,8 +124,7 @@ public final class RetryWhen {
         }
     };
 
-    private static Function<ErrorAndDuration, Flowable<ErrorAndDuration>> delay(
-            final Scheduler scheduler) {
+    private static Function<ErrorAndDuration, Flowable<ErrorAndDuration>> delay(final Scheduler scheduler) {
         return new Function<ErrorAndDuration, Flowable<ErrorAndDuration>>() {
             @Override
             public Flowable<ErrorAndDuration> apply(ErrorAndDuration e) {
@@ -180,8 +175,7 @@ public final class RetryWhen {
         return new Builder().action(action);
     }
 
-    public static Builder exponentialBackoff(final long firstDelay, final TimeUnit unit,
-            final double factor) {
+    public static Builder exponentialBackoff(final long firstDelay, final TimeUnit unit, final double factor) {
         return new Builder().exponentialBackoff(firstDelay, unit, factor);
     }
 
@@ -270,8 +264,9 @@ public final class RetryWhen {
             this.action = action;
             return this;
         }
-        
-        public Builder exponentialBackoff(final long firstDelay, final long maxDelay, final TimeUnit unit, final double factor) {
+
+        public Builder exponentialBackoff(final long firstDelay, final long maxDelay, final TimeUnit unit,
+                final double factor) {
 
             delays = Flowable.range(1, Integer.MAX_VALUE)
                     // make exponential
@@ -289,7 +284,7 @@ public final class RetryWhen {
                     });
             return this;
         }
-        
+
         public Builder exponentialBackoff(final long firstDelay, final TimeUnit unit, final double factor) {
             return exponentialBackoff(firstDelay, -1, unit, factor);
         }
@@ -303,8 +298,8 @@ public final class RetryWhen {
             if (maxRetries.isPresent()) {
                 delays = delays.take(maxRetries.get());
             }
-            return notificationHandler(delays, scheduler.get(), action, retryExceptions,
-                    failExceptions, exceptionPredicate);
+            return notificationHandler(delays, scheduler.get(), action, retryExceptions, failExceptions,
+                    exceptionPredicate);
         }
 
     }

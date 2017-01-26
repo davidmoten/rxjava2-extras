@@ -37,94 +37,94 @@ import io.reactivex.internal.util.BackpressureHelper;
  */
 public final class Burst<T> extends Flowable<T> {
 
-	private final List<T> items;
-	private final Throwable error;
+    private final List<T> items;
+    private final Throwable error;
 
-	private Burst(Throwable error, List<T> items) {
-		if (items.isEmpty()) {
-			throw new IllegalArgumentException("items cannot be empty");
-		}
-		for (T item : items) {
-			if (item == null) {
-				throw new IllegalArgumentException("items cannot include null");
-			}
-		}
-		this.error = error;
-		this.items = items;
-	}
+    private Burst(Throwable error, List<T> items) {
+        if (items.isEmpty()) {
+            throw new IllegalArgumentException("items cannot be empty");
+        }
+        for (T item : items) {
+            if (item == null) {
+                throw new IllegalArgumentException("items cannot include null");
+            }
+        }
+        this.error = error;
+        this.items = items;
+    }
 
-	@Override
-	protected void subscribeActual(final Subscriber<? super T> subscriber) {
-		subscriber.onSubscribe(new Subscription() {
+    @Override
+    protected void subscribeActual(final Subscriber<? super T> subscriber) {
+        subscriber.onSubscribe(new Subscription() {
 
-			final Queue<T> q = new ConcurrentLinkedQueue<T>(items);
-			final AtomicLong requested = new AtomicLong();
-			volatile boolean cancelled;
+            final Queue<T> q = new ConcurrentLinkedQueue<T>(items);
+            final AtomicLong requested = new AtomicLong();
+            volatile boolean cancelled;
 
-			@Override
-			public void request(long n) {
-				if (cancelled) {
-					// required by reactive-streams-jvm 3.6
-					return;
-				}
-				if (SubscriptionHelper.validate(n)) {
-					// just for testing, don't care about perf
-					// so no attempt made to reduce volatile reads
-					if (BackpressureHelper.add(requested, n) == 0) {
-						if (q.isEmpty()) {
-							return;
-						}
-						while (!q.isEmpty() && requested.get() > 0) {
-							T item = q.poll();
-							requested.decrementAndGet();
-							subscriber.onNext(item);
-						}
-						if (q.isEmpty()) {
-							if (error != null) {
-								subscriber.onError(error);
-							} else {
-								subscriber.onComplete();
-							}
-						}
-					}
-				}
-			}
+            @Override
+            public void request(long n) {
+                if (cancelled) {
+                    // required by reactive-streams-jvm 3.6
+                    return;
+                }
+                if (SubscriptionHelper.validate(n)) {
+                    // just for testing, don't care about perf
+                    // so no attempt made to reduce volatile reads
+                    if (BackpressureHelper.add(requested, n) == 0) {
+                        if (q.isEmpty()) {
+                            return;
+                        }
+                        while (!q.isEmpty() && requested.get() > 0) {
+                            T item = q.poll();
+                            requested.decrementAndGet();
+                            subscriber.onNext(item);
+                        }
+                        if (q.isEmpty()) {
+                            if (error != null) {
+                                subscriber.onError(error);
+                            } else {
+                                subscriber.onComplete();
+                            }
+                        }
+                    }
+                }
+            }
 
-			@Override
-			public void cancel() {
-				cancelled = true;
-			}
-		});
+            @Override
+            public void cancel() {
+                cancelled = true;
+            }
+        });
 
-	}
+    }
 
-	@SuppressWarnings("unchecked")
-	public static <T> Builder<T> item(T item) {
-		return items(item);
-	}
+    @SuppressWarnings("unchecked")
+    public static <T> Builder<T> item(T item) {
+        return items(item);
+    }
 
-	public static <T> Builder<T> items(T... items) {
-		return new Builder<T>(Arrays.asList(items));
-	}
+    public static <T> Builder<T> items(T... items) {
+        return new Builder<T>(Arrays.asList(items));
+    }
 
-	public static final class Builder<T> {
+    public static final class Builder<T> {
 
-		private final List<T> items;
-		private Throwable error;
+        private final List<T> items;
+        private Throwable error;
 
-		private Builder(List<T> items) {
-			this.items = items;
-		}
+        private Builder(List<T> items) {
+            this.items = items;
+        }
 
-		public Flowable<T> error(Throwable e) {
-			this.error = e;
-			return create();
-		}
+        public Flowable<T> error(Throwable e) {
+            this.error = e;
+            return create();
+        }
 
-		public Flowable<T> create() {
-			return new Burst<T>(error, items);
-		}
+        public Flowable<T> create() {
+            return new Burst<T>(error, items);
+        }
 
-	}
+    }
 
 }

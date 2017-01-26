@@ -11,7 +11,7 @@ public final class Flowables {
 
     private static final int DEFAULT_MATCH_BATCH_SIZE = 128;
 
-	private Flowables() {
+    private Flowables() {
         // prevent instantiation
     }
 
