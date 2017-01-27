@@ -140,6 +140,10 @@ SchedulerHelper
 
 `withThreadIdFromCallSite`
 
+Maybes
+-------------
+`fromNullable`
+
 Actions
 --------------------
 `doNothing`
