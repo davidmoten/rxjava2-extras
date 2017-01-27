@@ -55,7 +55,7 @@ public class SchedulerHelperTest {
             }
         });
         System.out.println(b);
-        assertEquals(main + "|schedId=[com.github.davidmoten.rx2.SchedulerHelperTest:testWithCallSite:48]",
+        assertEquals(main + "|schedId=[com.github.davidmoten.rx2.SchedulerHelperTest:testWithCallSite:47]",
                 b.toString());
     }
 
