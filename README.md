@@ -285,13 +285,13 @@ With this operator you can offload a stream's emissions to disk to reduce memory
 
 <img src="src/docs/onBackpressureBufferToFile.png" />
 
-If you have used the `onBackpressureBuffer` operator you'll know that when a stream is producing faster than the downstream operators can process (perhaps the producer cannot respond meaningfully to a *slow down* request from downstream) then `onBackpressureBuffer` buffers the items to an in-memory queue until they can be processed. Of course if memory is limited then some streams might eventually cause an `OutOfMemoryError`. One solution to this problem is to increase the effectively available memory for buffering by using disk instead (and small in-memory read/write buffers). That's why `onBackpressureBufferToFile` was created. 
+If you have used the `onBackpressureBuffer` operator you'll know that when a stream is producing faster than the downstream operators can process (perhaps the producer cannot respond meaningfully to a *slow down* request from downstream) then `onBackpressureBuffer` buffers the items to an in-memory queue until they can be processed. Of course if memory is limited then some streams might eventually cause an `OutOfMemoryError`. One solution to this problem is to increase the effectively available memory for buffering by using off-heap memory and disk instead. That's why `onBackpressureBufferToFile` was created. 
 
 *rxjava-extras* uses standard file io to buffer serialized stream items. This operator can still be used with RxJava2 using the [RxJava2Interop](https://github.com/akarnokd/RxJava2Interop) library. 
 
 *rxjava2-extras* uses fixed size memory-mapped files to perform the same operation but with much greater throughput. 
 
-Note that new files for a file buffered observable are created for each subscription and thoses files are in normal circumstances deleted on cancellation (triggered by `onCompleted`/`onError` termination or manual cancellation). 
+Note that new files for a file buffered observable are created for each subscription and those files are in normal circumstances deleted on cancellation (triggered by `onCompleted`/`onError` termination or manual cancellation). 
 
 Here's an example:
 
@@ -300,7 +300,7 @@ Here's an example:
 // disk-backed queue on the subscription
 // thread and emit the items read from 
 // the queue on the io() scheduler.
-Flowable<String> source = 
+Flowable<String> flowable = 
   Flowable
     .just("a", "b", "c")
     .compose(
@@ -311,7 +311,7 @@ Flowable<String> source =
 
 You can also use an `Observable` source (without converting to `Flowable` with `toFlowable`):
 ```java
-Observable<String> source = 
+Flowable<String> flowable = 
   Observable
     .just("a", "b", "c")
     .to(
@@ -324,7 +324,7 @@ Note that `to` is used above to cross types (`Observable` to `Flowable`).
 This example does the same as above but more concisely and uses standard java IO serialization (normally it will be more efficient to write your own `DataSerializer`):
 
 ```java
-Flowable<String> source = 
+Flowable<String> flowable = 
   Flowable
     .just("a", "b", "c")
     .compose(FlowableTransformers
@@ -437,6 +437,12 @@ Throughput is increased dramatically by using memory-mapped files.
 *rxjava2-extras* can push through 800MB/s using 1K messages compared to *rxjava-extras* 43MB/s (2011 i7-920 @2.67GHz). My 2016 2 core i5 HP Spectre laptop with SSD pushes through up to 1.5GB/s for 1K messages.
 
 Smaller messages mean more contention but still on my laptop I am seeing 6 million 40B messages per second.
+
+To do long-running perf tests (haven't set up jmh for this one yet) do this:
+
+```bash
+mvn test -Dn=500000000
+```
 
 repeatLast
 ------------------------
