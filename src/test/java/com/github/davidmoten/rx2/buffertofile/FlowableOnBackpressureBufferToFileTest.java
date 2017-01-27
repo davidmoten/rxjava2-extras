@@ -49,7 +49,7 @@ public class FlowableOnBackpressureBufferToFileTest {
         }
     };
 
-    private static final long N = Long.parseLong(System.getProperty("n", 8 * 1024 * 1024 + ""));
+    private static final long N = Long.parseLong(System.getProperty("n", 8 * 8 * 1024 + ""));
 
     @Test
     public void testJavaIOSerializable() {
@@ -514,6 +514,7 @@ public class FlowableOnBackpressureBufferToFileTest {
     @Test
     public void testVeryMany1KByteArrays() {
         long n = N;
+        System.out.println(n);
         byte[] bytes = new byte[1024];
         new Random().nextBytes(bytes);
         long t = System.currentTimeMillis();
