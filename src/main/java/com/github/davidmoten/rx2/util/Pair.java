@@ -71,4 +71,12 @@ public class Pair<T, S> {
         builder.append("]");
         return builder.toString();
     }
+
+    public T _1() {
+        return a;
+    }
+
+    public S _2() {
+        return b;
+    }
 }
