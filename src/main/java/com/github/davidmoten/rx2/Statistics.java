@@ -49,6 +49,8 @@ public final class Statistics {
         builder.append(count);
         builder.append(", sum=");
         builder.append(sum());
+        builder.append(", sumSquares=");
+        builder.append(sumSquares());
         builder.append(", mean=");
         builder.append(mean());
         builder.append(", sd=");

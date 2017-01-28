@@ -45,6 +45,7 @@ public class FlowableTransformersTest {
         assertEquals(35.0, s.sum(), 0.0001);
         assertEquals(8.75, s.mean(), 0.00001);
         assertEquals(7.258615570478987, s.sd(), 0.00001);
+        assertEquals(1+16+100+400, s.sumSquares(), 0.0001);
     }
 
     @Test
@@ -76,6 +77,13 @@ public class FlowableTransformersTest {
         assertEquals(35.0, s.b().sum(), 0.0001);
         assertEquals(8.75, s.b().mean(), 0.00001);
         assertEquals(7.258615570478987, s.b().sd(), 0.00001);
+    }
+    
+    @Test
+    public void testToString() {
+        Statistics s = Statistics.create();
+        s = s.add(1).add(2);
+        assertEquals("Statistics [count=2, sum=3.0, sumSquares=5.0, mean=1.5, sd=0.5]", s.toString());
     }
 
 }
