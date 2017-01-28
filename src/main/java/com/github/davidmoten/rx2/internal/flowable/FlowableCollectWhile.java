@@ -12,7 +12,7 @@ import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.BiPredicate;
 import io.reactivex.internal.fuseable.SimpleQueue;
-import io.reactivex.internal.queue.MpscLinkedQueue;
+import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 import io.reactivex.plugins.RxJavaPlugins;
@@ -53,7 +53,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
         private final Subscriber<? super R> child;
         private final boolean emitRemainder;
         private final AtomicLong requested = new AtomicLong();
-        private final SimpleQueue<R> queue = new MpscLinkedQueue<R>();
+        private final SimpleQueue<R> queue = new SpscLinkedArrayQueue<R>(16);
 
         private Subscription parent;
         private volatile R collection;
@@ -150,6 +150,15 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
                 return;
             }
             done = true;
+            R col = collection;
+            if (col != null) {
+                collection = null;
+                // ensure that the remainder is emitted
+                // if configured to
+                if (emitRemainder) {
+                    queue.offer(col);
+                }
+            }
             drain();
         }
 
@@ -186,19 +195,8 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
                                     child.onError(err);
                                     return;
                                 } else {
-                                    R col = collection;
-                                    if (col != null) {
-                                        collection = null;
-                                        // ensure that the remainder is emitted
-                                        // if configured to
-                                        if (emitRemainder) {
-                                            queue.offer(col);
-                                        }
-                                        // loop around again
-                                    } else {
-                                        child.onComplete();
-                                        return;
-                                    }
+                                    child.onComplete();
+                                    return;
                                 }
                             } else {
                                 // nothing to emit and not done
