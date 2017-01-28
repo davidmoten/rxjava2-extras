@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -271,7 +272,7 @@ public final class FlowableCollectWhileTest {
                 .compose(FlowableTransformers. //
                         toListWhile(BUFFER_TWO)) //
                 .subscribe(subscriber);
-        assertEquals(list, Arrays.asList(list(3, 4)));
+        assertEquals(Arrays.asList(list(3, 4)), list);
     }
 
     @SuppressWarnings("unchecked")

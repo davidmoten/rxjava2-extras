@@ -11,6 +11,7 @@ import io.reactivex.Flowable;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.BiPredicate;
+import io.reactivex.internal.fuseable.ConditionalSubscriber;
 import io.reactivex.internal.fuseable.SimpleQueue;
 import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
@@ -45,7 +46,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 
     @SuppressWarnings("serial")
     private static final class CollectWhileSubscriber<T, R> extends AtomicInteger
-            implements Subscriber<T>, Subscription {
+            implements Subscriber<T>, Subscription, ConditionalSubscriber<T> {
 
         private final Callable<R> collectionFactory;
         private final BiFunction<? super R, ? super T, ? extends R> add;
@@ -82,11 +83,19 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 
         @Override
         public void onNext(T t) {
+            //this path taken by upstream if not enabled to call `tryOnNext`
+            if (!tryOnNext(t)){
+                parent.request(1);
+            }
+        }
+
+        @Override
+        public boolean tryOnNext(T t) {
             if (done) {
-                return;
+                return true;
             }
             if (collection == null && !collectionCreated()) {
-                return;
+                return true;
             }
             boolean collect;
             try {
@@ -94,27 +103,26 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
             } catch (Throwable e) {
                 Exceptions.throwIfFatal(e);
                 onError(e);
-                return;
+                return true;
             }
             if (!collect) {
                 queue.offer(collection);
                 if (!collectionCreated()) {
-                    return;
+                    return true;
                 }
-            } else {
-                parent.request(1);
-            }
+            } 
             try {
                 collection = add.apply(collection, t);
                 if (collection == null) {
                     throw new NullPointerException("add function should not return null");
                 }
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 Exceptions.throwIfFatal(e);
                 onError(e);
-                return;
+                return true;
             }
             drain();
+            return !collect;
         }
 
         public boolean collectionCreated() {
@@ -124,7 +132,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
                     throw new NullPointerException("collectionFactory should not return null");
                 }
                 return true;
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 Exceptions.throwIfFatal(e);
                 onError(e);
                 return false;
@@ -233,6 +241,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
             cancelled = true;
             parent.cancel();
         }
+
 
     }
 }
