@@ -1,6 +1,8 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -50,7 +52,7 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 backpressureStrategy, requestBatchSize, child));
     }
 
-    private static final class StateMachineSubscriber<State, In, Out>
+    private static final class StateMachineSubscriber<State, In, Out> extends AtomicInteger
             implements Subscriber<In>, Subscription, Emitter<Out> {
         private final Callable<? extends State> initialState;
         private final Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition;
@@ -59,6 +61,7 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         private final int requestBatchSize;
         private final SimpleQueue<Out> queue = new SpscLinkedArrayQueue<Out>(16);
         private final Subscriber<? super Out> child;
+        private final AtomicLong requested = new AtomicLong();
 
         private Subscription parent;
         private volatile boolean cancelled;
@@ -175,7 +178,23 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         }
         
         public void drain() {
-            
+            if (getAndIncrement()==0) {
+                int missed = 1;
+                while (true) {
+                    long r = requested.get();
+                    long e = 0;
+                    while (e!= r) {
+                        
+                    }
+                    if (e > 0 && r != Long.MAX_VALUE) {
+                        requested.addAndGet(-e);
+                    }
+                    missed = addAndGet(-missed);
+                    if (missed == 0) {
+                        return;
+                    }
+                }
+            }
         }
 
     }
