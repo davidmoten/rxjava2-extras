@@ -122,4 +122,15 @@ public final class StateMachine {
             return (Completion<State, Out>) INSTANCE;
         }
     }
+
+    public static interface Emitter<T> {
+        void onNext_(T t);
+
+        void onError_(Throwable e);
+
+        void onComplete_();
+
+        void cancel();
+    }
+
 }
