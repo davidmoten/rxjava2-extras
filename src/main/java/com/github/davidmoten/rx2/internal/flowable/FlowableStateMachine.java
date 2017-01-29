@@ -18,6 +18,7 @@ import io.reactivex.functions.Function3;
 import io.reactivex.internal.fuseable.SimpleQueue;
 import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
+import io.reactivex.internal.util.BackpressureHelper;
 import io.reactivex.plugins.RxJavaPlugins;
 
 public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
@@ -142,12 +143,15 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
 
         @Override
         public void request(long n) {
-            // TODO Auto-generated method stub
-
+            if (SubscriptionHelper.validate(n)) {
+                BackpressureHelper.add(requested, n);
+                drain();
+            }
         }
 
         @Override
         public void cancel() {
+            cancelled = true;
             parent.cancel();
         }
 
@@ -173,18 +177,42 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
             if (done_) {
                 return;
             }
-            done = true;
+            done_ = true;
             drain();
         }
-        
+
         public void drain() {
-            if (getAndIncrement()==0) {
+            if (getAndIncrement() == 0) {
                 int missed = 1;
                 while (true) {
                     long r = requested.get();
                     long e = 0;
-                    while (e!= r) {
-                        
+                    while (e != r) {
+                        if (cancelled) {
+                            return;
+                        }
+                        Out t;
+                        try {
+                            t = queue.poll();
+                        } catch (Throwable err) {
+                            Exceptions.throwIfFatal(err);
+                            cancelled = true;
+                            queue.clear();
+                            cancelled = true;
+                            child.onError(err);
+                            return;
+                        }
+                        if (t == null) {
+                            if (done_) {
+                                if (error_ != null) {
+                                    //tODO
+                                } else {
+                                    //TODO
+                                }
+                            }
+                        } else {
+                            child.onNext(t);
+                        }
                     }
                     if (e > 0 && r != Long.MAX_VALUE) {
                         requested.addAndGet(-e);
