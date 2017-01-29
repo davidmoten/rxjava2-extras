@@ -53,6 +53,7 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 backpressureStrategy, requestBatchSize, child));
     }
 
+    @SuppressWarnings("serial")
     private static final class StateMachineSubscriber<State, In, Out> extends AtomicInteger
             implements Subscriber<In>, Subscription, Emitter<Out> {
         private final Callable<? extends State> initialState;
