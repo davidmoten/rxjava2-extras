@@ -72,7 +72,8 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         private boolean done;
         private volatile boolean done_;
         private Throwable error_;
-        private long emitted;
+        private long count; // counts down arrival of last request batch
+        private volatile boolean requestsArrived;
 
         StateMachineSubscriber(Callable<? extends State> initialState,
                 Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition,
@@ -91,6 +92,8 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
             if (SubscriptionHelper.validate(this.parent, parent)) {
                 child.onSubscribe(parent);
                 this.parent = parent;
+                this.count = requestBatchSize;
+                parent.request(requestBatchSize);
             }
         }
 
@@ -102,6 +105,11 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
             if (!createdState()) {
                 return;
             }
+            count -= 1;
+            if (count == 0) {
+                requestsArrived = true;
+                count = requestBatchSize;
+            }
             try {
                 state = ObjectHelper.requireNonNull(transition.apply(state, t, this),
                         "intermediate state cannot be null");
@@ -110,11 +118,8 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 onError(e);
                 return;
             }
-            if (emitted == 0) {
-                parent.request(1);
-            } else {
-                emitted--;
-            }
+            // TODO don't need to drain if drain occurred in transition
+            drain();
         }
 
         private boolean createdState() {
@@ -164,9 +169,7 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         @Override
         public void request(long n) {
             if (SubscriptionHelper.validate(n)) {
-                if (BackpressureHelper.add(requested, n) == 0) {
-                    parent.request(1);
-                }
+                BackpressureHelper.add(requested, n);
                 drain();
             }
         }
@@ -188,7 +191,6 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 return;
             }
             queue.offer(t);
-            emitted++;
             drain();
         }
 
@@ -256,6 +258,10 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                     }
                     if (e != 0 && r != Long.MAX_VALUE) {
                         requested.addAndGet(-e);
+                    }
+                    if (e != r && requestsArrived) {
+                        requestsArrived = false;
+                        parent.request(requestBatchSize);
                     }
                     missed = addAndGet(-missed);
                     if (missed == 0) {
