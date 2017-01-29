@@ -91,7 +91,6 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
             if (SubscriptionHelper.validate(this.parent, parent)) {
                 child.onSubscribe(parent);
                 this.parent = parent;
-                parent.request(1);
             }
         }
 
@@ -112,10 +111,7 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 return;
             }
             if (emitted == 0) {
-                // this is inexact accounting but extras are buffered
-                if (requested.get() > 0) {
-                    parent.request(1);
-                }
+                parent.request(1);
             } else {
                 emitted--;
             }
@@ -168,7 +164,9 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         @Override
         public void request(long n) {
             if (SubscriptionHelper.validate(n)) {
-                BackpressureHelper.add(requested, n);
+                if (BackpressureHelper.add(requested, n) == 0) {
+                    parent.request(1);
+                }
                 drain();
             }
         }
