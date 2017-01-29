@@ -218,6 +218,12 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 while (true) {
                     long r = requested.get();
                     long e = 0;
+                    boolean reqsArrived;
+                    if (r != Long.MAX_VALUE) {
+                        reqsArrived = requestsArrived;
+                    } else {
+                        reqsArrived = false;
+                    }
                     while (e != r) {
                         if (cancelled) {
                             return;
@@ -258,7 +264,7 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                         if (e != 0) {
                             requested.addAndGet(-e);
                         }
-                        if (e != r && requestsArrived) {
+                        if (e != r && reqsArrived) {
                             requestsArrived = false;
                             parent.request(requestBatchSize);
                         }
