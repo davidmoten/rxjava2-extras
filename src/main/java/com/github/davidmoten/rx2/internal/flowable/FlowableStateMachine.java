@@ -207,10 +207,17 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                         }
                         if (t == null) {
                             if (done_) {
-                                if (error_ != null) {
-                                    // tODO
+                                Throwable err = error_;
+                                if (err != null) {
+                                    cancel();
+                                    queue.clear();
+                                    child.onError(err);
+                                    return;
                                 } else {
-                                    // TODO
+                                    cancel();
+                                    queue.clear();
+                                    child.onComplete();
+                                    return;
                                 }
                             } else {
                                 break;
@@ -220,7 +227,7 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                             e++;
                         }
                     }
-                    if (e > 0 && r != Long.MAX_VALUE) {
+                    if (e != 0 && r != Long.MAX_VALUE) {
                         requested.addAndGet(-e);
                     }
                     missed = addAndGet(-missed);
@@ -230,6 +237,5 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 }
             }
         }
-
     }
 }
