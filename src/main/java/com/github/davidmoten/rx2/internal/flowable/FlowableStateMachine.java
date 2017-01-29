@@ -196,9 +196,8 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                             t = queue.poll();
                         } catch (Throwable err) {
                             Exceptions.throwIfFatal(err);
-                            cancelled = true;
+                            cancel();
                             queue.clear();
-                            cancelled = true;
                             child.onError(err);
                             return;
                         }
