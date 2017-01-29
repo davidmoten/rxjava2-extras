@@ -158,6 +158,9 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
 
         @Override
         public void onNext_(Out t) {
+            if (done_) {
+                return;
+            }
             queue.offer(t);
             drain();
         }
