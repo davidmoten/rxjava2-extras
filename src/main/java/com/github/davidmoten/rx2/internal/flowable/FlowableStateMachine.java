@@ -73,7 +73,9 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         private volatile boolean done_;
         private Throwable error_;
         private long count; // counts down arrival of last request batch
-        private volatile boolean requestsArrived;
+        private volatile boolean requestsArrived; // communicates to drainLoop
+                                                  // that we can request more if
+                                                  // needed
 
         StateMachineSubscriber(Callable<? extends State> initialState,
                 Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition,
@@ -113,7 +115,7 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
             try {
                 state = ObjectHelper.requireNonNull(transition.apply(state, t, this),
                         "intermediate state cannot be null");
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 Exceptions.throwIfFatal(e);
                 onError(e);
                 return;
@@ -139,11 +141,7 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
 
         @Override
         public void onError(Throwable e) {
-            if (done) {
-                RxJavaPlugins.onError(e);
-                return;
-            }
-            done = true;
+            onError_(e);
         }
 
         @Override
@@ -157,13 +155,13 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
             try {
                 if (completion.test(state, this)) {
                     done = true;
+                    onComplete_();
                 }
             } catch (Throwable e) {
                 Exceptions.throwIfFatal(e);
                 onError(e);
                 return;
             }
-            done = true;
         }
 
         @Override
@@ -256,12 +254,14 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                             e++;
                         }
                     }
-                    if (e != 0 && r != Long.MAX_VALUE) {
-                        requested.addAndGet(-e);
-                    }
-                    if (e != r && requestsArrived) {
-                        requestsArrived = false;
-                        parent.request(requestBatchSize);
+                    if (r != Long.MAX_VALUE) {
+                        if (e != 0) {
+                            requested.addAndGet(-e);
+                        }
+                        if (e != r && requestsArrived) {
+                            requestsArrived = false;
+                            parent.request(requestBatchSize);
+                        }
                     }
                     missed = addAndGet(-missed);
                     if (missed == 0) {
