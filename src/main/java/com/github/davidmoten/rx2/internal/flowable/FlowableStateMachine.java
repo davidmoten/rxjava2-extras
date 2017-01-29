@@ -205,13 +205,16 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                         if (t == null) {
                             if (done_) {
                                 if (error_ != null) {
-                                    //tODO
+                                    // tODO
                                 } else {
-                                    //TODO
+                                    // TODO
                                 }
+                            } else {
+                                break;
                             }
                         } else {
                             child.onNext(t);
+                            e++;
                         }
                     }
                     if (e > 0 && r != Long.MAX_VALUE) {
