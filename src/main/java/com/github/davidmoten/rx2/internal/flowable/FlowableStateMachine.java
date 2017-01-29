@@ -15,6 +15,7 @@ import io.reactivex.Flowable;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.BiPredicate;
 import io.reactivex.functions.Function3;
+import io.reactivex.internal.functions.ObjectHelper;
 import io.reactivex.internal.fuseable.SimpleQueue;
 import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
@@ -99,17 +100,12 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
             if (done) {
                 return;
             }
-            if (state == null) {
-                try {
-                    state = initialState.call();
-                } catch (Exception e) {
-                    Exceptions.throwIfFatal(e);
-                    onError(e);
-                    return;
-                }
+            if (!createdState()) {
+                return;
             }
             try {
-                state = transition.apply(state, t, this);
+                state = ObjectHelper.requireNonNull(transition.apply(state, t, this),
+                        "intermediate state cannot be null");
             } catch (Exception e) {
                 Exceptions.throwIfFatal(e);
                 onError(e);
@@ -125,6 +121,21 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
             }
         }
 
+        private boolean createdState() {
+            if (state == null) {
+                try {
+                    state = ObjectHelper.requireNonNull(initialState.call(), "initial state cannot be null");
+                    return true;
+                } catch (Throwable e) {
+                    Exceptions.throwIfFatal(e);
+                    onError(e);
+                    return false;
+                }
+            } else {
+                return true;
+            }
+        }
+
         @Override
         public void onError(Throwable e) {
             if (done) {
@@ -137,6 +148,9 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         @Override
         public void onComplete() {
             if (done) {
+                return;
+            }
+            if (!createdState()) {
                 return;
             }
             try {
