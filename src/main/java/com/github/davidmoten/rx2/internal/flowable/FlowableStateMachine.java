@@ -71,6 +71,7 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         private boolean done;
         private volatile boolean done_;
         private Throwable error_;
+        private long emitted;
 
         StateMachineSubscriber(Callable<? extends State> initialState,
                 Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition,
@@ -89,6 +90,7 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
             if (SubscriptionHelper.validate(this.parent, parent)) {
                 child.onSubscribe(parent);
                 this.parent = parent;
+                parent.request(1);
             }
         }
 
@@ -113,6 +115,14 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 onError(e);
                 return;
             }
+            if (emitted == 0) {
+                // this is inexact accounting but extras are buffered
+                if (requested.get() > 0) {
+                    parent.request(1);
+                }
+            } else {
+                emitted--;
+            }
         }
 
         @Override
@@ -122,7 +132,6 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 return;
             }
             done = true;
-
         }
 
         @Override
@@ -132,7 +141,7 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
             }
             try {
                 if (completion.test(state, this)) {
-                    done_ = true;
+                    done = true;
                 }
             } catch (Throwable e) {
                 Exceptions.throwIfFatal(e);
@@ -157,11 +166,17 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         }
 
         @Override
+        public void cancel_() {
+            cancel();
+        }
+
+        @Override
         public void onNext_(Out t) {
             if (done_) {
                 return;
             }
             queue.offer(t);
+            emitted++;
             drain();
         }
 

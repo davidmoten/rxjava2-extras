@@ -130,7 +130,7 @@ public final class StateMachine {
 
         void onComplete_();
 
-        void cancel();
+        void cancel_();
     }
 
 }
