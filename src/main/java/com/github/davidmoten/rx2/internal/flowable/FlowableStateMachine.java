@@ -42,7 +42,6 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
             int requestBatchSize) {
         Preconditions.checkNotNull(initialState);
         Preconditions.checkNotNull(transition);
-        Preconditions.checkNotNull(completionAction);
         Preconditions.checkNotNull(backpressureStrategy);
         Preconditions.checkArgument(requestBatchSize > 0, "initialRequest must be greater than zero");
         this.source = source;
@@ -82,9 +81,10 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         private Throwable error_;
         private boolean drainCalled;
         private long count; // counts down arrival of last request batch
-        private volatile boolean requestsArrived; // communicates to drainLoop
-                                                  // that we can request more if
-                                                  // needed
+        private volatile boolean requestsArrived = true; // communicates to
+                                                         // drainLoop
+        // that we can request more if
+        // needed
 
         StateMachineSubscriber( //
                 Callable<? extends State> initialState,
@@ -106,10 +106,8 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         @Override
         public void onSubscribe(Subscription parent) {
             if (SubscriptionHelper.validate(this.parent, parent)) {
-                child.onSubscribe(parent);
                 this.parent = parent;
-                this.count = requestBatchSize;
-                parent.request(requestBatchSize);
+                child.onSubscribe(this);
             }
         }
 
@@ -256,11 +254,7 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                     long r = requested.get();
                     long e = 0;
                     boolean reqsArrived;
-                    if (r != Long.MAX_VALUE) {
-                        reqsArrived = requestsArrived;
-                    } else {
-                        reqsArrived = false;
-                    }
+                    reqsArrived = requestsArrived;
                     while (e != r) {
                         if (cancelled) {
                             return;

@@ -3,10 +3,12 @@ package com.github.davidmoten.rx2;
 import java.util.concurrent.Callable;
 
 import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
+import com.github.davidmoten.rx2.functions.Consumer3;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableTransformer;
+import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.BiPredicate;
 import io.reactivex.functions.Function3;
 
@@ -24,11 +26,36 @@ public final class StateMachine {
 
     }
 
+    public interface Transition2<State, In, Out> extends Function3<State, In, Emitter<Out>, State> {
+
+        // override so IDEs have better suggestions for parameters
+        @Override
+        State apply(State state, In value, Emitter<Out> emitter);
+
+    }
+    
     public interface Completion<State, Out> extends BiPredicate<State, FlowableEmitter<Out>> {
 
         // override so IDEs have better suggestions for parameters
         @Override
-        boolean test(State state, FlowableEmitter<Out> FlowableEmitter);
+        boolean test(State state, FlowableEmitter<Out> emitter);
+
+    }
+
+    public interface Completion2<State, Out> extends BiConsumer<State, Emitter<Out>> {
+
+        // override so IDEs have better suggestions for parameters
+        @Override
+        void accept(State state, Emitter<Out> emitter);
+
+    }
+
+    
+    public interface Errored<State, Out> extends Consumer3<State, Throwable, Emitter<Out>> {
+
+        // override so IDEs have better suggestions for parameters
+        @Override
+        void accept(State state, Throwable error, Emitter<Out> emitter);
 
     }
 

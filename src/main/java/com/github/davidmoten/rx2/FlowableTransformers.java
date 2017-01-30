@@ -45,6 +45,10 @@ public final class FlowableTransformers {
     public static StateMachine.Builder stateMachine() {
         return StateMachine.builder();
     }
+    
+    public static StateMachine2.Builder stateMachine2() {
+        return StateMachine2.builder();
+    }
 
     public static <T> FlowableTransformer<T, T> doOnEmpty(final Action action) {
         return new FlowableTransformer<T, T>() {
