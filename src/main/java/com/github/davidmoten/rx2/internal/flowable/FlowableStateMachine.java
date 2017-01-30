@@ -9,11 +9,12 @@ import org.reactivestreams.Subscription;
 
 import com.github.davidmoten.guavamini.Preconditions;
 import com.github.davidmoten.rx2.StateMachine.Emitter;
+import com.github.davidmoten.rx2.functions.Consumer3;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.exceptions.Exceptions;
-import io.reactivex.functions.BiPredicate;
+import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Function3;
 import io.reactivex.internal.functions.ObjectHelper;
 import io.reactivex.internal.fuseable.SimpleQueue;
@@ -22,36 +23,41 @@ import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 import io.reactivex.plugins.RxJavaPlugins;
 
-public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
+public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
 
     private final Flowable<In> source;
     private final Callable<? extends State> initialState;
     private final Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition;
-    private final BiPredicate<? super State, ? super Emitter<Out>> completion;
+    private final BiConsumer<? super State, ? super Emitter<Out>> completionAction;
+    private final Consumer3<? super State, ? super Throwable, ? super Emitter<Out>> errorAction;
     private final BackpressureStrategy backpressureStrategy;
     private final int requestBatchSize;
 
-    public FlowableStateMachine(Flowable<In> source, Callable<? extends State> initialState,
-            Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition,
-            BiPredicate<? super State, ? super Emitter<Out>> completion, BackpressureStrategy backpressureStrategy,
+    public FlowableStateMachine(Flowable<In> source, //
+            Callable<? extends State> initialState, //
+            Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition, //
+            BiConsumer<? super State, ? super Emitter<Out>> completionAction, //
+            Consumer3<? super State, ? super Throwable, ? super Emitter<Out>> errorAction, //
+            BackpressureStrategy backpressureStrategy, //
             int requestBatchSize) {
         Preconditions.checkNotNull(initialState);
         Preconditions.checkNotNull(transition);
-        Preconditions.checkNotNull(completion);
+        Preconditions.checkNotNull(completionAction);
         Preconditions.checkNotNull(backpressureStrategy);
         Preconditions.checkArgument(requestBatchSize > 0, "initialRequest must be greater than zero");
         this.source = source;
         this.initialState = initialState;
         this.transition = transition;
-        this.completion = completion;
+        this.completionAction = completionAction;
+        this.errorAction = errorAction;
         this.backpressureStrategy = backpressureStrategy;
         this.requestBatchSize = requestBatchSize;
     }
 
     @Override
     protected void subscribeActual(Subscriber<? super Out> child) {
-        source.subscribe(new StateMachineSubscriber<State, In, Out>(initialState, transition, completion,
-                backpressureStrategy, requestBatchSize, child));
+        source.subscribe(new StateMachineSubscriber<State, In, Out>(initialState, transition, completionAction,
+                errorAction, backpressureStrategy, requestBatchSize, child));
     }
 
     @SuppressWarnings("serial")
@@ -59,7 +65,8 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
             implements Subscriber<In>, Subscription, Emitter<Out> {
         private final Callable<? extends State> initialState;
         private final Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition;
-        private final BiPredicate<? super State, ? super Emitter<Out>> completion;
+        private final BiConsumer<? super State, ? super Emitter<Out>> completionAction;
+        private final Consumer3<? super State, ? super Throwable, ? super Emitter<Out>> errorAction;
         private final BackpressureStrategy backpressureStrategy;
         private final int requestBatchSize;
         private final SimpleQueue<Out> queue = new SpscLinkedArrayQueue<Out>(16);
@@ -77,13 +84,18 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                                                   // that we can request more if
                                                   // needed
 
-        StateMachineSubscriber(Callable<? extends State> initialState,
-                Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition,
-                BiPredicate<? super State, ? super Emitter<Out>> completion, BackpressureStrategy backpressureStrategy,
-                int requestBatchSize, Subscriber<? super Out> child) {
+        StateMachineSubscriber( //
+                Callable<? extends State> initialState,
+                Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition, //
+                BiConsumer<? super State, ? super Emitter<Out>> completionAction, //
+                Consumer3<? super State, ? super Throwable, ? super Emitter<Out>> errorAction, //
+                BackpressureStrategy backpressureStrategy, //
+                int requestBatchSize, //
+                Subscriber<? super Out> child) {
             this.initialState = initialState;
             this.transition = transition;
-            this.completion = completion;
+            this.completionAction = completionAction;
+            this.errorAction = errorAction;
             this.backpressureStrategy = backpressureStrategy;
             this.requestBatchSize = requestBatchSize;
             this.child = child;
@@ -107,8 +119,7 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
             if (!createdState()) {
                 return;
             }
-            count -= 1;
-            if (count == 0) {
+            if (--count == 0) {
                 requestsArrived = true;
                 count = requestBatchSize;
             }
@@ -141,7 +152,23 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
 
         @Override
         public void onError(Throwable e) {
-            onError_(e);
+            if (done) {
+                RxJavaPlugins.onError(e);
+                return;
+            }
+            done = true;
+            if (!createdState()) {
+                return;
+            }
+            try {
+                errorAction.accept(state, e, this);
+                done = true;
+            } catch (Throwable err) {
+                Exceptions.throwIfFatal(e);
+                cancel();
+                child.onError(err);
+                return;
+            }
         }
 
         @Override
@@ -153,10 +180,8 @@ public class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 return;
             }
             try {
-                if (completion.test(state, this)) {
-                    done = true;
-                    onComplete_();
-                }
+                completionAction.accept(state, this);
+                done = true;
             } catch (Throwable e) {
                 Exceptions.throwIfFatal(e);
                 onError(e);
