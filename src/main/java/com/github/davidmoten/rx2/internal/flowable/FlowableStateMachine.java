@@ -67,7 +67,8 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         private final Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition;
         private final BiConsumer<? super State, ? super Emitter<Out>> completionAction;
         private final Consumer3<? super State, ? super Throwable, ? super Emitter<Out>> errorAction;
-        private final BackpressureStrategy backpressureStrategy;
+        private final BackpressureStrategy backpressureStrategy; // TODO
+                                                                 // implement
         private final int requestBatchSize;
         private final SimpleQueue<Out> queue = new SpscLinkedArrayQueue<Out>(16);
         private final Subscriber<? super Out> child;
@@ -79,6 +80,7 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         private boolean done;
         private volatile boolean done_;
         private Throwable error_;
+        private boolean drainCalled;
         private long count; // counts down arrival of last request batch
         private volatile boolean requestsArrived; // communicates to drainLoop
                                                   // that we can request more if
@@ -124,6 +126,7 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 count = requestBatchSize;
             }
             try {
+                drainCalled = false;
                 state = ObjectHelper.requireNonNull(transition.apply(state, t, this),
                         "intermediate state cannot be null");
             } catch (Throwable e) {
@@ -131,8 +134,9 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 onError(e);
                 return;
             }
-            // TODO don't need to drain if drain occurred in transition
-            drain();
+            if (!drainCalled) {
+                drain();
+            }
         }
 
         private boolean createdState() {
@@ -156,17 +160,20 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 RxJavaPlugins.onError(e);
                 return;
             }
-            done = true;
             if (!createdState()) {
                 return;
             }
             try {
-                errorAction.accept(state, e, this);
+                if (errorAction != null) {
+                    errorAction.accept(state, e, this);
+                } else {
+                    onError_(e);
+                }
                 done = true;
             } catch (Throwable err) {
                 Exceptions.throwIfFatal(e);
                 cancel();
-                child.onError(err);
+                onError_(err);
                 return;
             }
         }
@@ -180,7 +187,11 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 return;
             }
             try {
-                completionAction.accept(state, this);
+                if (completionAction == null) {
+                    completionAction.accept(state, this);
+                } else {
+                    onComplete_();
+                }
                 done = true;
             } catch (Throwable e) {
                 Exceptions.throwIfFatal(e);
@@ -238,6 +249,7 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         }
 
         public void drain() {
+            drainCalled = true;
             if (getAndIncrement() == 0) {
                 int missed = 1;
                 while (true) {
@@ -285,14 +297,12 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                             e++;
                         }
                     }
-                    if (r != Long.MAX_VALUE) {
-                        if (e != 0) {
-                            requested.addAndGet(-e);
-                        }
-                        if (e != r && reqsArrived) {
-                            requestsArrived = false;
-                            parent.request(requestBatchSize);
-                        }
+                    if (e != 0 && r != Long.MAX_VALUE) {
+                        requested.addAndGet(-e);
+                    }
+                    if (e != r && reqsArrived) {
+                        requestsArrived = false;
+                        parent.request(requestBatchSize);
                     }
                     missed = addAndGet(-missed);
                     if (missed == 0) {
