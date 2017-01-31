@@ -1,15 +1,21 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
+import com.github.davidmoten.rx2.Actions;
 import com.github.davidmoten.rx2.Consumers;
 import com.github.davidmoten.rx2.StateMachine.Completion2;
 import com.github.davidmoten.rx2.StateMachine.Emitter;
@@ -338,4 +344,40 @@ public final class FlowableStateMachineTest {
         assertEquals(N, n.get());
     }
 
+    @Test
+    public void testCancel() {
+        final AtomicBoolean terminated = new AtomicBoolean();
+        final List<Integer> list = new CopyOnWriteArrayList<Integer>();
+        Flowable.just(1, 2) //
+                .compose(passThrough(1)) //
+                .doOnComplete(Actions.setToTrue(terminated)) //
+                .subscribe(new Subscriber<Integer>() {
+                    
+                    Subscription parent;
+
+                    @Override
+                    public void onComplete() {
+                        terminated.set(true);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        terminated.set(true);
+                    }
+
+                    @Override
+                    public void onNext(Integer t) {
+                        list.add(t);
+                        parent.cancel();
+                    }
+
+                    @Override
+                    public void onSubscribe(Subscription s) {
+                        this.parent = s;
+                        parent.request(Long.MAX_VALUE);
+                    }
+                });
+        assertEquals(Arrays.asList(1), list);
+        assertFalse(terminated.get());
+    }
 }
