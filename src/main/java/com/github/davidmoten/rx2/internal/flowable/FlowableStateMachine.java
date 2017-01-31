@@ -43,7 +43,8 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         Preconditions.checkNotNull(initialState);
         Preconditions.checkNotNull(transition);
         Preconditions.checkNotNull(backpressureStrategy);
-        Preconditions.checkArgument(requestBatchSize > 0, "initialRequest must be greater than zero");
+        Preconditions.checkArgument(requestBatchSize > 0,
+                "initialRequest must be greater than zero");
         this.source = source;
         this.initialState = initialState;
         this.transition = transition;
@@ -55,8 +56,8 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
 
     @Override
     protected void subscribeActual(Subscriber<? super Out> child) {
-        source.subscribe(new StateMachineSubscriber<State, In, Out>(initialState, transition, completionAction,
-                errorAction, backpressureStrategy, requestBatchSize, child));
+        source.subscribe(new StateMachineSubscriber<State, In, Out>(initialState, transition,
+                completionAction, errorAction, backpressureStrategy, requestBatchSize, child));
     }
 
     @SuppressWarnings("serial")
@@ -141,11 +142,13 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         private boolean createdState() {
             if (state == null) {
                 try {
-                    state = ObjectHelper.requireNonNull(initialState.call(), "initial state cannot be null");
+                    state = ObjectHelper.requireNonNull(initialState.call(),
+                            "initial state cannot be null");
                     return true;
                 } catch (Throwable e) {
                     Exceptions.throwIfFatal(e);
-                    onError(e);
+                    done = true;
+                    onError_(e);
                     return false;
                 }
             } else {
@@ -168,7 +171,6 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 } else {
                     onError_(e);
                 }
-                done = true;
             } catch (Throwable err) {
                 Exceptions.throwIfFatal(e);
                 cancel();
