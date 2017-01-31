@@ -248,6 +248,24 @@ public final class FlowableStateMachineTest {
     }
 
     @Test
+    public void testStateFactoryReturnsNullFromErrorStream() {
+        FlowableTransformer<Integer, Integer> sm = StateMachine2.builder() //
+                .initialStateFactory(new Callable<String>() {
+                    @Override
+                    public String call() throws Exception {
+                        return null;
+                    }
+                }) //
+                .transition(PASS_THROUGH_TRANSITION) //
+                .build();
+        Flowable.<Integer> error(new ThrowingException()) //
+                .compose(sm) //
+                .test() //
+                .assertNoValues() //
+                .assertError(NullPointerException.class);
+    }
+
+    @Test
     public void testOnNextThrowsWithBurstSource() {
         FlowableTransformer<Integer, Integer> sm = StateMachine2.builder() //
                 .initialState("") //
@@ -352,7 +370,7 @@ public final class FlowableStateMachineTest {
                 .compose(passThrough(1)) //
                 .doOnComplete(Actions.setToTrue(terminated)) //
                 .subscribe(new Subscriber<Integer>() {
-                    
+
                     Subscription parent;
 
                     @Override
