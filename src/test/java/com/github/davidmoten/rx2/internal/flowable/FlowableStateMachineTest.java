@@ -284,6 +284,27 @@ public final class FlowableStateMachineTest {
                 .assertNoValues() //
                 .assertError(ThrowingException.class);
     }
+    
+    @Test
+    public void testCancelFromTransition() {
+        FlowableTransformer<Integer, Integer> sm = StateMachine2.builder() //
+                .initialState("") //
+                .transition(new Transition2<String, Integer, Integer>() {
+
+                    @Override
+                    public String apply(String state, Integer value, Emitter<Integer> emitter) {
+                       emitter.cancel_();
+                       return state;
+                    }
+                }) //
+                .requestBatchSize(10) //
+                .build();
+        Burst.items(1, 2, 3).create() //
+                .compose(sm) //
+                .test() //
+                .assertNoValues() //
+                .assertNotTerminated();
+    }
 
     @Test
     public void testOnNextThrowsWithBurstSourceThatTerminatesWithError() {
