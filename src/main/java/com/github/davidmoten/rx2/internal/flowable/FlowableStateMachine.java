@@ -101,6 +101,7 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
             this.backpressureStrategy = backpressureStrategy;
             this.requestBatchSize = requestBatchSize;
             this.child = child;
+            this.count = requestBatchSize;
         }
 
         @Override
@@ -185,7 +186,7 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 return;
             }
             try {
-                if (completionAction == null) {
+                if (completionAction != null) {
                     completionAction.accept(state, this);
                 } else {
                     onComplete_();

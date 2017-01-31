@@ -13,7 +13,6 @@ import io.reactivex.FlowableTransformer;
 public class FlowableStateMachineTest {
 
     @Test
-    @Ignore
     public void test() {
         FlowableTransformer<Integer, Integer> sm = StateMachine2.builder() //
                 .initialState("") //
