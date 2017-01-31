@@ -305,6 +305,16 @@ public final class FlowableStateMachineTest {
                 .assertNoValues() //
                 .assertNotTerminated();
     }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testInvalidRequestBatchSize() {
+        FlowableTransformer<Integer, Integer> sm = StateMachine2.builder() //
+                .initialState("") //
+                .transition(PASS_THROUGH_TRANSITION) //
+                .requestBatchSize(-10) //
+                .build();
+        Flowable.just(1).compose(sm).test();
+    }
 
     @Test
     public void testOnNextThrowsWithBurstSourceThatTerminatesWithError() {
