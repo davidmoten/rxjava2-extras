@@ -292,5 +292,24 @@ public final class FlowableStateMachineTest {
                 .assertNoValues() //
                 .assertError(ThrowingException.class);
     }
+    
+    @Test
+    public void errorActionPassThrough() {
+        FlowableTransformer<Integer, Integer> sm = StateMachine2.builder() //
+                .initialState("") //
+                .transition(PASS_THROUGH_TRANSITION) //
+                .errored(new Errored<String, Integer>() {
+                    @Override
+                    public void accept(String state, Throwable error, Emitter<Integer> emitter) {
+                        emitter.onError_(error);
+                    }
+                }) //
+                .build();
+        Flowable.<Integer> error(new ThrowingException()) //
+                .compose(sm) //
+                .test() //
+                .assertNoValues() //
+                .assertError(ThrowingException.class);
+    }
 
 }
