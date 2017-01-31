@@ -276,12 +276,40 @@ public final class FlowableStateMachineTest {
                         throw new ThrowingException();
                     }
                 }) //
+                .requestBatchSize(10) //
                 .build();
         Burst.items(1, 2, 3).create() //
                 .compose(sm) //
                 .test() //
                 .assertNoValues() //
                 .assertError(ThrowingException.class);
+    }
+
+    @Test
+    public void testOnNextThrowsWithBurstSourceThatTerminatesWithError() {
+        List<Throwable> list = new CopyOnWriteArrayList<Throwable>();
+        try {
+            RxJavaPlugins.setErrorHandler(Consumers.addTo(list));
+            FlowableTransformer<Integer, Integer> sm = StateMachine2.builder() //
+                    .initialState("") //
+                    .transition(new Transition2<String, Integer, Integer>() {
+
+                        @Override
+                        public String apply(String state, Integer value, Emitter<Integer> emitter) {
+                            throw new ThrowingException();
+                        }
+                    }) //
+                    .requestBatchSize(10) //
+                    .build();
+            Burst.item(1).error(new RuntimeException()) //
+                    .compose(sm) //
+                    .test() //
+                    .assertNoValues() //
+                    .assertError(ThrowingException.class);
+            assertEquals(1, list.size());
+        } finally {
+            RxJavaPlugins.reset();
+        }
     }
 
     @Test
@@ -397,5 +425,23 @@ public final class FlowableStateMachineTest {
                 });
         assertEquals(Arrays.asList(1), list);
         assertFalse(terminated.get());
+    }
+
+    @Test
+    public void noActionTransition() {
+        FlowableTransformer<Integer, Integer> sm = StateMachine2.builder() //
+                .initialState("") //
+                .transition(new Transition2<String, Integer, Integer>() {
+                    @Override
+                    public String apply(String state, Integer value, Emitter<Integer> emitter) {
+                        return state;
+                    }
+                }) //
+                .build();
+        Flowable.just(1, 2) //
+                .compose(sm) //
+                .test() //
+                .assertNoValues() //
+                .assertComplete();
     }
 }

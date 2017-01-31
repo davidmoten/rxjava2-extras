@@ -67,6 +67,7 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         private final Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition;
         private final BiConsumer<? super State, ? super Emitter<Out>> completionAction;
         private final Consumer3<? super State, ? super Throwable, ? super Emitter<Out>> errorAction;
+        @SuppressWarnings("unused")
         private final BackpressureStrategy backpressureStrategy; // TODO
                                                                  // implement
         private final int requestBatchSize;
