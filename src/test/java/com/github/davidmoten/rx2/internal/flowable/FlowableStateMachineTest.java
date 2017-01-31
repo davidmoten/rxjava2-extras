@@ -5,6 +5,8 @@ import static org.junit.Assert.assertEquals;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
@@ -19,7 +21,9 @@ import com.github.davidmoten.rx2.flowable.Burst;
 
 import io.reactivex.Flowable;
 import io.reactivex.FlowableTransformer;
+import io.reactivex.functions.Consumer;
 import io.reactivex.plugins.RxJavaPlugins;
+import io.reactivex.schedulers.Schedulers;
 
 public final class FlowableStateMachineTest {
 
@@ -292,7 +296,7 @@ public final class FlowableStateMachineTest {
                 .assertNoValues() //
                 .assertError(ThrowingException.class);
     }
-    
+
     @Test
     public void errorActionPassThrough() {
         FlowableTransformer<Integer, Integer> sm = StateMachine2.builder() //
@@ -310,6 +314,28 @@ public final class FlowableStateMachineTest {
                 .test() //
                 .assertNoValues() //
                 .assertError(ThrowingException.class);
+    }
+
+    @Test
+    public void testAsync() {
+        final AtomicInteger n = new AtomicInteger(0);
+        final int N = 1000000;
+        Flowable.range(1, N) //
+                .compose(passThrough(1)) //
+                .observeOn(Schedulers.computation()) //
+                .rebatchRequests(100) //
+                .doOnNext(new Consumer<Integer>() {
+                    @Override
+                    public void accept(Integer value) throws Exception {
+                        if (!n.compareAndSet(value - 1, value)) {
+                            throw new RuntimeException();
+                        }
+                    }
+                }) //
+                .test() //
+                .awaitDone(60, TimeUnit.SECONDS) //
+                .assertComplete();
+        assertEquals(N, n.get());
     }
 
 }
