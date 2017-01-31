@@ -17,7 +17,7 @@ import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Function3;
 import io.reactivex.internal.functions.ObjectHelper;
-import io.reactivex.internal.fuseable.SimpleQueue;
+import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
@@ -70,7 +70,7 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         private final BackpressureStrategy backpressureStrategy; // TODO
                                                                  // implement
         private final int requestBatchSize;
-        private final SimpleQueue<Out> queue = new SpscLinkedArrayQueue<Out>(16);
+        private final SimplePlainQueue<Out> queue = new SpscLinkedArrayQueue<Out>(16);
         private final Subscriber<? super Out> child;
         private final AtomicLong requested = new AtomicLong();
 
@@ -162,20 +162,20 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                 RxJavaPlugins.onError(e);
                 return;
             }
+            done = true;
             if (!createdState()) {
                 return;
             }
-            try {
-                if (errorAction != null) {
+            if (errorAction != null) {
+                try {
                     errorAction.accept(state, e, this);
-                } else {
-                    onError_(e);
+                } catch (Throwable err) {
+                    Exceptions.throwIfFatal(e);
+                    onError_(err);
+                    return;
                 }
-            } catch (Throwable err) {
-                Exceptions.throwIfFatal(e);
-                cancel();
-                onError_(err);
-                return;
+            } else {
+                onError_(e);
             }
         }
 
@@ -262,16 +262,7 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                         if (cancelled) {
                             return;
                         }
-                        Out t;
-                        try {
-                            t = queue.poll();
-                        } catch (Throwable err) {
-                            Exceptions.throwIfFatal(err);
-                            cancel();
-                            queue.clear();
-                            child.onError(err);
-                            return;
-                        }
+                        Out t = queue.poll();
                         if (t == null) {
                             if (done_) {
                                 Throwable err = error_;

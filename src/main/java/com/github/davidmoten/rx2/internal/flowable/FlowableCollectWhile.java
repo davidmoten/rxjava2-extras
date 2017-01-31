@@ -12,7 +12,7 @@ import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.BiPredicate;
 import io.reactivex.internal.fuseable.ConditionalSubscriber;
-import io.reactivex.internal.fuseable.SimpleQueue;
+import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
@@ -27,8 +27,8 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
     private final boolean emitRemainder;
 
     public FlowableCollectWhile(Flowable<T> source, Callable<R> collectionFactory,
-            BiFunction<? super R, ? super T, ? extends R> add, BiPredicate<? super R, ? super T> condition,
-            boolean emitRemainder) {
+            BiFunction<? super R, ? super T, ? extends R> add,
+            BiPredicate<? super R, ? super T> condition, boolean emitRemainder) {
         super();
         this.source = source;
         this.collectionFactory = collectionFactory;
@@ -39,8 +39,8 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 
     @Override
     protected void subscribeActual(Subscriber<? super R> child) {
-        CollectWhileSubscriber<T, R> subscriber = new CollectWhileSubscriber<T, R>(collectionFactory, add, condition,
-                child, emitRemainder);
+        CollectWhileSubscriber<T, R> subscriber = new CollectWhileSubscriber<T, R>(
+                collectionFactory, add, condition, child, emitRemainder);
         source.subscribe(subscriber);
     }
 
@@ -54,7 +54,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
         private final Subscriber<? super R> child;
         private final boolean emitRemainder;
         private final AtomicLong requested = new AtomicLong();
-        private final SimpleQueue<R> queue = new SpscLinkedArrayQueue<R>(16);
+        private final SimplePlainQueue<R> queue = new SpscLinkedArrayQueue<R>(16);
 
         private Subscription parent;
         private volatile R collection;
@@ -64,8 +64,10 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 
         private volatile boolean cancelled;
 
-        CollectWhileSubscriber(Callable<R> collectionFactory, BiFunction<? super R, ? super T, ? extends R> add,
-                BiPredicate<? super R, ? super T> condition, Subscriber<? super R> child, boolean emitRemainder) {
+        CollectWhileSubscriber(Callable<R> collectionFactory,
+                BiFunction<? super R, ? super T, ? extends R> add,
+                BiPredicate<? super R, ? super T> condition, Subscriber<? super R> child,
+                boolean emitRemainder) {
             this.collectionFactory = collectionFactory;
             this.add = add;
             this.condition = condition;
@@ -83,8 +85,8 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 
         @Override
         public void onNext(T t) {
-            //this path taken by upstream if not enabled to call `tryOnNext`
-            if (!tryOnNext(t)){
+            // this path taken by upstream if not enabled to call `tryOnNext`
+            if (!tryOnNext(t)) {
                 parent.request(1);
             }
         }
@@ -110,7 +112,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
                 if (!collectionCreated()) {
                     return true;
                 }
-            } 
+            }
             try {
                 collection = add.apply(collection, t);
                 if (collection == null) {
@@ -182,16 +184,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
                             collection = null;
                             return;
                         }
-                        R c = null;
-                        try {
-                            c = queue.poll();
-                        } catch (Throwable err) {
-                            Exceptions.throwIfFatal(err);
-                            queue.clear();
-                            collection = null;
-                            child.onError(err);
-                            return;
-                        }
+                        R c = queue.poll();
                         if (c == null) {
                             if (done) {
                                 // `error` must be read AFTER `done` for
@@ -241,7 +234,6 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
             cancelled = true;
             parent.cancel();
         }
-
 
     }
 }
