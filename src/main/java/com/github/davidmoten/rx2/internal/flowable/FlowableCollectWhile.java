@@ -147,6 +147,8 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
                 RxJavaPlugins.onError(e);
                 return;
             }
+            //release for GC
+            collection = null;
             // must set `error` before done because `error` is not volatile and
             // `done` is
             error = e;
