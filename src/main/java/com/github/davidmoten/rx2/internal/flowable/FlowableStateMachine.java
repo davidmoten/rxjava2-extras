@@ -262,9 +262,10 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                         if (cancelled) {
                             return;
                         }
+                        boolean d = done_;
                         Out t = queue.poll();
                         if (t == null) {
-                            if (done_) {
+                            if (d) {
                                 Throwable err = error_;
                                 if (err != null) {
                                     cancel();
