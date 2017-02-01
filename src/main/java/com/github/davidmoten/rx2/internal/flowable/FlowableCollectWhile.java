@@ -57,7 +57,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
         private final SimplePlainQueue<R> queue = new SpscLinkedArrayQueue<R>(16);
 
         private Subscription parent;
-        private volatile R collection;
+        private R collection;
         private volatile boolean done;
         private Throwable error; // does not need to be volatile because is set
                                  // before `done` and read after `done`
@@ -181,7 +181,6 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
                     while (e != r) {
                         if (cancelled) {
                             queue.clear();
-                            collection = null;
                             return;
                         }
                         R c = queue.poll();
@@ -192,7 +191,6 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
                                 Throwable err = error;
                                 if (err != null) {
                                     error = null;
-                                    collection = null;
                                     child.onError(err);
                                     return;
                                 } else {
