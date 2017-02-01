@@ -188,7 +188,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
                         if (c == null) {
                             if (done) {
                                 // `error` must be read AFTER `done` for
-                                // visibility
+                                // full visibility
                                 Throwable err = error;
                                 if (err != null) {
                                     error = null;

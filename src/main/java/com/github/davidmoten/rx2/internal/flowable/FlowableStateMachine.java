@@ -83,10 +83,9 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
         private Throwable error_;
         private boolean drainCalled;
         private long count; // counts down arrival of last request batch
-        private volatile boolean requestsArrived = true; // communicates to
-                                                         // drainLoop
-        // that we can request more if
-        // needed
+
+        // indicates to drain method that we can request more if needed
+        private volatile boolean requestsArrived = true;
 
         StateMachineSubscriber( //
                 Callable<? extends State> initialState,
