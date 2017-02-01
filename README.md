@@ -216,7 +216,7 @@ Behaves as per `toListWhile` but allows control over the data structure used.
 
 <img src="src/docs/collectWhile.png?raw=true" />
 
-This operator supports [request-one macro-fusion](http://akarnokd.blogspot.com.au/2016/03/operator-fusion-part-1.html).
+This operator supports [request-one micro-fusion](http://akarnokd.blogspot.com.au/2016/03/operator-fusion-part-1.html).
 
 doOnEmpty
 -------------------------
@@ -631,7 +631,7 @@ produces
 [2, 5, 6]
 ```
 
-See also [`collectWhile`](#collectwhile). This operator supports [request-one macro-fusion](http://akarnokd.blogspot.com.au/2016/03/operator-fusion-part-1.html).
+See also [`collectWhile`](#collectwhile). This operator supports [request-one micro-fusion](http://akarnokd.blogspot.com.au/2016/03/operator-fusion-part-1.html).
 
 windowMin/Max
 ----------------------------
