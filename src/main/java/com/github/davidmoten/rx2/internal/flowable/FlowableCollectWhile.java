@@ -159,7 +159,6 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
             if (done) {
                 return;
             }
-            done = true;
             R col = collection;
             if (col != null) {
                 collection = null;
@@ -169,6 +168,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
                     queue.offer(col);
                 }
             }
+            done = true;
             drain();
         }
 
@@ -183,20 +183,21 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
                             queue.clear();
                             return;
                         }
+                        //must read `done` before polling queue
+                        boolean d = done;
                         R c = queue.poll();
                         if (c == null) {
-                            if (done) {
+                            if (d) {
                                 // `error` must be read AFTER `done` for
                                 // full visibility
                                 Throwable err = error;
                                 if (err != null) {
                                     error = null;
                                     child.onError(err);
-                                    return;
                                 } else {
                                     child.onComplete();
-                                    return;
                                 }
+                                return;
                             } else {
                                 // nothing to emit and not done
                                 break;
