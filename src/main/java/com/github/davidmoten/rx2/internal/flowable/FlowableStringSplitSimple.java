@@ -161,8 +161,8 @@ public final class FlowableStringSplitSimple extends Flowable<String> {
                         }
                     }
                 }
-                if (e > 0) {
-                    BackpressureHelper.produced(this, e);
+                if (e > 0 && r != Long.MAX_VALUE) {
+                    this.addAndGet(-e);
                 }
                 missed = wip.addAndGet(-missed);
                 if (missed == 0) {
