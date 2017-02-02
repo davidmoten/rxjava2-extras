@@ -34,7 +34,7 @@ public final class FlowableDoOnEmpty<T> extends Flowable<T> {
         source.subscribe(new DoOnEmptySubscriber<T>(child, onEmpty));
     }
 
-    static final class DoOnEmptySubscriber<T> implements Subscriber<T>, Subscription {
+    private static final class DoOnEmptySubscriber<T> implements Subscriber<T>, Subscription {
 
         private final Subscriber<? super T> child;
         private final Action onEmpty;

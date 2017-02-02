@@ -35,7 +35,7 @@ public final class FlowableRepeat<T> extends Flowable<T> {
         private volatile boolean cancelled;
         private long counter;
 
-        public RepeatSubscription(Subscriber<? super T> child, T value, long count) {
+        RepeatSubscription(Subscriber<? super T> child, T value, long count) {
             this.child = child;
             this.value = value;
             this.count = count;

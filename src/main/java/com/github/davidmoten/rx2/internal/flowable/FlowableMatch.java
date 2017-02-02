@@ -380,7 +380,7 @@ public final class FlowableMatch<A, B, K, C> extends Flowable<C> {
     }
 
     @SuppressWarnings("serial")
-    static final class MySubscriber<T, K> extends AtomicReference<Subscription> implements Subscription, Subscriber<T> {
+    private static final class MySubscriber<T, K> extends AtomicReference<Subscription> implements Subscription, Subscriber<T> {
 
         private final Receiver receiver;
         private final Source source;
@@ -430,7 +430,7 @@ public final class FlowableMatch<A, B, K, C> extends Flowable<C> {
 
     }
 
-    static final class MyError {
+    private static final class MyError {
         final Throwable error;
 
         MyError(Throwable error) {
@@ -438,7 +438,7 @@ public final class FlowableMatch<A, B, K, C> extends Flowable<C> {
         }
     }
 
-    static final class ItemA {
+    private static final class ItemA {
         final Object value;
 
         ItemA(Object value) {
@@ -446,7 +446,7 @@ public final class FlowableMatch<A, B, K, C> extends Flowable<C> {
         }
     }
 
-    enum Source {
+    private enum Source {
         A, B;
     }
 
