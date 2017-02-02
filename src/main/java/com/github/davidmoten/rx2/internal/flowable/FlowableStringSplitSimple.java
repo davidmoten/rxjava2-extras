@@ -10,11 +10,10 @@ import org.reactivestreams.Subscription;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
-import io.reactivex.internal.fuseable.SimpleQueue;
-import io.reactivex.internal.queue.SpscArrayQueue;
+import io.reactivex.internal.fuseable.SimplePlainQueue;
+import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
-import io.reactivex.internal.util.NotificationLite;
 
 public final class FlowableStringSplitSimple extends Flowable<String> {
 
@@ -35,11 +34,13 @@ public final class FlowableStringSplitSimple extends Flowable<String> {
     }
 
     @SuppressWarnings("serial")
-    private static final class StringSplitSubscriber extends AtomicLong implements Subscriber<String>, Subscription {
+    private static final class StringSplitSubscriber extends AtomicLong
+            implements Subscriber<String>, Subscription {
 
         private final Subscriber<? super String> actual;
         // queue of notifications
-        private final transient SimpleQueue<Object> queue = new SpscArrayQueue<Object>(16);
+        private final transient SimplePlainQueue<String> queue = new SpscLinkedArrayQueue<String>(
+                16);
         private final AtomicInteger wip = new AtomicInteger();
         private final AtomicBoolean once = new AtomicBoolean();
 
@@ -47,6 +48,9 @@ public final class FlowableStringSplitSimple extends Flowable<String> {
         private volatile boolean cancelled;
         private Subscription parent;
         private boolean unbounded;
+
+        private Throwable error;
+        private volatile boolean done;
 
         StringSplitSubscriber(Subscriber<? super String> actual, String delimiter) {
             this.actual = actual;
@@ -83,19 +87,20 @@ public final class FlowableStringSplitSimple extends Flowable<String> {
 
         @Override
         public void onNext(String t) {
-            queue.offer(NotificationLite.next(t));
+            queue.offer(t);
             drain();
         }
 
         @Override
         public void onComplete() {
-            queue.offer(NotificationLite.complete());
+            done = true;
             drain();
         }
 
         @Override
         public void onError(Throwable e) {
-            queue.offer(NotificationLite.error(e));
+            error = e;
+            done = true;
             drain();
         }
 
@@ -114,46 +119,45 @@ public final class FlowableStringSplitSimple extends Flowable<String> {
                     if (find()) {
                         e++;
                     } else {
-                        Object o = null;
-                        try {
-                            o = queue.poll();
-                        } catch (Exception e1) {
-                            o = NotificationLite.error(e1);
-                        }
-                        if (o == null) {
-                            if (!unbounded) {
+                        // must read `done` before poll occurs
+                        boolean d = done;
+                        String t = queue.poll();
+                        if (t == null) {
+                            if (d) {
+                                Throwable err = error;
+                                if (err != null) {
+                                    ss.clear();
+                                    actual.onError(err);
+                                    return;
+                                } else {
+                                    String remaining = ss.remaining();
+                                    final boolean checkCancelled;
+                                    if (remaining != null) {
+                                        ss.clear();
+                                        queue.clear();
+                                        actual.onNext(remaining);
+                                        e++;
+                                        checkCancelled = true;
+                                    } else if (ss.addCalled()) {
+                                        ss.clear();
+                                        queue.clear();
+                                        actual.onNext("");
+                                        e++;
+                                        checkCancelled = true;
+                                    } else {
+                                        checkCancelled = false;
+                                    }
+                                    if (!checkCancelled || !cancelled) {
+                                        actual.onComplete();
+                                    }
+                                    return;
+                                }
+                            } else if (!unbounded) {
                                 parent.request(1);
                             }
                             break;
-                        } else if (NotificationLite.isComplete(o)) {
-                            String remaining = ss.remaining();
-                            final boolean checkCancelled;
-                            if (remaining != null) {
-                                ss.clear();
-                                queue.clear();
-                                actual.onNext(remaining);
-                                e++;
-                                checkCancelled = true;
-                            } else if (ss.addCalled()) {
-                                ss.clear();
-                                queue.clear();
-                                actual.onNext("");
-                                e++;
-                                checkCancelled = true;
-                            } else {
-                                checkCancelled = false;
-                            }
-                            if (!checkCancelled || !cancelled) {
-                                actual.onComplete();
-                            }
-                            return;
-                        } else if (NotificationLite.isError(o)) {
-                            ss.clear();
-                            queue.clear();
-                            actual.onError(NotificationLite.getError(o));
-                            return;
                         } else {
-                            ss.add((String) o);
+                            ss.add(t);
                         }
                     }
                 }
