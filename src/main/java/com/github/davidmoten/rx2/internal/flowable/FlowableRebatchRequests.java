@@ -108,9 +108,9 @@ public final class FlowableRebatchRequests<T> extends Flowable<T> {
             if (getAndIncrement() == 0) {
                 int missed = 1;
                 while (true) {
+                    boolean reqsArrived = requestsArrived;
                     long r = requested.get();
                     int e = 0;
-                    boolean reqsArrived = requestsArrived;
                     while (e != r) {
                         boolean d = done;
                         T t = queue.poll();
@@ -140,8 +140,8 @@ public final class FlowableRebatchRequests<T> extends Flowable<T> {
                         requestsArrived = false;
                         long nr = nextRequest;
                         if (nr > 0) {
-                            parent.request(nr);
                             requestSubscriber.request(1);
+                            parent.request(nr);
                         }
                     }
                     missed = addAndGet(-missed);

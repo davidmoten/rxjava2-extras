@@ -254,10 +254,9 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
             if (getAndIncrement() == 0) {
                 int missed = 1;
                 while (true) {
+                    boolean reqsArrived = requestsArrived;
                     long r = requested.get();
                     long e = 0;
-                    boolean reqsArrived;
-                    reqsArrived = requestsArrived;
                     while (e != r) {
                         if (cancelled) {
                             return;
