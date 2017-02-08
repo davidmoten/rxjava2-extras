@@ -63,13 +63,20 @@ public class FlowableMaxRequest<T> extends Flowable<T> {
         @Override
         public void onNext(T t) {
             if (--count == 0) {
-                long r = requested.get();
-                if (r > 0) {
+                while (true) {
+                    long r = requested.get();
+                    if (r == 0) {
+                        break;
+                    }
                     long req = Math.min(r, maxRequest);
-                    requested.addAndGet(-req);
-                    parent.request(req);
+                    if (requested.compareAndSet(r, r - req)) {
+                        parent.request(req);
+                        count = req;
+                        break;
+                    }
                 }
             }
+            child.onNext(t);
         }
 
         @Override
@@ -83,9 +90,9 @@ public class FlowableMaxRequest<T> extends Flowable<T> {
             // TODO Auto-generated method stub
 
         }
-     
+
         private void requestMore() {
-            if (getAndIncrement()==0) {
+            if (getAndIncrement() == 0) {
                 int missed = 1;
                 while (true) {
                     break;
@@ -96,7 +103,7 @@ public class FlowableMaxRequest<T> extends Flowable<T> {
                 }
             }
         }
-        
+
     }
 
 }
