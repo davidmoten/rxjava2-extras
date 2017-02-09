@@ -13,6 +13,7 @@ import com.github.davidmoten.rx2.FlowableTransformers;
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
 
 import io.reactivex.Flowable;
+import io.reactivex.subscribers.TestSubscriber;
 
 public class FlowableMaxRequestTest {
 
@@ -27,7 +28,7 @@ public class FlowableMaxRequestTest {
                 .assertComplete();
         assertEquals(Arrays.asList(1L), requests);
     }
-    
+
     @Test
     public void checkErrorMaxRequestOneDownstreamRequestsMaxValue() {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
@@ -104,6 +105,32 @@ public class FlowableMaxRequestTest {
     @Test
     public void checkMaxRequestThreeDownstreamRequestTen() {
         checkMaxRequestDownstreamRequestTen(3L, 3L, 3L, 3L, 1L);
+    }
+
+    @Test
+    public void checkRequestsWhileEmitting() {
+        List<Long> requests = new CopyOnWriteArrayList<Long>();
+        Flowable.range(1, 10) //
+                .doOnRequest(Consumers.addLongTo(requests)) //
+                .compose(FlowableTransformers.maxRequest(3)) //
+                .rebatchRequests(4).test(11) //
+                .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
+                .assertComplete();
+        assertEquals(Arrays.asList(3L, 1L, 3L, 3L, 3L), requests);
+    }
+
+    @Test
+    public void checkCancel() {
+        List<Long> requests = new CopyOnWriteArrayList<Long>();
+        TestSubscriber<Object> ts = Flowable.range(1, 10) //
+                .doOnRequest(Consumers.addLongTo(requests)) //
+                .compose(FlowableTransformers.maxRequest(3)) //
+                .test(4).assertValues(1, 2, 3, 4); //
+        ts.cancel();
+        ts.requestMore(3);
+        ts.assertValueCount(4);
+        ts.assertNotTerminated();
+        assertEquals(Arrays.asList(3L, 1L), requests);
     }
 
     private void checkMaxRequestDownstreamRequestMaxValue(long maxRequest,
