@@ -32,6 +32,7 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
         private final long maxRequest;
         private final Subscriber<? super T> child;
         private final AtomicLong requested = new AtomicLong();
+
         private Subscription parent;
         private long count;
         private volatile long nextRequest;
@@ -69,7 +70,7 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
                 count--;
                 if (count == -1) {
                     // request didn't happen from this onNext method so refresh
-                    // count from the volatile
+                    // count from the volatile set in requestMore
                     long nr = nextRequest;
                     if (nr == Long.MAX_VALUE) {
                         count = nr;
@@ -81,6 +82,8 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
                     while (true) {
                         long r = requested.get();
                         if (r == 0) {
+                            // now must rely on dowstream requests to request
+                            // more from upstream via `requestMore`
                             allArrived = true;
                             requestMore();
                             break;
@@ -115,23 +118,25 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
         private void requestMore() {
             if (getAndIncrement() == 0) {
                 int missed = 1;
-                if (allArrived) {
-                    while (true) {
-                        long r = requested.get();
-                        long req = Math.min(r, maxRequest);
-                        if (r == 0) {
-                            break;
-                        } else if (r == Long.MAX_VALUE || requested.compareAndSet(r, r - req)) {
-                            allArrived = false;
-                            nextRequest = req;
-                            parent.request(req);
-                            break;
+                while (true) {
+                    if (allArrived) {
+                        while (true) {
+                            long r = requested.get();
+                            long req = Math.min(r, maxRequest);
+                            if (r == 0) {
+                                break;
+                            } else if (r == Long.MAX_VALUE || requested.compareAndSet(r, r - req)) {
+                                allArrived = false;
+                                nextRequest = req;
+                                parent.request(req);
+                                break;
+                            }
                         }
                     }
-                }
-                missed = addAndGet(-missed);
-                if (missed == 0) {
-                    return;
+                    missed = addAndGet(-missed);
+                    if (missed == 0) {
+                        return;
+                    }
                 }
             }
         }
