@@ -12,6 +12,7 @@ import com.github.davidmoten.rx2.internal.flowable.FlowableCollectWhile;
 import com.github.davidmoten.rx2.internal.flowable.FlowableDoOnEmpty;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMapLast;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMatch;
+import com.github.davidmoten.rx2.internal.flowable.FlowableMaxRequest;
 import com.github.davidmoten.rx2.internal.flowable.FlowableReverse;
 import com.github.davidmoten.rx2.internal.flowable.FlowableWindowMinMax;
 import com.github.davidmoten.rx2.internal.flowable.FlowableWindowMinMax.Metric;
@@ -248,6 +249,16 @@ public final class FlowableTransformers {
     @SuppressWarnings("unchecked")
     private static <T extends Comparable<T>> Comparator<T> naturalComparator() {
         return (Comparator<T>) (Comparator<?>) NaturalComparatorHolder.INSTANCE;
+    }
+    
+    
+    public static <T> FlowableTransformer<T,T> maxRequest(final long maxRequest) {
+        return new FlowableTransformer<T,T> () {
+
+            @Override
+            public Publisher<T> apply(Flowable<T> source) {
+                return new FlowableMaxRequest<T>(source, maxRequest);
+            }};
     }
 
 }

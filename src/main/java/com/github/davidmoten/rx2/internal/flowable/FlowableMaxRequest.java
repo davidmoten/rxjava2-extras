@@ -67,7 +67,8 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
         public void onNext(T t) {
             count--;
             if (count == -1) {
-                // request didn't happen from this onNext method
+                // request didn't happen from this onNext method so refresh
+                // count from the volatile
                 long nr = nextRequest;
                 count = nr - 1;
             } else if (count == 0) {
@@ -102,11 +103,20 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
         private void requestMore() {
             if (getAndIncrement() == 0) {
                 int missed = 1;
-                long r = requested.get();
-                if (r > 0 && allArrived) {
-                    long req = Math.min(r, maxRequest);
-                    nextRequest = req;
-                    parent.request(req);
+                if (allArrived) {
+                    while (true) {
+                        long r = requested.get();
+                        long req = Math.min(r, maxRequest);
+                        if (r == 0) {
+                            break;
+                        }
+                        if (requested.compareAndSet(r, r - req)) {
+                            allArrived = false;
+                            nextRequest = req;
+                            parent.request(req);
+                            break;
+                        }
+                    }
                 }
                 missed = addAndGet(-missed);
                 if (missed == 0) {
