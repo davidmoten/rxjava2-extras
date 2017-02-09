@@ -65,28 +65,35 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
 
         @Override
         public void onNext(T t) {
-            count--;
-            if (count == -1) {
-                // request didn't happen from this onNext method so refresh
-                // count from the volatile
-                long nr = nextRequest;
-                count = nr - 1;
-            } else if (count == 0) {
-                while (true) {
-                    long r = requested.get();
-                    if (r == 0) {
-                        allArrived = true;
-                        break;
+            if (count != Long.MAX_VALUE) {
+                count--;
+                if (count == -1) {
+                    // request didn't happen from this onNext method so refresh
+                    // count from the volatile
+                    long nr = nextRequest;
+                    if (nr == Long.MAX_VALUE) {
+                        count = nr;
+                    } else {
+                        count = nr - 1;
                     }
-                    long req = Math.min(r, maxRequest);
-                    if (r == Long.MAX_VALUE) {
-                        count = req;
-                        parent.request(req);
-                        break;
-                    } else if (requested.compareAndSet(r, r - req)) {
-                        count = req;
-                        parent.request(req);
-                        break;
+                }
+                if (count == 0) {
+                    while (true) {
+                        long r = requested.get();
+                        if (r == 0) {
+                            allArrived = true;
+                            break;
+                        }
+                        long req = Math.min(r, maxRequest);
+                        if (r == Long.MAX_VALUE) {
+                            count = req;
+                            parent.request(req);
+                            break;
+                        } else if (requested.compareAndSet(r, r - req)) {
+                            count = req;
+                            parent.request(req);
+                            break;
+                        }
                     }
                 }
             }
