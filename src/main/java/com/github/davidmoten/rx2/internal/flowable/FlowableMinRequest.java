@@ -7,6 +7,8 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
 import io.reactivex.Flowable;
+import io.reactivex.internal.fuseable.SimplePlainQueue;
+import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 
@@ -31,8 +33,12 @@ public class FlowableMinRequest<T> extends Flowable<T> {
         private final long minRequest;
         private final Subscriber<? super T> child;
         private final AtomicLong requested = new AtomicLong();
+        private final SimplePlainQueue<T> queue = new SpscLinkedArrayQueue<T>(16);
 
         private Subscription parent;
+        private volatile boolean done;
+        private Throwable error;
+        private volatile boolean cancelled;
 
         public MinRequestSubscriber(long minRequest, Subscriber<? super T> child) {
             this.minRequest = minRequest;
@@ -57,29 +63,69 @@ public class FlowableMinRequest<T> extends Flowable<T> {
 
         @Override
         public void cancel() {
+            cancelled = true;
             parent.cancel();
         }
 
         @Override
         public void onNext(T t) {
-            // TODO Auto-generated method stub
-
+            queue.offer(t);
+            drain();
         }
 
         @Override
-        public void onError(Throwable t) {
-            // TODO Auto-generated method stub
-
+        public void onError(Throwable e) {
+            error = e;
+            done = true;
+            drain();
         }
 
         @Override
         public void onComplete() {
-            // TODO Auto-generated method stub
-
+            done = true;
+            drain();
         }
-        
+
         private void drain() {
-            
+            if (getAndIncrement() == 0) {
+                int missed = 1;
+                while (true) {
+                    long r = requested.get();
+                    long e = 0;
+                    while (e != r) {
+                        if (cancelled) {
+                            return;
+                        }
+                        boolean d = done;
+                        T t = queue.poll();
+                        if (t == null) {
+                            if (done) {
+                                parent.cancel();
+                                Throwable err = error;
+                                if (err != null) {
+                                    error = null;
+                                    child.onError(err);
+                                } else {
+                                    child.onComplete();
+                                }
+                                return;
+                            } else {
+                                break;
+                            }
+                        } else {
+                            child.onNext(t);
+                            e++;
+                        }
+                    }
+                    if (e != 0 && r != Long.MAX_VALUE) {
+                        requested.addAndGet(-e);
+                    }
+                    missed = addAndGet(-missed);
+                    if (missed == 0) {
+                        return;
+                    }
+                }
+            }
         }
 
     }
