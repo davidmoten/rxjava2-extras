@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
+import com.github.davidmoten.guavamini.Preconditions;
+
 import io.reactivex.Flowable;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.SpscLinkedArrayQueue;
@@ -19,6 +21,7 @@ public class FlowableMinRequest<T> extends Flowable<T> {
     private final long minRequest;
 
     public FlowableMinRequest(Flowable<T> source, long minRequest) {
+        Preconditions.checkArgument(minRequest);
         this.source = source;
         this.minRequest = minRequest;
     }
