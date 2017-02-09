@@ -172,6 +172,18 @@ public class FlowableMaxRequestTest {
                 .assertValueCount(N) //
                 .assertComplete(); //
     }
+    
+    @Test
+    public void testMaxRequestIsMaxValue() {
+        List<Long> requests = new CopyOnWriteArrayList<Long>();
+        Flowable.range(1, 10) //
+                .doOnRequest(Consumers.addLongTo(requests)) //
+                .compose(FlowableTransformers.maxRequest(Long.MAX_VALUE)) //
+                .test() //
+                .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
+                .assertComplete();
+        assertEquals(Arrays.asList(Long.MAX_VALUE), requests);
+    }
 
     private void checkMaxRequestDownstreamRequestMaxValue(long maxRequest, Long... expectedRequests) {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
