@@ -41,7 +41,6 @@ public class FlowableMinRequest<T> extends Flowable<T> {
         private Throwable error;
         private volatile boolean cancelled;
         private long count;
-        private boolean firstRequest = true;
 
         public MinRequestSubscriber(long minRequest, Subscriber<? super T> child) {
             this.minRequest = minRequest;
@@ -102,7 +101,7 @@ public class FlowableMinRequest<T> extends Flowable<T> {
                         boolean d = done;
                         T t = queue.poll();
                         if (t == null) {
-                            if (done) {
+                            if (d) {
                                 parent.cancel();
                                 Throwable err = error;
                                 if (err != null) {
@@ -118,10 +117,17 @@ public class FlowableMinRequest<T> extends Flowable<T> {
                         } else {
                             child.onNext(t);
                             e++;
+                            if (count != Long.MAX_VALUE) {
+                                count--;
+                            }
                         }
                     }
                     if (e != 0 && r != Long.MAX_VALUE) {
-                        requested.addAndGet(-e);
+                        r = requested.addAndGet(-e);
+                    }
+                    if (r != 0 && count == 0) {
+                        count = Math.max(r, minRequest);
+                        parent.request(count);
                     }
                     missed = addAndGet(-missed);
                     if (missed == 0) {
