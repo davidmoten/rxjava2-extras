@@ -10,10 +10,35 @@ import org.junit.Test;
 
 import com.github.davidmoten.rx2.Consumers;
 import com.github.davidmoten.rx2.FlowableTransformers;
+import com.github.davidmoten.rx2.exceptions.ThrowingException;
 
 import io.reactivex.Flowable;
 
 public class FlowableMaxRequestTest {
+
+    @Test
+    public void checkEmptyMaxRequestOneDownstreamRequestsMaxValue() {
+        List<Long> requests = new CopyOnWriteArrayList<Long>();
+        Flowable.<Integer> empty() //
+                .doOnRequest(Consumers.addLongTo(requests)) //
+                .compose(FlowableTransformers.maxRequest(1)) //
+                .test() //
+                .assertNoValues() //
+                .assertComplete();
+        assertEquals(Arrays.asList(1L), requests);
+    }
+    
+    @Test
+    public void checkErrorMaxRequestOneDownstreamRequestsMaxValue() {
+        List<Long> requests = new CopyOnWriteArrayList<Long>();
+        Flowable.<Integer> error(new ThrowingException()) //
+                .doOnRequest(Consumers.addLongTo(requests)) //
+                .compose(FlowableTransformers.maxRequest(1)) //
+                .test() //
+                .assertNoValues() //
+                .assertError(ThrowingException.class);
+        assertEquals(Arrays.asList(1L), requests);
+    }
 
     @Test
     public void checkSingleMaxRequestOneDownstreamRequestsMaxValue() {
@@ -38,7 +63,7 @@ public class FlowableMaxRequestTest {
                 .assertComplete();
         assertEquals(Arrays.asList(2L), requests);
     }
-    
+
     @Test
     public void checkSingleMaxRequestMaxValueDownstreamRequestsMaxValue() {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
@@ -51,7 +76,6 @@ public class FlowableMaxRequestTest {
         assertEquals(Arrays.asList(Long.MAX_VALUE), requests);
     }
 
-
     @Test
     public void checkMaxRequestOneDownstreamRequestMaxValue() {
         checkMaxRequestDownstreamRequestMaxValue(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L);
@@ -61,12 +85,12 @@ public class FlowableMaxRequestTest {
     public void checkMaxRequestTwoDownstreamRequestMaxValue() {
         checkMaxRequestDownstreamRequestMaxValue(2L, 2L, 2L, 2L, 2L, 2L, 2L);
     }
-    
+
     @Test
     public void checkMaxRequestThreeDownstreamRequestMaxValue() {
         checkMaxRequestDownstreamRequestMaxValue(3L, 3L, 3L, 3L, 3L);
     }
-    
+
     @Test
     public void checkMaxRequestOneDownstreamRequestTen() {
         checkMaxRequestDownstreamRequestTen(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L);
@@ -76,14 +100,14 @@ public class FlowableMaxRequestTest {
     public void checkMaxRequestTwoDownstreamRequestTen() {
         checkMaxRequestDownstreamRequestTen(2L, 2L, 2L, 2L, 2L, 2L);
     }
-    
+
     @Test
     public void checkMaxRequestThreeDownstreamRequestTen() {
         checkMaxRequestDownstreamRequestTen(3L, 3L, 3L, 3L, 1L);
     }
 
-
-    private void checkMaxRequestDownstreamRequestMaxValue(long maxRequest, Long... expectedRequests) {
+    private void checkMaxRequestDownstreamRequestMaxValue(long maxRequest,
+            Long... expectedRequests) {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         Flowable.range(1, 10) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
@@ -93,7 +117,7 @@ public class FlowableMaxRequestTest {
                 .assertComplete();
         assertEquals(Arrays.asList(expectedRequests), requests);
     }
-    
+
     private void checkMaxRequestDownstreamRequestTen(long maxRequest, Long... expectedRequests) {
         List<Long> list = new CopyOnWriteArrayList<Long>();
         Flowable.range(1, 10) //

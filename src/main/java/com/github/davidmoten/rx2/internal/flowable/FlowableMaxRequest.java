@@ -79,6 +79,7 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
                     }
                 }
                 if (count == 0) {
+                    // CAS loop to update requested
                     while (true) {
                         long r = requested.get();
                         if (r == 0) {
@@ -121,6 +122,7 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
                 int missed = 1;
                 while (true) {
                     if (allArrived) {
+                        // CAS loop to update requested
                         while (true) {
                             long r = requested.get();
                             long req = Math.min(r, maxRequest);
