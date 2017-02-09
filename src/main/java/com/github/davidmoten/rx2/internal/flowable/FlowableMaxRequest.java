@@ -26,16 +26,29 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
     }
 
     @SuppressWarnings("serial")
-    private static final class MaxRequestSubscriber<T> extends AtomicInteger
-            implements Subscriber<T>, Subscription {
+    private static final class MaxRequestSubscriber<T> extends AtomicInteger implements Subscriber<T>, Subscription {
 
         private final long maxRequest;
         private final Subscriber<? super T> child;
+
+        // the number of requests from downstream that have not been requested
+        // from upstream yet
         private final AtomicLong requested = new AtomicLong();
 
+        // the upstream subscription (which allows us to request from upstream
+        // and cancel it)
         private Subscription parent;
+
+        // the number of items still to emitted from
+        // upstream out of the last request to parent
         private long count;
+
+        // when request made from `requestMore` this value is used to set the
+        // next value of `count` in the `onNext` method
         private volatile long nextRequest;
+
+        // indicates to the `requestMore` method that all items from the last
+        // request to parent have arrived
         private volatile boolean allArrived = true;
 
         MaxRequestSubscriber(long maxRequest, Subscriber<? super T> child) {
@@ -79,6 +92,9 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
                     }
                 }
                 if (count == 0) {
+                    // All items from the last request made to parent have
+                    // arrived
+
                     // CAS loop to update `requested`
                     while (true) {
                         long r = requested.get();
