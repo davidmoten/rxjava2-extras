@@ -17,14 +17,28 @@ public class FlowableMaxRequestTest {
 
     @Test
     public void test() {
+        checkMaxRequest(1);
+    }
+    
+    @Test
+    public void test1() {
+        checkMaxRequest(2);
+    }
+    
+    @Test
+    public void testMaxValue() {
+        checkMaxRequest(Long.MAX_VALUE);
+    }
+
+    private void checkMaxRequest(long maxRequest) {
         List<Long> list = new CopyOnWriteArrayList<Long>();
         Flowable.just(1) //
                 .doOnRequest(Consumers.addLongTo(list)) //
-                .compose(FlowableTransformers.maxRequest(2)) //
+                .compose(FlowableTransformers.maxRequest(maxRequest)) //
                 .test() //
                 .assertValue(1) //
                 .assertComplete();
-        assertEquals(Arrays.asList(2L), list);
+        assertEquals(Arrays.asList(maxRequest), list);
     }
 
 }

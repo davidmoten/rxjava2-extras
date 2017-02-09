@@ -79,9 +79,13 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
                         break;
                     }
                     long req = Math.min(r, maxRequest);
-                    if (requested.compareAndSet(r, r - req)) {
-                        parent.request(req);
+                    if (r == Long.MAX_VALUE) {
                         count = req;
+                        parent.request(req);
+                        break;
+                    } else if (requested.compareAndSet(r, r - req)) {
+                        count = req;
+                        parent.request(req);
                         break;
                     }
                 }
@@ -109,8 +113,7 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
                         long req = Math.min(r, maxRequest);
                         if (r == 0) {
                             break;
-                        }
-                        if (requested.compareAndSet(r, r - req)) {
+                        } else if (r == Long.MAX_VALUE || requested.compareAndSet(r, r - req)) {
                             allArrived = false;
                             nextRequest = req;
                             parent.request(req);
