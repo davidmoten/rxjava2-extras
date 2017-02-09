@@ -79,7 +79,7 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
                     }
                 }
                 if (count == 0) {
-                    // CAS loop to update requested
+                    // CAS loop to update `requested`
                     while (true) {
                         long r = requested.get();
                         if (r == 0) {

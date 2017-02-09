@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
@@ -13,6 +14,7 @@ import com.github.davidmoten.rx2.FlowableTransformers;
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
 
 import io.reactivex.Flowable;
+import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subscribers.TestSubscriber;
 
 public class FlowableMaxRequestTest {
@@ -20,7 +22,7 @@ public class FlowableMaxRequestTest {
     @Test
     public void checkEmptyMaxRequestOneDownstreamRequestsMaxValue() {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
-        Flowable.<Integer> empty() //
+        Flowable.<Integer>empty() //
                 .doOnRequest(Consumers.addLongTo(requests)) //
                 .compose(FlowableTransformers.maxRequest(1)) //
                 .test() //
@@ -32,7 +34,7 @@ public class FlowableMaxRequestTest {
     @Test
     public void checkErrorMaxRequestOneDownstreamRequestsMaxValue() {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
-        Flowable.<Integer> error(new ThrowingException()) //
+        Flowable.<Integer>error(new ThrowingException()) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
                 .compose(FlowableTransformers.maxRequest(1)) //
                 .test() //
@@ -135,11 +137,43 @@ public class FlowableMaxRequestTest {
 
     @Test
     public void testAsync() {
-       //TODO
+        int N = 10000;
+        for (int m = 1; m <= N + 1; m++) {
+            Flowable.range(1, N) //
+                    .compose(FlowableTransformers.maxRequest(m)) //
+                    .observeOn(Schedulers.computation()) //
+                    .test() //
+                    .awaitDone(1, TimeUnit.MINUTES) //
+                    .assertValueCount(N) //
+                    .assertComplete(); //
+        }
     }
-    
-    private void checkMaxRequestDownstreamRequestMaxValue(long maxRequest,
-            Long... expectedRequests) {
+
+    @Test
+    public void testAsyncNotMaxValue() {
+        int N = 10000;
+        Flowable.range(1, N) //
+                .compose(FlowableTransformers.maxRequest(3)) //
+                .observeOn(Schedulers.computation()) //
+                .test(N + 10) //
+                .awaitDone(1, TimeUnit.MINUTES) //
+                .assertValueCount(N) //
+                .assertComplete(); //
+    }
+
+    @Test
+    public void testAsyncMaxRequestIsMax() {
+        int N = 10000;
+        Flowable.range(1, N) //
+                .compose(FlowableTransformers.maxRequest(Long.MAX_VALUE)) //
+                .observeOn(Schedulers.computation()) //
+                .test(N + 10) //
+                .awaitDone(1, TimeUnit.MINUTES) //
+                .assertValueCount(N) //
+                .assertComplete(); //
+    }
+
+    private void checkMaxRequestDownstreamRequestMaxValue(long maxRequest, Long... expectedRequests) {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         Flowable.range(1, 10) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
