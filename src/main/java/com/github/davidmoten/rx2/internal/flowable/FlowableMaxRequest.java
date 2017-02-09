@@ -82,6 +82,7 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
                         long r = requested.get();
                         if (r == 0) {
                             allArrived = true;
+                            requestMore();
                             break;
                         }
                         long req = Math.min(r, maxRequest);
