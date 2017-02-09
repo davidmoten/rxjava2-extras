@@ -10,7 +10,7 @@ import io.reactivex.Flowable;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 
-public class FlowableMaxRequest<T> extends Flowable<T> {
+public final class FlowableMaxRequest<T> extends Flowable<T> {
 
     private final Flowable<T> source;
     private final long maxRequest;
@@ -25,16 +25,19 @@ public class FlowableMaxRequest<T> extends Flowable<T> {
         source.subscribe(new MaxRequestSubscriber<T>(maxRequest, child));
     }
 
-    private static final class MaxRequestSubscriber<T> extends AtomicInteger implements Subscriber<T>, Subscription {
+    @SuppressWarnings("serial")
+    private static final class MaxRequestSubscriber<T> extends AtomicInteger
+            implements Subscriber<T>, Subscription {
 
         private final long maxRequest;
         private final Subscriber<? super T> child;
         private final AtomicLong requested = new AtomicLong();
         private Subscription parent;
         private long count;
-        private volatile long currentRequest;
+        private volatile long nextRequest;
+        private volatile boolean allArrived = true;
 
-        public MaxRequestSubscriber(long maxRequest, Subscriber<? super T> child) {
+        MaxRequestSubscriber(long maxRequest, Subscriber<? super T> child) {
             this.maxRequest = maxRequest;
             this.child = child;
         }
@@ -51,21 +54,27 @@ public class FlowableMaxRequest<T> extends Flowable<T> {
         public void request(long n) {
             if (SubscriptionHelper.validate(n)) {
                 BackpressureHelper.add(requested, n);
+                requestMore();
             }
         }
 
         @Override
         public void cancel() {
-            // TODO Auto-generated method stub
-
+            parent.cancel();
         }
 
         @Override
         public void onNext(T t) {
-            if (--count == 0) {
+            count--;
+            if (count == -1) {
+                // request didn't happen from this onNext method
+                long nr = nextRequest;
+                count = nr - 1;
+            } else if (count == 0) {
                 while (true) {
                     long r = requested.get();
                     if (r == 0) {
+                        allArrived = true;
                         break;
                     }
                     long req = Math.min(r, maxRequest);
@@ -81,21 +90,23 @@ public class FlowableMaxRequest<T> extends Flowable<T> {
 
         @Override
         public void onError(Throwable t) {
-            // TODO Auto-generated method stub
+            child.onError(t);
 
         }
 
         @Override
         public void onComplete() {
-            // TODO Auto-generated method stub
-
+            child.onComplete();
         }
 
         private void requestMore() {
             if (getAndIncrement() == 0) {
                 int missed = 1;
-                while (true) {
-                    break;
+                long r = requested.get();
+                if (r > 0 && allArrived) {
+                    long req = Math.min(r, maxRequest);
+                    nextRequest = req;
+                    parent.request(req);
                 }
                 missed = addAndGet(-missed);
                 if (missed == 0) {
