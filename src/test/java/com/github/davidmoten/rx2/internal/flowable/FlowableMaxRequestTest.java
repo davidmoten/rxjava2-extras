@@ -133,6 +133,11 @@ public class FlowableMaxRequestTest {
         assertEquals(Arrays.asList(3L, 1L), requests);
     }
 
+    @Test
+    public void testAsync() {
+       //TODO
+    }
+    
     private void checkMaxRequestDownstreamRequestMaxValue(long maxRequest,
             Long... expectedRequests) {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
