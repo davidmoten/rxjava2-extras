@@ -70,7 +70,7 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
                 count--;
                 if (count == -1) {
                     // request didn't happen from this onNext method so refresh
-                    // count from the volatile set in requestMore
+                    // count from the volatile set in `requestMore`
                     long nr = nextRequest;
                     if (nr == Long.MAX_VALUE) {
                         count = nr;
@@ -87,16 +87,17 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
                             allArrived = true;
                             requestMore();
                             break;
-                        }
-                        long req = Math.min(r, maxRequest);
-                        if (r == Long.MAX_VALUE) {
-                            count = req;
-                            parent.request(req);
+                        } else if (r == Long.MAX_VALUE) {
+                            count = maxRequest;
+                            parent.request(maxRequest);
                             break;
-                        } else if (requested.compareAndSet(r, r - req)) {
-                            count = req;
-                            parent.request(req);
-                            break;
+                        } else {
+                            long req = Math.min(r, maxRequest);
+                            if (requested.compareAndSet(r, r - req)) {
+                                count = req;
+                                parent.request(req);
+                                break;
+                            }
                         }
                     }
                 }
