@@ -115,6 +115,8 @@ FlowableTransformers
 
 [`match`, `matchWith`](#match-matchwith)
 
+[`maxRequest`](#maxrequest)
+
 [`onBackpressureBufferToFile`](#onbackpressurebuffertofile)
 
 [`reverse`](#reverse)
@@ -281,6 +283,17 @@ Don't rely on the output order!
 
 Under the covers elements are requested from `a` and `b` in alternating batches of 128 by default. The batch size is configurable in another overload.
 
+maxRequest
+-------------
+Limits upstream requests (like `rebatchRequests` but may allow requests less than the batch amount through unchanged depending on the timing).
+
+```java
+flowable
+  .compose(FlowableTransformers.maxRequest(100));
+
+```
+
+TODO discuss IO service calls using this operator.
 
 ##onBackpressureBufferToFile
 With this operator you can offload a stream's emissions to disk to reduce memory pressure when you have a fast producer + slow consumer (or just to minimize memory usage).
