@@ -1,5 +1,6 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -39,6 +40,8 @@ public class FlowableMinRequest<T> extends Flowable<T> {
         private volatile boolean done;
         private Throwable error;
         private volatile boolean cancelled;
+        private long count;
+        private boolean firstRequest = true;
 
         public MinRequestSubscriber(long minRequest, Subscriber<? super T> child) {
             this.minRequest = minRequest;

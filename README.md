@@ -285,8 +285,8 @@ Under the covers elements are requested from `a` and `b` in alternating batches 
 
 maxRequest
 -------------
-Limits upstream requests. This operator is like `rebatchRequests`:
-* may allow requests less than the batch amount through unchanged depending on timing
+Limits upstream requests. 
+* may allow requests less than the maximum 
 * serializes requests
 * does not buffer items
 
@@ -297,6 +297,7 @@ flowable
 ```
 
 TODO discuss IO service calls using this operator.
+TODO minReques operator
 
 ##onBackpressureBufferToFile
 With this operator you can offload a stream's emissions to disk to reduce memory pressure when you have a fast producer + slow consumer (or just to minimize memory usage).
