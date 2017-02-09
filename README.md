@@ -285,7 +285,10 @@ Under the covers elements are requested from `a` and `b` in alternating batches 
 
 maxRequest
 -------------
-Limits upstream requests (like `rebatchRequests` but may allow requests less than the batch amount through unchanged depending on the timing).
+Limits upstream requests. This operator is like `rebatchRequests`:
+* may allow requests less than the batch amount through unchanged depending on timing
+* serializes requests
+* does not buffer items
 
 ```java
 flowable
