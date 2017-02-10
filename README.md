@@ -293,6 +293,7 @@ Limits upstream requests.
 * may allow requests less than the maximum 
 * serializes requests
 * does not buffer items
+* requests at start and just before emission of last item in current batch
 
 ```java
 flowable
