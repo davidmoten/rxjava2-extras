@@ -306,8 +306,6 @@ flowable
 
 See also: [`minRequest`](#minrequest), [`rebatchRequests`](#rebatchrequests)
 
-TODO discuss IO service calls using this operator.
-
 minRequest
 -------------
 Ensures requests are at least the given value. Configurable to not constrain the first request.
