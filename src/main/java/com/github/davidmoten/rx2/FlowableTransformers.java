@@ -13,11 +13,13 @@ import com.github.davidmoten.rx2.internal.flowable.FlowableDoOnEmpty;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMapLast;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMatch;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMaxRequest;
+import com.github.davidmoten.rx2.internal.flowable.FlowableMinRequest;
 import com.github.davidmoten.rx2.internal.flowable.FlowableReverse;
 import com.github.davidmoten.rx2.internal.flowable.FlowableWindowMinMax;
 import com.github.davidmoten.rx2.internal.flowable.FlowableWindowMinMax.Metric;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStateMachine;
 import com.github.davidmoten.rx2.util.Pair;
+import com.google.common.base.Preconditions;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -35,18 +37,19 @@ public final class FlowableTransformers {
         // prevent instantiation
     }
 
-    public static <State, In, Out> FlowableTransformer<In, Out> stateMachine(Callable<? extends State> initialState,
+    public static <State, In, Out> FlowableTransformer<In, Out> stateMachine(
+            Callable<? extends State> initialState,
             Function3<? super State, ? super In, ? super FlowableEmitter<Out>, ? extends State> transition,
             BiPredicate<? super State, ? super FlowableEmitter<Out>> completion,
             BackpressureStrategy backpressureStrategy, int requestBatchSize) {
-        return TransformerStateMachine.create(initialState, transition, completion, backpressureStrategy,
-                requestBatchSize);
+        return TransformerStateMachine.create(initialState, transition, completion,
+                backpressureStrategy, requestBatchSize);
     }
 
     public static StateMachine.Builder stateMachine() {
         return StateMachine.builder();
     }
-    
+
     public static StateMachine2.Builder stateMachine2() {
         return StateMachine2.builder();
     }
@@ -78,7 +81,8 @@ public final class FlowableTransformers {
 
     }
 
-    public static <T> FlowableTransformer<T, T> mapLast(final Function<? super T, ? extends T> function) {
+    public static <T> FlowableTransformer<T, T> mapLast(
+            final Function<? super T, ? extends T> function) {
         return new FlowableTransformer<T, T>() {
 
             @Override
@@ -90,8 +94,9 @@ public final class FlowableTransformers {
 
     }
 
-    public static <A, B, K, C> Flowable<C> match(Flowable<A> a, Flowable<B> b, Function<? super A, K> aKey,
-            Function<? super B, K> bKey, BiFunction<? super A, ? super B, C> combiner, int requestSize) {
+    public static <A, B, K, C> Flowable<C> match(Flowable<A> a, Flowable<B> b,
+            Function<? super A, K> aKey, Function<? super B, K> bKey,
+            BiFunction<? super A, ? super B, C> combiner, int requestSize) {
         return new FlowableMatch<A, B, K, C>(a, b, aKey, bKey, combiner, requestSize);
     }
 
@@ -140,23 +145,25 @@ public final class FlowableTransformers {
             public Flowable<Pair<T, Statistics>> apply(Flowable<T> source) {
                 return source.scan(Pair.create((T) null, Statistics.create()),
                         new BiFunction<Pair<T, Statistics>, T, Pair<T, Statistics>>() {
-                            @Override
-                            public Pair<T, Statistics> apply(Pair<T, Statistics> pair, T t) throws Exception {
-                                return Pair.create(t, pair.b().add(function.apply(t)));
-                            }
-                        }).skip(1);
+                    @Override
+                    public Pair<T, Statistics> apply(Pair<T, Statistics> pair, T t)
+                            throws Exception {
+                        return Pair.create(t, pair.b().add(function.apply(t)));
+                    }
+                }).skip(1);
             }
         };
     }
 
     public static <T, R> FlowableTransformer<T, R> collectWhile(final Callable<R> collectionFactory,
-            final BiFunction<? super R, ? super T, ? extends R> add, final BiPredicate<? super R, ? super T> condition,
-            final boolean emitRemainder) {
+            final BiFunction<? super R, ? super T, ? extends R> add,
+            final BiPredicate<? super R, ? super T> condition, final boolean emitRemainder) {
         return new FlowableTransformer<T, R>() {
 
             @Override
             public Publisher<R> apply(Flowable<T> source) {
-                return new FlowableCollectWhile<T, R>(source, collectionFactory, add, condition, emitRemainder);
+                return new FlowableCollectWhile<T, R>(source, collectionFactory, add, condition,
+                        emitRemainder);
             }
         };
     }
@@ -169,7 +176,8 @@ public final class FlowableTransformers {
 
     public static <T> FlowableTransformer<T, List<T>> toListWhile(
             final BiPredicate<? super List<T>, ? super T> condition, boolean emitRemainder) {
-        return collectWhile(ListFactoryHolder.<T>factory(), ListFactoryHolder.<T>add(), condition, emitRemainder);
+        return collectWhile(ListFactoryHolder.<T> factory(), ListFactoryHolder.<T> add(), condition,
+                emitRemainder);
     }
 
     public static <T> FlowableTransformer<T, List<T>> toListWhile(
@@ -208,8 +216,9 @@ public final class FlowableTransformers {
 
     }
 
-    public static <T extends Comparable<T>> FlowableTransformer<T, T> windowMax(final int windowSize) {
-        return windowMax(windowSize, FlowableTransformers.<T>naturalComparator());
+    public static <T extends Comparable<T>> FlowableTransformer<T, T> windowMax(
+            final int windowSize) {
+        return windowMax(windowSize, FlowableTransformers.<T> naturalComparator());
     }
 
     public static <T> FlowableTransformer<T, T> windowMax(final int windowSize,
@@ -222,8 +231,9 @@ public final class FlowableTransformers {
         };
     }
 
-    public static <T extends Comparable<T>> FlowableTransformer<T, T> windowMin(final int windowSize) {
-        return windowMin(windowSize, FlowableTransformers.<T>naturalComparator());
+    public static <T extends Comparable<T>> FlowableTransformer<T, T> windowMin(
+            final int windowSize) {
+        return windowMin(windowSize, FlowableTransformers.<T> naturalComparator());
     }
 
     public static <T> FlowableTransformer<T, T> windowMin(final int windowSize,
@@ -250,15 +260,47 @@ public final class FlowableTransformers {
     private static <T extends Comparable<T>> Comparator<T> naturalComparator() {
         return (Comparator<T>) (Comparator<?>) NaturalComparatorHolder.INSTANCE;
     }
-    
-    
-    public static <T> FlowableTransformer<T,T> maxRequest(final long maxRequest) {
-        return new FlowableTransformer<T,T> () {
+
+    public static <T> FlowableTransformer<T, T> maxRequest(final long maxRequest) {
+        return new FlowableTransformer<T, T>() {
 
             @Override
             public Publisher<T> apply(Flowable<T> source) {
                 return new FlowableMaxRequest<T>(source, maxRequest);
-            }};
+            }
+        };
     }
 
+    public static <T> FlowableTransformer<T, T> minRequest(final int minRequest,
+            final boolean constrainFirstRequest) {
+        return new FlowableTransformer<T, T>() {
+
+            @Override
+            public Publisher<T> apply(Flowable<T> source) {
+                return new FlowableMinRequest<T>(source, minRequest, constrainFirstRequest);
+            }
+        };
+    }
+
+    public static <T> FlowableTransformer<T, T> minRequest(final int minRequest) {
+        return minRequest(minRequest, true);
+    }
+
+    public static <T> FlowableTransformer<T, T> rebatchRequests(final int minRequest,
+            final long maxRequest, final boolean constrainFirstRequestMin) {
+        Preconditions.checkArgument(minRequest > 0, "minRequest must be greater than 0");
+        Preconditions.checkArgument(maxRequest > 0, "maxRequest must be greater than 0");
+        Preconditions.checkArgument(minRequest <= maxRequest,
+                "minRequest cannot be greater than maxRequest");
+        return new FlowableTransformer<T, T>() {
+
+            @Override
+            public Publisher<T> apply(Flowable<T> source) {
+                return source
+                        .compose(FlowableTransformers.<T> minRequest(minRequest,
+                                constrainFirstRequestMin))
+                        .compose(FlowableTransformers.<T> maxRequest(maxRequest));
+            }
+        };
+    }
 }
