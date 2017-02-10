@@ -290,6 +290,9 @@ Under the covers elements are requested from `a` and `b` in alternating batches 
 maxRequest
 -------------
 Limits upstream requests. 
+
+<img src="src/docs/maxRequest.png?raw=true" />
+
 * may allow requests less than the maximum 
 * serializes requests
 * does not buffer items
