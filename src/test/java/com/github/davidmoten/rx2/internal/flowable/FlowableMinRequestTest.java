@@ -51,7 +51,7 @@ public class FlowableMinRequestTest {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         Flowable.range(1, 10) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.minRequest(2, true)) //
+                .compose(FlowableTransformers.minRequest(2)) //
                 .test() //
                 .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
                 .assertComplete();
@@ -134,6 +134,47 @@ public class FlowableMinRequestTest {
         assertEquals(Lists.newArrayList(1), values);
         assertFalse(terminated.get());
         assertEquals(Lists.newArrayList(Long.MAX_VALUE), requests);
+    }
+
+    @Test
+    public void testRebatchRequestsMinEqualsMaxDontConstrainFirstUsesRxJavaCoreRebatchRequests() {
+        List<Long> requests = new CopyOnWriteArrayList<Long>();
+        Flowable.range(1, 10) //
+                .doOnRequest(Consumers.addLongTo(requests)) //
+                .compose(FlowableTransformers.rebatchRequests(5, 5)) //
+                .test() //
+                .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
+                .assertComplete();
+        assertEquals(Lists.newArrayList(5L, 4L, 4L), requests);
+    }
+
+    @Test
+    public void testRebatchRequestsMinEqualsMaxDontConstrainFirstRequest() {
+        List<Long> requests = new CopyOnWriteArrayList<Long>();
+        Flowable.range(1, 10) //
+                .doOnRequest(Consumers.addLongTo(requests)) //
+                .compose(FlowableTransformers.rebatchRequests(5, 5, false)) //
+                .test() //
+                .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
+                .assertComplete();
+        assertEquals(Lists.newArrayList(5L, 5L), requests);
+    }
+
+    @Test
+    public void testRebatchRequestsMinLessThanMax() {
+        List<Long> requests = new CopyOnWriteArrayList<Long>();
+        Flowable.range(1, 10) //
+                .doOnRequest(Consumers.addLongTo(requests)) //
+                .compose(FlowableTransformers.rebatchRequests(2, 3, false)) //
+                .test(10) //
+                .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
+                .assertComplete();
+        assertEquals(Lists.newArrayList(3L, 3L, 3L, 2L), requests);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRebatchRequestsMinMoreThanMaxThrows() {
+        FlowableTransformers.rebatchRequests(3, 2);
     }
 
 }

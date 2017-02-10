@@ -294,7 +294,7 @@ public final class FlowableTransformers {
 
             @Override
             public Publisher<T> apply(Flowable<T> source) {
-                if (minRequest == maxRequest) {
+                if (minRequest == maxRequest && constrainFirstRequestMin) {
                     return source.rebatchRequests(minRequest);
                 } else {
                     return source
