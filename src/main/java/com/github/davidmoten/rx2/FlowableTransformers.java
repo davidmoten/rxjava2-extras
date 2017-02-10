@@ -7,6 +7,7 @@ import java.util.concurrent.Callable;
 
 import org.reactivestreams.Publisher;
 
+import com.github.davidmoten.guavamini.Preconditions;
 import com.github.davidmoten.rx2.buffertofile.Options;
 import com.github.davidmoten.rx2.internal.flowable.FlowableCollectWhile;
 import com.github.davidmoten.rx2.internal.flowable.FlowableDoOnEmpty;
@@ -19,7 +20,6 @@ import com.github.davidmoten.rx2.internal.flowable.FlowableWindowMinMax;
 import com.github.davidmoten.rx2.internal.flowable.FlowableWindowMinMax.Metric;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStateMachine;
 import com.github.davidmoten.rx2.util.Pair;
-import com.google.common.base.Preconditions;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
