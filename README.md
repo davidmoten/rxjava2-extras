@@ -494,7 +494,11 @@ mvn test -Dn=500000000
 
 rebatchRequests
 ------------------
-Constrains requests to a range of values (rebatches):
+Constrains requests to a range of values (rebatches).
+
+`rebatchRequests(min, max, constrainFirstRequest)` is equivalent to 
+
+`minRequest(min, constrainFirstRequest).maxRequest(max)`
 
 ```java
 flowable
