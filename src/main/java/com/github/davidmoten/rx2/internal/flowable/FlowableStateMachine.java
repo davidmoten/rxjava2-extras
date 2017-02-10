@@ -270,13 +270,12 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
                                     cancel();
                                     queue.clear();
                                     child.onError(err);
-                                    return;
                                 } else {
                                     cancel();
                                     queue.clear();
                                     child.onComplete();
-                                    return;
                                 }
+                                return;
                             } else {
                                 break;
                             }
