@@ -294,10 +294,14 @@ public final class FlowableTransformers {
 
             @Override
             public Publisher<T> apply(Flowable<T> source) {
-                return source
-                        .compose(FlowableTransformers.<T> minRequest(minRequest,
-                                constrainFirstRequestMin))
-                        .compose(FlowableTransformers.<T> maxRequest(maxRequest));
+                if (minRequest == maxRequest) {
+                    return source.rebatchRequests(minRequest);
+                } else {
+                    return source
+                            .compose(FlowableTransformers.<T> minRequest(minRequest,
+                                    constrainFirstRequestMin))
+                            .compose(FlowableTransformers.<T> maxRequest(maxRequest));
+                }
             }
         };
     }

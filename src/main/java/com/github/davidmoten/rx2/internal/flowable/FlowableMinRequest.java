@@ -134,6 +134,8 @@ public final class FlowableMinRequest<T> extends Flowable<T> {
                         r = requested.addAndGet(-e);
                     }
                     if (r != 0 && count == 0) {
+                        // requests from parent have arrived so request some
+                        // more
                         if (firstRequest && !constrainFirstRequest) {
                             count = r;
                             parent.request(r);
