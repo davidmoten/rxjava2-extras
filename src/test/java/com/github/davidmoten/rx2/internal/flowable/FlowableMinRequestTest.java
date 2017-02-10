@@ -62,7 +62,7 @@ public class FlowableMinRequestTest {
     public void testMinWhenRequestIsMaxValueAndSourceDoesNotComplete() {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         Flowable.range(1, 10) //
-                .concatWith(Flowable.<Integer> never()) //
+                .concatWith(Flowable.<Integer>never()) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
                 .compose(FlowableTransformers.minRequest(2, true)) //
                 .test() //
@@ -88,7 +88,7 @@ public class FlowableMinRequestTest {
     @Test
     public void testError() {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
-        Flowable.<Long> error(new ThrowingException()) //
+        Flowable.<Long>error(new ThrowingException()) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
                 .compose(FlowableTransformers.minRequest(2, true)) //
                 .test() //
@@ -104,7 +104,7 @@ public class FlowableMinRequestTest {
         final AtomicBoolean terminated = new AtomicBoolean();
         Flowable.range(1, 10) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.<Integer> minRequest(2, true)) //
+                .compose(FlowableTransformers.<Integer>minRequest(2, true)) //
                 .subscribe(new Subscriber<Integer>() {
 
                     private Subscription parent;
@@ -175,6 +175,11 @@ public class FlowableMinRequestTest {
     @Test(expected = IllegalArgumentException.class)
     public void testRebatchRequestsMinMoreThanMaxThrows() {
         FlowableTransformers.rebatchRequests(3, 2);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMinNegativeThrows() {
+        Flowable.just(1).compose(FlowableTransformers.minRequest(0));
     }
 
 }
