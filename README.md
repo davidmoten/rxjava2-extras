@@ -320,7 +320,7 @@ flowable
   .compose(FlowableTransformers.minRequest(10, false));
 ```
 
-See also: [`maxRequest`](#minrequest), [`rebatchRequests`](#rebatchrequests)
+See also: [`maxRequest`](#maxrequest), [`rebatchRequests`](#rebatchrequests)
 
 ##onBackpressureBufferToFile
 With this operator you can offload a stream's emissions to disk to reduce memory pressure when you have a fast producer + slow consumer (or just to minimize memory usage).
