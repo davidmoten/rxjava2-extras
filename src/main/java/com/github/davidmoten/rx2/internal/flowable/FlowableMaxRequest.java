@@ -43,7 +43,7 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
         // and cancel it)
         private Subscription parent;
 
-        // the number of items still to emitted from
+        // the number of items still to be emitted from
         // upstream out of the last request to parent
         private long count;
 
@@ -163,7 +163,6 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
                 }
             }
         }
-
     }
 
 }

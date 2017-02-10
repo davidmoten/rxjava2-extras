@@ -117,7 +117,11 @@ FlowableTransformers
 
 [`maxRequest`](#maxrequest)
 
+[`minRequest`](#minrequest)
+
 [`onBackpressureBufferToFile`](#onbackpressurebuffertofile)
+
+[rebatchRequests](#rebatchrequests)
 
 [`reverse`](#reverse)
 
@@ -296,8 +300,27 @@ flowable
 
 ```
 
+See also: [`minRequest`](#minrequest), [`rebatchRequests`](#rebatchrequests)
+
 TODO discuss IO service calls using this operator.
-TODO minReques operator
+
+minRequest
+-------------
+Ensures requests are at least the given value. Configurable to not constrain the first request.
+* serializes requests
+* may buffer items
+
+```java
+flowable
+  .compose(FlowableTransformers.minRequest(10));
+```
+To allow the first request through unconstrained:
+```java
+flowable
+  .compose(FlowableTransformers.minRequest(10, false));
+```
+
+See also: [`maxRequest`](#minrequest), [`rebatchRequests`](#rebatchrequests)
 
 ##onBackpressureBufferToFile
 With this operator you can offload a stream's emissions to disk to reduce memory pressure when you have a fast producer + slow consumer (or just to minimize memory usage).
@@ -462,6 +485,22 @@ To do long-running perf tests (haven't set up jmh for this one yet) do this:
 ```bash
 mvn test -Dn=500000000
 ```
+
+rebatchRequests
+------------------
+Constrains requests to a range of values (rebatches):
+
+```java
+flowable
+  .compose(FlowableTransformers.rebatchRequests(5, 100));
+```
+Allow the first request to be unconstrained by the minimum:
+```java
+flowable
+  .compose(FlowableTransformers.rebatchRequests(5, 100, false));
+```
+
+See also: [`minRequest`](#minrequest), [`maxRequest`](#maxrequest)
 
 repeatLast
 ------------------------
