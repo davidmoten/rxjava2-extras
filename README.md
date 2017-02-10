@@ -496,9 +496,9 @@ rebatchRequests
 ------------------
 Constrains requests to a range of values (rebatches).
 
-`rebatchRequests(min, max, constrainFirstRequest)` is equivalent to 
+`rebatchRequests` is the composition of the operators [`minRequest`](#minrequest) and [`maxRequest`](#maxrequest).
 
-`minRequest(min, constrainFirstRequest).maxRequest(max)`
+Example:
 
 ```java
 flowable
