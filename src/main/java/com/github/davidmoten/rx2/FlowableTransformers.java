@@ -282,7 +282,7 @@ public final class FlowableTransformers {
         };
     }
 
-    public static <T> FlowableTransformer<T, T> minRequest(final int minRequest) {
+    public static <T> FlowableTransformer<T, T> minRequest(int minRequest) {
         return minRequest(minRequest, true);
     }
 
@@ -300,5 +300,9 @@ public final class FlowableTransformers {
                         .compose(FlowableTransformers.<T> maxRequest(maxRequest));
             }
         };
+    }
+
+    public static <T> FlowableTransformer<T, T> rebatchRequests(int minRequest, long maxRequest) {
+        return rebatchRequests(minRequest, maxRequest, true);
     }
 }
