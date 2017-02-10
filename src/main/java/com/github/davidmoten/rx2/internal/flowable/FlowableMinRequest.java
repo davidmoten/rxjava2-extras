@@ -14,7 +14,7 @@ import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 
-public class FlowableMinRequest<T> extends Flowable<T> {
+public final class FlowableMinRequest<T> extends Flowable<T> {
 
     private final Flowable<T> source;
     private final int minRequest;
@@ -106,6 +106,7 @@ public class FlowableMinRequest<T> extends Flowable<T> {
                     long e = 0;
                     while (e != r) {
                         if (cancelled) {
+                            queue.clear();
                             return;
                         }
                         boolean d = done;
@@ -152,7 +153,6 @@ public class FlowableMinRequest<T> extends Flowable<T> {
                 }
             }
         }
-
     }
 
 }
