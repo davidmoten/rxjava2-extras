@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.function.LongFunction;
 
 import org.junit.Test;
 
@@ -13,8 +14,11 @@ import com.github.davidmoten.rx2.Consumers;
 import com.github.davidmoten.rx2.FlowableTransformers;
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
 
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import io.reactivex.functions.LongConsumer;
 import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.ReplaySubject;
 import io.reactivex.subscribers.TestSubscriber;
 
 public class FlowableMaxRequestTest {
@@ -172,7 +176,7 @@ public class FlowableMaxRequestTest {
                 .assertValueCount(N) //
                 .assertComplete(); //
     }
-    
+
     @Test
     public void testMaxRequestIsMaxValue() {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
@@ -206,5 +210,32 @@ public class FlowableMaxRequestTest {
                 .assertComplete();
         assertEquals(Arrays.asList(expectedRequests), list);
     }
-    
+
+    @Test
+    public void testDummyServiceCalls() {
+        final ReplaySubject<Flowable<Integer>> subject = ReplaySubject.create();
+        final LongFunction<Flowable<Integer>> fetch = new LongFunction<Flowable<Integer>>() {
+            @Override
+            public Flowable<Integer> apply(long n) {
+                return Flowable.just((int) n).repeat(n);
+            }
+        };
+        LongConsumer request = new LongConsumer() {
+            @Override
+            public void accept(long n) throws Exception {
+                subject.onNext(fetch.apply(n));
+            }
+        };
+        Flowable.concatEager(subject.serialize().toFlowable(BackpressureStrategy.BUFFER)) //
+                .doOnRequest(request) //
+                .doOnRequest(Consumers.printLong("request=")) //
+                .compose(FlowableTransformers.rebatchRequests(2, 3)) //
+                .test(1) //
+                .assertValue(2) //
+                .requestMore(1) //
+                .assertValues(2, 2) //
+                .requestMore(4) //
+                .assertValues(2, 2, 3, 3, 3, 2);
+    }
+
 }

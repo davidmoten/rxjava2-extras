@@ -158,4 +158,13 @@ public final class Consumers {
 
         };
     }
+
+    public static LongConsumer printLong(final String prefix) {
+        return new LongConsumer() {
+            @Override
+            public void accept(long t) throws Exception {
+                System.out.println(prefix + t);
+            }
+        };
+    }
 }
