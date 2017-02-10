@@ -20,8 +20,7 @@ public final class FlowableMinRequest<T> extends Flowable<T> {
     private final int minRequest;
     private final boolean constrainFirstRequest;
 
-    public FlowableMinRequest(Flowable<T> source, int minRequest,
-            boolean constrainFirstRequest) {
+    public FlowableMinRequest(Flowable<T> source, int minRequest, boolean constrainFirstRequest) {
         Preconditions.checkArgument(minRequest > 0, "minRequest must be >0");
         this.source = source;
         this.minRequest = minRequest;
@@ -104,23 +103,16 @@ public final class FlowableMinRequest<T> extends Flowable<T> {
                 while (true) {
                     long r = requested.get();
                     long e = 0;
+                    boolean d = done;
                     while (e != r) {
                         if (cancelled) {
                             queue.clear();
                             return;
                         }
-                        boolean d = done;
                         T t = queue.poll();
                         if (t == null) {
                             if (d) {
-                                parent.cancel();
-                                Throwable err = error;
-                                if (err != null) {
-                                    error = null;
-                                    child.onError(err);
-                                } else {
-                                    child.onComplete();
-                                }
+                                terminate();
                                 return;
                             } else {
                                 break;
@@ -132,6 +124,11 @@ public final class FlowableMinRequest<T> extends Flowable<T> {
                                 count--;
                             }
                         }
+                        d = done;
+                    }
+                    if (d && queue.isEmpty()) {
+                        terminate();
+                        return;
                     }
                     if (e != 0 && r != Long.MAX_VALUE) {
                         r = requested.addAndGet(-e);
@@ -151,6 +148,17 @@ public final class FlowableMinRequest<T> extends Flowable<T> {
                         return;
                     }
                 }
+            }
+        }
+
+        private void terminate() {
+            parent.cancel();
+            Throwable err = error;
+            if (err != null) {
+                error = null;
+                child.onError(err);
+            } else {
+                child.onComplete();
             }
         }
     }

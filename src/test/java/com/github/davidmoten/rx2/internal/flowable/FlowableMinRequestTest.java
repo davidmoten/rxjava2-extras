@@ -30,7 +30,7 @@ public class FlowableMinRequestTest {
                 .test() //
                 .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
                 .assertComplete();
-        assertEquals(Lists.newArrayList(2L, 2L, 2L, 2L, 2L, 2L), requests);
+        assertEquals(Lists.newArrayList(2L, 2L, 2L, 2L, 2L), requests);
     }
 
     @Test
@@ -56,6 +56,33 @@ public class FlowableMinRequestTest {
                 .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
                 .assertComplete();
         assertEquals(Lists.newArrayList(Long.MAX_VALUE), requests);
+    }
+
+    @Test
+    public void testMinWhenRequestIsMaxValueAndSourceDoesNotComplete() {
+        List<Long> requests = new CopyOnWriteArrayList<Long>();
+        Flowable.range(1, 10) //
+                .concatWith(Flowable.<Integer> never()) //
+                .doOnRequest(Consumers.addLongTo(requests)) //
+                .compose(FlowableTransformers.minRequest(2, true)) //
+                .test() //
+                .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
+                .assertNotComplete();
+        assertEquals(Lists.newArrayList(Long.MAX_VALUE), requests);
+    }
+
+    @Test
+    public void testBackpressure() {
+        List<Long> requests = new CopyOnWriteArrayList<Long>();
+        Flowable.range(1, 10) //
+                .doOnRequest(Consumers.addLongTo(requests)) //
+                .compose(FlowableTransformers.minRequest(2, true)) //
+                .test(1) //
+                .assertValues(1) //
+                .requestMore(9) //
+                .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
+                .assertComplete();
+        assertEquals(Lists.newArrayList(2L, 8L), requests);
     }
 
     @Test
