@@ -121,7 +121,7 @@ FlowableTransformers
 
 [`onBackpressureBufferToFile`](#onbackpressurebuffertofile)
 
-[rebatchRequests](#rebatchrequests)
+[`rebatchRequests`](#rebatchrequests)
 
 [`reverse`](#reverse)
 
