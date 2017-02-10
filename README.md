@@ -496,6 +496,8 @@ rebatchRequests
 ------------------
 Constrains requests to a range of values (rebatches).
 
+<img src="src/docs/rebatchRequests.png?raw=true" /> 
+
 `rebatchRequests` is the composition of the operators [`minRequest`](#minrequest) and [`maxRequest`](#maxrequest).
 
 Example:
