@@ -309,6 +309,9 @@ See also: [`minRequest`](#minrequest), [`rebatchRequests`](#rebatchrequests)
 minRequest
 -------------
 Ensures requests are at least the given value. Configurable to not constrain the first request.
+
+<img src="src/docs/minRequest.png?raw=true" />
+
 * serializes requests
 * may buffer items
 * requests at start and just after emission of last item in current batch
