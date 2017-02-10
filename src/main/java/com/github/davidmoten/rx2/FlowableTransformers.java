@@ -288,8 +288,6 @@ public final class FlowableTransformers {
 
     public static <T> FlowableTransformer<T, T> rebatchRequests(final int minRequest,
             final long maxRequest, final boolean constrainFirstRequestMin) {
-        Preconditions.checkArgument(minRequest > 0, "minRequest must be greater than 0");
-        Preconditions.checkArgument(maxRequest > 0, "maxRequest must be greater than 0");
         Preconditions.checkArgument(minRequest <= maxRequest,
                 "minRequest cannot be greater than maxRequest");
         return new FlowableTransformer<T, T>() {

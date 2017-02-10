@@ -6,6 +6,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
+import com.google.common.base.Preconditions;
+
 import io.reactivex.Flowable;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
@@ -16,6 +18,7 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
     private final long maxRequest;
 
     public FlowableMaxRequest(Flowable<T> source, long maxRequest) {
+        Preconditions.checkArgument(maxRequest > 0, "maxRequest must be greater than 0");
         this.source = source;
         this.maxRequest = maxRequest;
     }
@@ -26,7 +29,8 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
     }
 
     @SuppressWarnings("serial")
-    private static final class MaxRequestSubscriber<T> extends AtomicInteger implements Subscriber<T>, Subscription {
+    private static final class MaxRequestSubscriber<T> extends AtomicInteger
+            implements Subscriber<T>, Subscription {
 
         private final long maxRequest;
         private final Subscriber<? super T> child;
