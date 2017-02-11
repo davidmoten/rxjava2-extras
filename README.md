@@ -258,7 +258,7 @@ Let's see how we can efficiently support those use cases. I'm going to assume th
 
 ```java
 // note that start is 0-based
-List<Movie> mostPopular(int start, int size);
+List<Movie> mostPopularMovies(int start, int size);
 
 ```
 Now I'm going to wrap this synchronous call as a `Flowable` to give to my colleagues:
