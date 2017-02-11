@@ -34,17 +34,17 @@ public final class Flowables {
         return new FlowableRepeat<T>(t, count);
     }
 
-    public static <T> Flowable<T> fetchPagesByRequest(final BiFunction<Long, Long, ? extends Flowable<T>> fetch,
+    public static <T> Flowable<T> fetchPagesByRequest(final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch,
             long start, int maxConcurrent) {
         return FlowableFetchPagesByRequest.create(fetch, start, maxConcurrent);
     }
 
-    public static <T> Flowable<T> fetchPagesByRequest(final BiFunction<Long, Long, ? extends Flowable<T>> fetch,
+    public static <T> Flowable<T> fetchPagesByRequest(final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch,
             long start) {
         return fetchPagesByRequest(fetch, start, 2);
     }
 
-    public static <T> Flowable<T> fetchPagesByRequest(final BiFunction<Long, Long, ? extends Flowable<T>> fetch) {
+    public static <T> Flowable<T> fetchPagesByRequest(final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch) {
         return fetchPagesByRequest(fetch, 0, 2);
     }
 }

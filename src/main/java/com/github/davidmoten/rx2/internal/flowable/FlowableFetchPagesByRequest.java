@@ -20,7 +20,7 @@ public final class FlowableFetchPagesByRequest {
         // prevent instantiation
     }
     
-    public static <T> Flowable<T> create(final BiFunction<Long, Long, ? extends Flowable<T>> fetch,
+    public static <T> Flowable<T> create(final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch,
             final long start, final int maxConcurrency) {
         return Flowable.defer(new Callable<Flowable<T>>() {
             @Override
