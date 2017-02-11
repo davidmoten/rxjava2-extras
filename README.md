@@ -254,7 +254,7 @@ Now I want to give a library with a `Flowable` definition of this service to my 
 * Fred may just want to know the most popular movie each day, 
 * Greta wants to get the top 20 and then have the ability to keep scrolling down the list in her UI.
 
-Let's see how we can efficiently support those use cases. I'm going to assume that the movie definitions are mapped conveniently to objects by whatever framework I'm using (JAXB, Jersey, etc.). The fetch method looks like this:
+Let's see how we can efficiently support those use cases. I'm going to assume that the movie data returned by the service are mapped conveniently to objects by whatever framework I'm using (JAXB, Jersey, etc.). The fetch method looks like this:
 
 ```java
 // note that start is 0-based
