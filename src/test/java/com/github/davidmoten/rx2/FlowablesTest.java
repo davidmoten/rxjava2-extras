@@ -1,11 +1,13 @@
 package com.github.davidmoten.rx2;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.github.davidmoten.junit.Asserts;
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
 
 import io.reactivex.Flowable;
+import io.reactivex.exceptions.MissingBackpressureException;
 import io.reactivex.functions.BiFunction;
 
 public class FlowablesTest {
@@ -17,7 +19,23 @@ public class FlowablesTest {
         }
 
     };
-    
+
+    final static BiFunction<Long, Long, Flowable<Long>> FETCH_LESS = new BiFunction<Long, Long, Flowable<Long>>() {
+        @Override
+        public Flowable<Long> apply(Long start, Long request) {
+            return Flowable.rangeLong(start, request - 1);
+        }
+
+    };
+
+    final static BiFunction<Long, Long, Flowable<Long>> FETCH_MORE = new BiFunction<Long, Long, Flowable<Long>>() {
+        @Override
+        public Flowable<Long> apply(Long start, Long request) {
+            return Flowable.rangeLong(start, request + 1);
+        }
+
+    };
+
     @Test
     public void isUtilityClass() {
         Asserts.assertIsUtilityClass(Flowables.class);
@@ -36,7 +54,7 @@ public class FlowablesTest {
                 .assertValues(0L, 1L, 2L, 3L, 4L, 5L) //
                 .assertNotTerminated();
     }
-    
+
     @Test
     public void testFetchByRequestNonZeroStart() {
         Flowables.fetchPagesByRequest(FETCH, 3) //
@@ -64,6 +82,23 @@ public class FlowablesTest {
                 .test(1) //
                 .assertNoValues() //
                 .assertError(ThrowingException.class);
+    }
+
+    @Test
+    public void testFetchCompletesIfReturnsLessThanRequested() {
+        Flowables.fetchPagesByRequest(FETCH_LESS) //
+                .test(100) //
+                .assertValueCount(99) //
+                .assertComplete();
+    }
+
+    @Test
+    @Ignore
+    public void testFetchEmitsMissingBackpressureExceptionIfReturnsMoreThanRequested() {
+        Flowables.fetchPagesByRequest(FETCH_MORE) //
+                .test(100) //
+                .assertValueCount(100) //
+                .assertError(MissingBackpressureException.class);
     }
 
 }

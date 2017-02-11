@@ -296,8 +296,8 @@ mostPopularMovies()
 ```
 
 A bit more detail about `fetchPagesByRequest`:
-* if the `fetch` function returns a `Flowable` that delivers fewer than the requested number of items then the overall stream is assumed to have completed.
-* if the `fetch` function returns a `Flowable` that delivers more than the requested number of items then a `MissingBackpressureException` is emitted and the overall stream terminated.
+* if the `fetch` function returns a `Flowable` that delivers fewer than the requested number of items then the overall stream completes.
+* if the `fetch` function returns a `Flowable` that delivers more than the requested number of items then a `MissingBackpressureException` is emitted and the overall stream terminates.
     
 mapLast
 -------------------------

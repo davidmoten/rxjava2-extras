@@ -8,7 +8,10 @@ import com.github.davidmoten.rx2.internal.flowable.FlowableRepeat;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import io.reactivex.exceptions.MissingBackpressureException;
+import io.reactivex.functions.Action;
 import io.reactivex.functions.BiFunction;
+import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.functions.LongConsumer;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
@@ -52,12 +55,35 @@ public final class Flowables {
                 final AtomicLong position = new AtomicLong(start);
                 LongConsumer request = new LongConsumer() {
                     @Override
-                    public void accept(long n) throws Exception {
-                        long start = position.getAndAdd(n);
+                    public void accept(final long n) throws Exception {
+                        final long pos = position.getAndAdd(n);
                         if (SubscriptionHelper.validate(n)) {
                             Flowable<T> flowable;
                             try {
-                                flowable = fetch.apply(start, n);
+                                flowable = Flowable.defer(new Callable<Flowable<T>>() {
+                                    long count;
+
+                                    @Override
+                                    public Flowable<T> call() throws Exception {
+                                        return fetch.apply(pos, n) //
+                                                .doOnNext(new Consumer<T>() {
+                                                    @Override
+                                                    public void accept(T x) throws Exception {
+                                                        count++;
+                                                    }
+                                                }).doOnComplete(new Action() {
+                                                    @Override
+                                                    public void run() throws Exception {
+                                                        if (count < n) {
+                                                            subject.onComplete();
+                                                        } else if (count > n) {
+                                                            subject.onError(new MissingBackpressureException(
+                                                                    "fetch flowable returned more than requested amount"));
+                                                        }
+                                                    }
+                                                });
+                                    }
+                                });
                             } catch (Throwable e) {
                                 Exceptions.throwIfFatal(e);
                                 subject.onError(e);
