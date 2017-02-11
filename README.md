@@ -99,6 +99,8 @@ IO
 
 Flowables
 ---------------
+[`fetchPagesByRequest`](#fetchpagesbyrequest)
+
 [`match`](#match-matchwith)
 
 `repeat`
@@ -235,6 +237,57 @@ flowable.compose(
     FlowableTransformers.doOnEmpty(action));
 ```
 
+fetchPagesByRequest
+-----------------------
+This is a `Flowable` creation method that is aimed at supporting calls to a service that provides data in pages where the page sizes are determined by requests from downstream (*requests* are a part of the backpressure machinery of RxJava).
+
+Here's an example.
+
+Suppose you have a stateless web service, say a rest service that returns JSON/XML and supplies you with
+
+* the most popular movies of the last 24 hours sorted by descending popularity
+
+The service supports paging in that you can pass it a start number and a page size and it will return just that slice from the list.
+
+Now I want to give a `Flowable` definition of this service to my colleagues that they can call in their applications whatever they may be. For example, 
+
+* Fred may just want to know the most popular movie each day, 
+* Greta wants to get the top 20 and then have the ability to keep scrolling down the list in her UI.
+
+Let's see how we can efficiently support those use cases. I'm going to assume that the movie definitions are mapped conveniently to objects by whatever framework I'm using (JAXB, Jersey, etc.). The fetch method looks like this:
+
+```java
+// note that start is 0-based
+List<Movie> mostPopular(int start, int size);
+
+```
+Now I'm going to wrap this synchronous call as a `Flowable` to give to my colleagues:
+
+```java
+Flowable<Movie> mostPopular(int start) {
+    return Flowables.fetchPagesByRequest(
+        (position, n) -> mostPopular(position, n),
+        start)
+        // rebatch requests so that they are always between 
+        // 5 and 100 except for the first request
+      .compose(FlowableTransformers.rebatchRequests(5, 100, false));
+}
+```
+
+Righto, Fred now uses it like this:
+
+```java
+Movie top = mostPopular(0).first().blockingFirst();
+```
+and Greta uses it like this:
+
+```java
+mostPopular(0)
+    .rebatchRequests(20)
+    .doOnNext(movie -> addToUI(movie))
+    .subscribe(subscriber);
+```
+    
 mapLast
 -------------------------
 Modifies the last element of the stream via a defined Function.
