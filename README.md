@@ -249,7 +249,7 @@ Suppose you have a stateless web service, say a rest service that returns JSON/X
 
 The service supports paging in that you can pass it a start number and a page size and it will return just that slice from the list.
 
-Now I want to give a `Flowable` definition of this service to my colleagues that they can call in their applications whatever they may be. For example, 
+Now I want to give a library with a `Flowable` definition of this service to my colleagues that they can call in their applications whatever they may be. For example, 
 
 * Fred may just want to know the most popular movie each day, 
 * Greta wants to get the top 20 and then have the ability to keep scrolling down the list in her UI.
