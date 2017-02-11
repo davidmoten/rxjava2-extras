@@ -10,6 +10,14 @@ import io.reactivex.functions.BiFunction;
 
 public class FlowablesTest {
 
+    final static BiFunction<Long, Long, Flowable<Long>> FETCH = new BiFunction<Long, Long, Flowable<Long>>() {
+        @Override
+        public Flowable<Long> apply(Long start, Long request) {
+            return Flowable.rangeLong(start, request);
+        }
+
+    };
+    
     @Test
     public void isUtilityClass() {
         Asserts.assertIsUtilityClass(Flowables.class);
@@ -17,14 +25,7 @@ public class FlowablesTest {
 
     @Test
     public void testFetchByRequest() {
-        final BiFunction<Long, Long, Flowable<Long>> fetch = new BiFunction<Long, Long, Flowable<Long>>() {
-            @Override
-            public Flowable<Long> apply(Long start, Long request) {
-                return Flowable.rangeLong(start, request);
-            }
-
-        };
-        Flowables.fetchPagesByRequest(fetch) //
+        Flowables.fetchPagesByRequest(FETCH) //
                 .test(0) //
                 .assertNoValues() //
                 .requestMore(1) //
@@ -33,6 +34,20 @@ public class FlowablesTest {
                 .assertValues(0L, 1L, 2L) //
                 .requestMore(3) //
                 .assertValues(0L, 1L, 2L, 3L, 4L, 5L) //
+                .assertNotTerminated();
+    }
+    
+    @Test
+    public void testFetchByRequestNonZeroStart() {
+        Flowables.fetchPagesByRequest(FETCH, 3) //
+                .test(0) //
+                .assertNoValues() //
+                .requestMore(1) //
+                .assertValue(3L) //
+                .requestMore(2) //
+                .assertValues(3L, 4L, 5L) //
+                .requestMore(3) //
+                .assertValues(3L, 4L, 5L, 6L, 7L, 8L) //
                 .assertNotTerminated();
     }
 

@@ -42,14 +42,14 @@ public final class Flowables {
     }
 
     public static <T> Flowable<T> fetchPagesByRequest(final BiFunction<Long, Long, ? extends Flowable<T>> fetch,
-            long start, final int maxConcurrency) {
+            final long start, final int maxConcurrency) {
         return Flowable.defer(new Callable<Flowable<T>>() {
             @Override
             public Flowable<T> call() throws Exception {
                 // need a ReplaySubject because requests can come through before
                 // concatEager has established subscriptions to the subject
                 final ReplaySubject<Flowable<T>> subject = ReplaySubject.create();
-                final AtomicLong position = new AtomicLong();
+                final AtomicLong position = new AtomicLong(start);
                 LongConsumer request = new LongConsumer() {
                     @Override
                     public void accept(long n) throws Exception {
