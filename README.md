@@ -266,7 +266,7 @@ Now I'm going to wrap this synchronous call as a `Flowable` to give to my collea
 ```java
 Flowable<Movie> mostPopularMovies(int start) {
     return Flowables.fetchPagesByRequest(
-        (position, n) -> mostPopular(position, n),
+        (position, n) -> Flowable.fromIterable(mostPopular(position, n)),
         start)
         // rebatch requests so that they are always between 
         // 5 and 100 except for the first request
