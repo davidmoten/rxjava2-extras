@@ -1,7 +1,5 @@
 package com.github.davidmoten.rx2;
 
-import java.util.function.LongFunction;
-
 import org.junit.Test;
 
 import com.github.davidmoten.junit.Asserts;
@@ -19,10 +17,10 @@ public class FlowablesTest {
 
     @Test
     public void testFetchByRequest() {
-        final BiFunction<Long, Long, Flowable<Integer>> fetch = new BiFunction<Long, Long, Flowable<Integer>>() {
+        final BiFunction<Long, Long, Flowable<Long>> fetch = new BiFunction<Long, Long, Flowable<Long>>() {
             @Override
-            public Flowable<Integer> apply(Long start, Long n) {
-                return Flowable.just(n.intValue()).repeat(n);
+            public Flowable<Long> apply(Long start, Long request) {
+                return Flowable.rangeLong(start, request);
             }
 
         };
@@ -30,11 +28,11 @@ public class FlowablesTest {
                 .test(0) //
                 .assertNoValues() //
                 .requestMore(1) //
-                .assertValue(1) //
+                .assertValue(0L) //
                 .requestMore(2) //
-                .assertValues(1, 2, 2) //
+                .assertValues(0L, 1L, 2L) //
                 .requestMore(3) //
-                .assertValues(1, 2, 2, 3, 3, 3) //
+                .assertValues(0L, 1L, 2L, 3L, 4L, 5L) //
                 .assertNotTerminated();
     }
 
