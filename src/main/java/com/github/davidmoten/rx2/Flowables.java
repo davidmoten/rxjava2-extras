@@ -8,6 +8,7 @@ import com.github.davidmoten.rx2.internal.flowable.FlowableRepeat;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import io.reactivex.exceptions.Exceptions;
 import io.reactivex.exceptions.MissingBackpressureException;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.BiFunction;
@@ -16,7 +17,6 @@ import io.reactivex.functions.Function;
 import io.reactivex.functions.LongConsumer;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.subjects.ReplaySubject;
-import rx.exceptions.Exceptions;
 
 public final class Flowables {
 
