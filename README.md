@@ -264,7 +264,7 @@ List<Movie> mostPopular(int start, int size);
 Now I'm going to wrap this synchronous call as a `Flowable` to give to my colleagues:
 
 ```java
-Flowable<Movie> mostPopular(int start) {
+Flowable<Movie> mostPopularMovies(int start) {
     return Flowables.fetchPagesByRequest(
         (position, n) -> mostPopular(position, n),
         start)
@@ -277,12 +277,14 @@ Flowable<Movie> mostPopular(int start) {
 Righto, Fred now uses it like this:
 
 ```java
-Movie top = mostPopular(0).first().blockingFirst();
+Movie top = mostPopularMovies(0)
+    .first()
+    .blockingFirst();
 ```
 and Greta uses it like this:
 
 ```java
-mostPopular(0)
+mostPopularMovies(0)
     .rebatchRequests(20)
     .doOnNext(movie -> addToUI(movie))
     .subscribe(subscriber);
