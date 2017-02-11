@@ -272,19 +272,24 @@ Flowable<Movie> mostPopularMovies(int start) {
         // 5 and 100 except for the first request
       .compose(FlowableTransformers.rebatchRequests(5, 100, false));
 }
-```
 
-Righto, Fred now uses it like this:
+Flowable<Movie> mostPopularMovies() {
+  return mostPopularMovies(0);
+}
+```
+Note particularly that the method above uses [`rebatchRequests`](#rebatchrequests) to limit both minimum and maximum requests. We particularly don't want to allow a single call requesting the top 100,000 popular movies because of the memory and network pressures that arise from that call.
+
+Righto, Fred now uses the new API like this:
 
 ```java
-Movie top = mostPopularMovies(0)
+Movie top = mostPopularMovies()
     .first()
     .blockingFirst();
 ```
 and Greta uses it like this:
 
 ```java
-mostPopularMovies(0)
+mostPopularMovies()
     .rebatchRequests(20)
     .doOnNext(movie -> addToUI(movie))
     .subscribe(subscriber);
