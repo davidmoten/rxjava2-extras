@@ -16,7 +16,7 @@
    version="1.1"
    inkscape:version="0.91 r13725"
    sodipodi:docname="fetchPagesByRequest.svg"
-   inkscape:export-filename="/home/dave/Development/ide/eclipse/workspace-4.3/rxjava-extras/src/docs/toListWhile.png"
+   inkscape:export-filename="/home/dave/workspace/rxjava2-extras/src/docs/fetchPagesByRequest.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90">
   <sodipodi:namedview
@@ -1617,7 +1617,7 @@
          y="353.14322"
          x="197.32487"
          id="tspan6478"
-         sodipodi:role="line">fetchPagesByRequest(2)</tspan></text>
+         sodipodi:role="line">fetchPagesByRequest</tspan></text>
     <path
        inkscape:connector-curvature="0"
        id="path3003-6"
