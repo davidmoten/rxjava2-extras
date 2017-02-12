@@ -241,6 +241,8 @@ fetchPagesByRequest
 -----------------------
 This is a `Flowable` creation method that is aimed at supporting calls to a service that provides data in pages where the page sizes are determined by requests from downstream (*requests* are a part of the backpressure machinery of RxJava).
 
+<img src="src/docs/fetchPagesByRequest.png?raw=true" />
+
 Here's an example.
 
 Suppose you have a stateless web service, say a rest service that returns JSON/XML and supplies you with
