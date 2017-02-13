@@ -3,6 +3,7 @@ package com.github.davidmoten.rx2.internal.flowable;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.github.davidmoten.junit.Asserts;
 import com.github.davidmoten.rx2.Flowables;
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
 
@@ -39,6 +40,11 @@ public class FlowableFetchPagesByRequestTest {
         }
 
     };
+
+    @Test
+    public void isUtilityClass() {
+        Asserts.assertIsUtilityClass(FlowableFetchPagesByRequest.class);
+    }
 
     @Test
     public void testFetchByRequest() {
