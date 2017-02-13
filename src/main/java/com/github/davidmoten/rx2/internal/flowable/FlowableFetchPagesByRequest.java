@@ -62,9 +62,11 @@ public final class FlowableFetchPagesByRequest {
     }
 
     private static final class Count implements Consumer<Object>, Action {
-        final Subject<?> subject;
+        private final Subject<?> subject;
         private final long n;
-        long count;
+
+        // mutable
+        private long count;
 
         Count(Subject<?> subject, long n) {
             this.subject = subject;
