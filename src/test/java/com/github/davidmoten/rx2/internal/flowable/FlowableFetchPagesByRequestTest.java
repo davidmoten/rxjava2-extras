@@ -16,7 +16,6 @@ public class FlowableFetchPagesByRequestTest {
         public Flowable<Long> apply(Long start, Long request) {
             return Flowable.rangeLong(start, request);
         }
-
     };
 
     final static BiFunction<Long, Long, Flowable<Long>> FETCH_LESS = new BiFunction<Long, Long, Flowable<Long>>() {
@@ -24,7 +23,13 @@ public class FlowableFetchPagesByRequestTest {
         public Flowable<Long> apply(Long start, Long request) {
             return Flowable.rangeLong(start, request - 1);
         }
+    };
 
+    final static BiFunction<Long, Long, Flowable<Long>> FETCH_NONE = new BiFunction<Long, Long, Flowable<Long>>() {
+        @Override
+        public Flowable<Long> apply(Long start, Long request) {
+            return Flowable.empty();
+        }
     };
 
     final static BiFunction<Long, Long, Flowable<Long>> FETCH_MORE = new BiFunction<Long, Long, Flowable<Long>>() {
@@ -83,6 +88,14 @@ public class FlowableFetchPagesByRequestTest {
         Flowables.fetchPagesByRequest(FETCH_LESS) //
                 .test(100) //
                 .assertValueCount(99) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testFetchCompletesIfNoneReturned() {
+        Flowables.fetchPagesByRequest(FETCH_NONE) //
+                .test() //
+                .assertNoValues() //
                 .assertComplete();
     }
 
