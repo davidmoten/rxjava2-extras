@@ -3,8 +3,6 @@ package com.github.davidmoten.rx2.internal.flowable;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.reactivestreams.Publisher;
-
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.exceptions.Exceptions;
@@ -44,11 +42,16 @@ public final class FlowableFetchPagesByRequest {
                                 subject.onError(e);
                                 return;
                             }
-                            flowable = notifySubjectOfCompletionIfFullRequestNotReturned(flowable, subject, n);
+                            // reduce allocations by incorporating the onNext
+                            // and onComplete actions into the mutable count
+                            // object
+                            final Count count = new Count(subject, n);
+                            flowable = flowable //
+                                    .doOnNext(count) //
+                                    .doOnComplete(count);
                             subject.onNext(flowable);
                         }
                     }
-
                 };
                 return Flowable //
                         .concatEager(subject.serialize() //
@@ -58,31 +61,27 @@ public final class FlowableFetchPagesByRequest {
         });
     }
 
-    private static <T> Flowable<T> notifySubjectOfCompletionIfFullRequestNotReturned(final Flowable<T> flowable,
-            final Subject<Flowable<T>> subject, final long n) {
-        return Flowable.defer(new Callable<Publisher<T>>() {
-            long count;
+    private static final class Count implements Consumer<Object>, Action {
+        final Subject<?> subject;
+        private final long n;
+        long count;
 
-            @Override
-            public Flowable<T> call() throws Exception {
-                return flowable.doOnNext(new Consumer<T>() {
+        Count(Subject<?> subject, long n) {
+            this.subject = subject;
+            this.n = n;
+        }
 
-                    @Override
-                    public void accept(T t) throws Exception {
-                        count++;
-                    }
-                }).doOnComplete(new Action() {
+        @Override
+        public void accept(Object t) throws Exception {
+            count++;
+        }
 
-                    @Override
-                    public void run() throws Exception {
-                        if (count < n) {
-                            subject.onComplete();
-                        }
-                    }
-                });
+        @Override
+        public void run() throws Exception {
+            if (count < n) {
+                subject.onComplete();
             }
-        });
-
+        }
     }
 
 }
