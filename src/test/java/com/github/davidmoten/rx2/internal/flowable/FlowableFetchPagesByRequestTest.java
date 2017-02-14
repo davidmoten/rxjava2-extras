@@ -1,6 +1,5 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.github.davidmoten.junit.Asserts;
@@ -8,7 +7,6 @@ import com.github.davidmoten.rx2.Flowables;
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
 
 import io.reactivex.Flowable;
-import io.reactivex.exceptions.MissingBackpressureException;
 import io.reactivex.functions.BiFunction;
 
 public class FlowableFetchPagesByRequestTest {
@@ -103,15 +101,6 @@ public class FlowableFetchPagesByRequestTest {
                 .test() //
                 .assertNoValues() //
                 .assertComplete();
-    }
-
-    @Test
-    @Ignore
-    public void testFetchEmitsMissingBackpressureExceptionIfReturnsMoreThanRequested() {
-        Flowables.fetchPagesByRequest(FETCH_MORE) //
-                .test(100) //
-                .assertValueCount(100) //
-                .assertError(MissingBackpressureException.class);
     }
 
 }
