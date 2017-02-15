@@ -25,8 +25,9 @@ public final class FlowableFetchPagesByRequest {
         return Flowable.defer(new Callable<Flowable<T>>() {
             @Override
             public Flowable<T> call() throws Exception {
-                // need a ReplaySubject because requests can come through before
-                // concatEager has established subscriptions to the subject
+                // need a ReplaySubject because multiple requests can come
+                // through before concatEager has established subscriptions to
+                // the subject
                 final ReplaySubject<Flowable<T>> subject = ReplaySubject.create();
                 final AtomicLong position = new AtomicLong(start);
                 LongConsumer request = new LongConsumer() {
