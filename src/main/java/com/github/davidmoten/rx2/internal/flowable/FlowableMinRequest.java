@@ -17,27 +17,27 @@ import io.reactivex.internal.util.BackpressureHelper;
 public final class FlowableMinRequest<T> extends Flowable<T> {
 
     private final Flowable<T> source;
-    private final int minRequest;
-    private final boolean constrainFirstRequest;
+    private final int[] minRequest;
 
-    public FlowableMinRequest(Flowable<T> source, int minRequest, boolean constrainFirstRequest) {
-        Preconditions.checkArgument(minRequest > 0, "minRequest must be >0");
+    public FlowableMinRequest(Flowable<T> source, int[] minRequests) {
+        Preconditions.checkArgument(minRequests.length > 0, "minRequests length must be > 0");
+        for (int i = 0; i < minRequests.length; i++) {
+            Preconditions.checkArgument(minRequests[i] > 0, "each item in minRequests must be > 0");
+        }
         this.source = source;
-        this.minRequest = minRequest;
-        this.constrainFirstRequest = constrainFirstRequest;
+        this.minRequest = minRequests;
     }
 
     @Override
     protected void subscribeActual(Subscriber<? super T> child) {
-        source.subscribe(new MinRequestSubscriber<T>(minRequest, constrainFirstRequest, child));
+        source.subscribe(new MinRequestSubscriber<T>(minRequest, child));
     }
 
     @SuppressWarnings("serial")
-    private static final class MinRequestSubscriber<T> extends AtomicInteger
-            implements Subscriber<T>, Subscription {
+    private static final class MinRequestSubscriber<T> extends AtomicInteger implements Subscriber<T>, Subscription {
 
-        private final int minRequest;
-        private final boolean constrainFirstRequest;
+        private final int[] minRequests;
+        private int requestNum;
         private final Subscriber<? super T> child;
         private final AtomicLong requested = new AtomicLong();
         private final SimplePlainQueue<T> queue = new SpscLinkedArrayQueue<T>(16);
@@ -47,12 +47,9 @@ public final class FlowableMinRequest<T> extends Flowable<T> {
         private Throwable error;
         private volatile boolean cancelled;
         private long count;
-        private boolean firstRequest = true;
 
-        MinRequestSubscriber(int minRequest, boolean constrainFirstRequest,
-                Subscriber<? super T> child) {
-            this.minRequest = minRequest;
-            this.constrainFirstRequest = constrainFirstRequest;
+        MinRequestSubscriber(int[] minRequests, Subscriber<? super T> child) {
+            this.minRequests = minRequests;
             this.child = child;
         }
 
@@ -136,14 +133,12 @@ public final class FlowableMinRequest<T> extends Flowable<T> {
                     if (r != 0 && count == 0) {
                         // requests from parent have arrived so request some
                         // more
-                        if (firstRequest && !constrainFirstRequest) {
-                            count = r;
-                            parent.request(r);
-                            firstRequest = false;
-                        } else {
-                            count = Math.max(r, minRequest);
-                            parent.request(count);
+                        int min = minRequests[requestNum];
+                        if (requestNum != minRequests.length - 1) {
+                            requestNum++;
                         }
+                        count = Math.max(r, min);
+                        parent.request(count);
                     }
                     missed = addAndGet(-missed);
                     if (missed == 0) {

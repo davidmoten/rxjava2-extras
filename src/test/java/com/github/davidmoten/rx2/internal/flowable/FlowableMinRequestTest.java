@@ -25,7 +25,7 @@ public class FlowableMinRequestTest {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         Flowable.range(1, 10) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.minRequest(2, true)) //
+                .compose(FlowableTransformers.minRequest(2)) //
                 .rebatchRequests(1) //
                 .test() //
                 .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
@@ -38,7 +38,7 @@ public class FlowableMinRequestTest {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         Flowable.range(1, 10) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.minRequest(2, false)) //
+                .compose(FlowableTransformers.minRequest(1, 2)) //
                 .rebatchRequests(1) //
                 .test() //
                 .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
@@ -64,7 +64,7 @@ public class FlowableMinRequestTest {
         Flowable.range(1, 10) //
                 .concatWith(Flowable.<Integer>never()) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.minRequest(2, true)) //
+                .compose(FlowableTransformers.minRequest(2)) //
                 .test() //
                 .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
                 .assertNotComplete();
@@ -76,7 +76,7 @@ public class FlowableMinRequestTest {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         Flowable.range(1, 10) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.minRequest(2, true)) //
+                .compose(FlowableTransformers.minRequest(2)) //
                 .test(1) //
                 .assertValues(1) //
                 .requestMore(9) //
@@ -90,7 +90,7 @@ public class FlowableMinRequestTest {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         Flowable.<Long>error(new ThrowingException()) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.minRequest(2, true)) //
+                .compose(FlowableTransformers.minRequest(2)) //
                 .test() //
                 .assertNoValues() //
                 .assertError(ThrowingException.class);
@@ -104,7 +104,7 @@ public class FlowableMinRequestTest {
         final AtomicBoolean terminated = new AtomicBoolean();
         Flowable.range(1, 10) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.<Integer>minRequest(2, true)) //
+                .compose(FlowableTransformers.<Integer>minRequest(2)) //
                 .subscribe(new Subscriber<Integer>() {
 
                     private Subscription parent;
