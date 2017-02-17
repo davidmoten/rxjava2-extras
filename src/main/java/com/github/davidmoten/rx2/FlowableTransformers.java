@@ -253,7 +253,7 @@ public final class FlowableTransformers {
         return (Comparator<T>) (Comparator<?>) NaturalComparatorHolder.INSTANCE;
     }
 
-    public static <T> FlowableTransformer<T, T> maxRequest(final long maxRequest) {
+    public static <T> FlowableTransformer<T, T> maxRequest(final long... maxRequest) {
         return new FlowableTransformer<T, T>() {
 
             @Override

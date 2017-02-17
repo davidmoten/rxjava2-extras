@@ -15,24 +15,27 @@ import io.reactivex.internal.util.BackpressureHelper;
 public final class FlowableMaxRequest<T> extends Flowable<T> {
 
     private final Flowable<T> source;
-    private final long maxRequest;
+    private final long[] maxRequests;
 
-    public FlowableMaxRequest(Flowable<T> source, long maxRequest) {
-        Preconditions.checkArgument(maxRequest > 0, "maxRequest must be greater than 0");
+    public FlowableMaxRequest(Flowable<T> source, long[] maxRequests) {
+        Preconditions.checkArgument(maxRequests.length > 0, "maxRequests length must be greater than 0");
+        for (int i = 0; i < maxRequests.length; i++) {
+            Preconditions.checkArgument(maxRequests[i] > 0, "maxRequests items must be greater than zero");
+        }
         this.source = source;
-        this.maxRequest = maxRequest;
+        this.maxRequests = maxRequests;
     }
 
     @Override
     protected void subscribeActual(Subscriber<? super T> child) {
-        source.subscribe(new MaxRequestSubscriber<T>(maxRequest, child));
+        source.subscribe(new MaxRequestSubscriber<T>(maxRequests, child));
     }
 
     @SuppressWarnings("serial")
-    private static final class MaxRequestSubscriber<T> extends AtomicInteger
-            implements Subscriber<T>, Subscription {
+    private static final class MaxRequestSubscriber<T> extends AtomicInteger implements Subscriber<T>, Subscription {
 
-        private final long maxRequest;
+        private final long[] maxRequests;
+        private int requestNum;
         private final Subscriber<? super T> child;
 
         // the number of requests from downstream that have not been requested
@@ -55,8 +58,8 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
         // request to parent have arrived
         private volatile boolean allArrived = true;
 
-        MaxRequestSubscriber(long maxRequest, Subscriber<? super T> child) {
-            this.maxRequest = maxRequest;
+        MaxRequestSubscriber(long[] maxRequests, Subscriber<? super T> child) {
+            this.maxRequests = maxRequests;
             this.child = child;
         }
 
@@ -100,6 +103,7 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
                     // arrived
 
                     // CAS loop to update `requested`
+                    long mr = peekNextMaxRequest();
                     while (true) {
                         long r = requested.get();
                         if (r == 0) {
@@ -109,12 +113,14 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
                             requestMore();
                             break;
                         } else if (r == Long.MAX_VALUE) {
-                            count = maxRequest;
-                            parent.request(maxRequest);
+                            nextMaxRequest();
+                            count = mr;
+                            parent.request(mr);
                             break;
                         } else {
-                            long req = Math.min(r, maxRequest);
+                            long req = Math.min(r, mr);
                             if (requested.compareAndSet(r, r - req)) {
+                                nextMaxRequest();
                                 count = req;
                                 parent.request(req);
                                 break;
@@ -143,12 +149,14 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
                 while (true) {
                     if (allArrived) {
                         // CAS loop to update requested
+                        long mr = peekNextMaxRequest();
                         while (true) {
                             long r = requested.get();
-                            long req = Math.min(r, maxRequest);
+                            long req = Math.min(r, mr);
                             if (r == 0) {
                                 break;
                             } else if (r == Long.MAX_VALUE || requested.compareAndSet(r, r - req)) {
+                                nextMaxRequest();
                                 allArrived = false;
                                 nextRequest = req;
                                 parent.request(req);
@@ -163,6 +171,17 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
                 }
             }
         }
+
+        private long peekNextMaxRequest() {
+            return maxRequests[requestNum];
+        }
+
+        private void nextMaxRequest() {
+            if (requestNum != maxRequests.length - 1) {
+                requestNum++;
+            }
+        }
+
     }
 
 }
