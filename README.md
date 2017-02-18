@@ -368,6 +368,12 @@ flowable
   .compose(FlowableTransformers.maxRequest(100));
 
 ```
+To constrain some requests then no constraint:
+```java
+flowable
+  .compose(FlowableTransformers.maxRequest(100, 256, 256, 256, Long.MAX_VALUE);
+```
+
 
 See also: [`minRequest`](#minrequest), [`rebatchRequests`](#rebatchrequests)
 
@@ -388,7 +394,7 @@ flowable
 To allow the first request through unconstrained:
 ```java
 flowable
-  .compose(FlowableTransformers.minRequest(10, false));
+  .compose(FlowableTransformers.minRequest(1, 10));
 ```
 
 See also: [`maxRequest`](#maxrequest), [`rebatchRequests`](#rebatchrequests)
