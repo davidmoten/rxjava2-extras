@@ -13,8 +13,8 @@ Features
 * [`Bytes`](#bytes) - create/manipulate streams of `byte[]`
 * [`StateMachine`](#Transformers) - a more expressive form of `scan` that can emit multiple events for each source event
 * [`onBackpressureBufferToFile`](#onbackpressurebuffertofile) - high throughput with memory-mapped files
-* [Flowable `Transformers`](#transformersflowable)
-* [Observable `Transformers`](#transformersobservable)
+* [`Flowable Transformers`](#transformers-flowable)
+* [`Observable Transformers`](#transformers-observable)
 * [`Serialized`](#serialized)
 * tests pass on Linux, Windows 10, Solaris 10
 * supports Java 1.6+
