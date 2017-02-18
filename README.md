@@ -11,10 +11,10 @@ Features
 ----------
 * [`Strings`](#strings) - create/manipulate streams of `String`, conversions to and from
 * [`Bytes`](#bytes) - create/manipulate streams of `byte[]`
-* [`StateMachine`](#flowabletransformers) - a more expressive form of `scan` that can emit multiple events for each source event
+* [`StateMachine`](#Transformers) - a more expressive form of `scan` that can emit multiple events for each source event
 * [`onBackpressureBufferToFile`](#onbackpressurebuffertofile) - high throughput with memory-mapped files
-* [`FlowableTransformers`](#flowabletransformers)
-* [`ObservableTransformers`](#observabletransformers)
+* [Flowable `Transformers`](#transformersflowable)
+* [Observable `Transformers`](#transformersobservable)
 * [`Serialized`](#serialized)
 * tests pass on Linux, Windows 10, Solaris 10
 * supports Java 1.6+
@@ -105,7 +105,7 @@ Flowables
 
 `repeat`
 
-FlowableTransformers
+Transformers (Flowable)
 ---------------------------
 [`collectStats`](#collectstats)
 
@@ -136,7 +136,7 @@ FlowableTransformers
 [`windowMax`](#windowminmax)
 
 
-ObservableTransformers
+Transformers (Observable)
 ---------------------------
 [`onBackpressureBufferToFile`](#onbackpressurebuffertofile)
 
@@ -234,7 +234,7 @@ Performs an action only if a stream completes without emitting an item.
 
 ```java
 flowable.compose(
-    FlowableTransformers.doOnEmpty(action));
+    Transformers.doOnEmpty(action));
 ```
 
 fetchPagesByRequest
@@ -272,7 +272,7 @@ Flowable<Movie> mostPopularMovies(int start) {
           start)
         // rebatch requests so that they are always between 
         // 5 and 100 except for the first request
-      .compose(FlowableTransformers.rebatchRequests(5, 100, false));
+      .compose(Transformers.rebatchRequests(5, 100, false));
 }
 
 Flowable<Movie> mostPopularMovies() {
@@ -311,7 +311,7 @@ Example:
 ```java
 Flowable
     .just(1, 2, 3)
-    .compose(FlowableTransformers.mapLast(x -> x + 1))
+    .compose(Transformers.mapLast(x -> x + 1))
     .forEach(System.out::println);
 ```
 produces
@@ -365,13 +365,13 @@ Limits upstream requests.
 
 ```java
 flowable
-  .compose(FlowableTransformers.maxRequest(100));
+  .compose(Transformers.maxRequest(100));
 
 ```
 To constrain some requests then no constraint:
 ```java
 flowable
-  .compose(FlowableTransformers.maxRequest(100, 256, 256, 256, Long.MAX_VALUE);
+  .compose(Transformers.maxRequest(100, 256, 256, 256, Long.MAX_VALUE);
 ```
 
 See also: [`minRequest`](#minrequest), [`rebatchRequests`](#rebatchrequests)
@@ -388,12 +388,12 @@ Ensures requests are at least the given value. Configurable to not constrain the
 
 ```java
 flowable
-  .compose(FlowableTransformers.minRequest(10));
+  .compose(Transformers.minRequest(10));
 ```
 To allow the first request through unconstrained:
 ```java
 flowable
-  .compose(FlowableTransformers.minRequest(1, 10));
+  .compose(Transformers.minRequest(1, 10));
 ```
 
 See also: [`maxRequest`](#maxrequest), [`rebatchRequests`](#rebatchrequests)
@@ -422,7 +422,7 @@ Flowable<String> flowable =
   Flowable
     .just("a", "b", "c")
     .compose(
-      FlowableTransformers
+      Transformers
           .onBackpressureBufferToFile()
           .serializerUtf8())
 ```
@@ -445,7 +445,7 @@ This example does the same as above but more concisely and uses standard java IO
 Flowable<String> flowable = 
   Flowable
     .just("a", "b", "c")
-    .compose(FlowableTransformers
+    .compose(Transformers
         .<String>onBackpressureBufferToFile());
 ```
 
@@ -474,7 +474,7 @@ DataSerializer<String> serializer = new DataSerializer<String>() {
 Flowable
   .just("a", "b", "c")
   .compose(
-    FlowableTransformers
+    Transformers
         .onBackpressureBufferToFile()
         .serializer(serializer));
   ...
@@ -485,7 +485,7 @@ You can configure various options:
 Flowable
   .just("a", "b", "c")
   .compose(
-    FlowableTransformers
+    Transformers
         .onBackpressureBufferToFile()
         .scheduler(Schedulers.computation()) 
         .fileFactory(fileFactory)
@@ -508,7 +508,7 @@ Using default java serialization you can buffer array lists of integers to a fil
 Flowable.just(1, 2, 3, 4)
     //accumulate into sublists of length 2
     .buffer(2)
-    .compose(FlowableTransformers
+    .compose(Transformers
         .<List<Integer>>onBackpressureBufferToFile()
         .serializerJavaIO())
 ```
@@ -520,7 +520,7 @@ Flowable.just(1, 2, 3, 4)
     .buffer(2)
     .map(list -> new ArrayList<Integer>(list))
     .compose(
-      FlowableTransformers
+      Transformers
           .<List<Integer>>onBackpressureBufferToFile()
           .serializerJavaIO())
 ```
@@ -574,12 +574,12 @@ Example:
 
 ```java
 flowable
-  .compose(FlowableTransformers.rebatchRequests(5, 100));
+  .compose(Transformers.rebatchRequests(5, 100));
 ```
 Allow the first request to be unconstrained by the minimum:
 ```java
 flowable
-  .compose(FlowableTransformers.rebatchRequests(5, 100, false));
+  .compose(Transformers.rebatchRequests(5, 100, false));
 ```
 
 See also: [`minRequest`](#minrequest), [`maxRequest`](#maxrequest)
@@ -592,7 +592,7 @@ If a stream has elements and completes then the last element is repeated.
 
 ```java
 flowable.compose(
-    FlowableTransformers.repeatLast());
+    Transformers.repeatLast());
 ```
 
 RetryWhen
@@ -642,12 +642,12 @@ Reverses the order of emissions of a stream. Does not emit till source completes
 
 ```java
 flowable.compose(
-    FlowableTransformers.reverse());
+    Transformers.reverse());
 ```
 
 stateMachine
 --------------------------
-Custom operators are difficult things to get right in RxJava mainly because of the complexity of supporting backpressure efficiently. `FlowableTransformers.stateMachine` enables a custom operator implementation when:
+Custom operators are difficult things to get right in RxJava mainly because of the complexity of supporting backpressure efficiently. `Transformers.stateMachine` enables a custom operator implementation when:
 
 * each source emission is mapped to 0 to many emissions (of a different type perhaps) to downstream but those emissions are calculated based on accumulated state
 
@@ -671,7 +671,7 @@ static class State {
 
 int MIN_SEQUENCE_LENGTH = 2;
 
-FlowableTransformer<Double, Double> trans = FlowableTransformers 
+FlowableTransformer<Double, Double> trans = Transformers 
     .stateMachine() 
     .initialStateFactory(() -> new State(new ArrayList<>(), false))
     .<Double, Double> transition((state, t, subscriber) -> {
@@ -756,7 +756,7 @@ As an example from a sequence of temperatures lets group the sub-zero and zero o
 
 ```java
 Flowable.just(10, 5, 2, -1, -2, -5, -1, 2, 5, 6)
-    .compose(FlowableTransformers.toListWhile( 
+    .compose(Transformers.toListWhile( 
         (list, t) -> list.isEmpty() 
             || Math.signum(list.get(0)) < 0 && Math.signum(t) < 0
             || Math.signum(list.get(0)) >= 0 && Math.signum(t) >= 0)
@@ -779,7 +779,7 @@ Sliding window minimum/maximum:
 
 ```java
 Flowable.just(3, 2, 5, 1, 6, 4)
-    .compose(FlowableTransformers.<Integer>windowMin(3))
+    .compose(Transformers.<Integer>windowMin(3))
 ```
 
 
