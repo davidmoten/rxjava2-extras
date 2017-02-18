@@ -378,7 +378,7 @@ See also: [`minRequest`](#minrequest), [`rebatchRequests`](#rebatchrequests)
 
 minRequest
 -------------
-Ensures requests are at least the given value. Configurable to not constrain the first request.
+Ensures requests are at least the given value(s).
 
 <img src="src/docs/minRequest.png?raw=true" />
 
