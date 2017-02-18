@@ -9,7 +9,7 @@ import java.util.List;
 import org.junit.Test;
 
 import com.github.davidmoten.rx2.Consumers;
-import com.github.davidmoten.rx2.FlowableTransformers;
+import com.github.davidmoten.rx2.flowable.Transformers;
 
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
@@ -21,7 +21,7 @@ public class FlowableMapLastTest {
         List<Long> list = new ArrayList<Long>();
         Flowable.range(1, 10) //
                 .doOnRequest(Consumers.addLongTo(list))//
-                .compose(FlowableTransformers.mapLast(new Function<Integer, Integer>() {
+                .compose(Transformers.mapLast(new Function<Integer, Integer>() {
                     @Override
                     public Integer apply(Integer x) {
                         return x + 1;
@@ -39,7 +39,7 @@ public class FlowableMapLastTest {
         List<Long> list = new ArrayList<Long>();
         Flowable.range(1, 5) //
                 .doOnRequest(Consumers.addLongTo(list))//
-                .compose(FlowableTransformers.mapLast(new Function<Integer, Integer>() {
+                .compose(Transformers.mapLast(new Function<Integer, Integer>() {
                     @Override
                     public Integer apply(Integer x) {
                         return x + 1;
@@ -53,7 +53,7 @@ public class FlowableMapLastTest {
     @Test(expected = OutOfMemoryError.class)
     public void testMapLastHandlesFatalError() {
         Flowable.range(1, 5) //
-                .compose(FlowableTransformers.mapLast(new Function<Integer, Integer>() {
+                .compose(Transformers.mapLast(new Function<Integer, Integer>() {
                     @Override
                     public Integer apply(Integer x) {
                         throw new OutOfMemoryError();
@@ -65,7 +65,7 @@ public class FlowableMapLastTest {
     public void testMapLastHandlesNonFatalError() {
         final RuntimeException e = new RuntimeException();
         Flowable.range(1, 5) //
-                .compose(FlowableTransformers.mapLast(new Function<Integer, Integer>() {
+                .compose(Transformers.mapLast(new Function<Integer, Integer>() {
                     @Override
                     public Integer apply(Integer x) {
                         throw e;

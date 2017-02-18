@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 import com.github.davidmoten.junit.Asserts;
-import com.github.davidmoten.rx2.FlowableTransformers;
+import com.github.davidmoten.rx2.flowable.Transformers;
 
 import io.reactivex.Flowable;
 
@@ -40,7 +40,7 @@ public class SerializersTest {
             }
         };
         Flowable.just(4) //
-                .compose(FlowableTransformers.onBackpressureBufferToFile() //
+                .compose(Transformers.onBackpressureBufferToFile() //
                         .serializer(ds)) //
                 .test() //
                 .awaitDone(5, TimeUnit.SECONDS) //
@@ -69,7 +69,7 @@ public class SerializersTest {
             }
         };
         Flowable.just(4) //
-                .compose(FlowableTransformers.onBackpressureBufferToFile() //
+                .compose(Transformers.onBackpressureBufferToFile() //
                         .serializer(ds)) //
                 .test() //
                 .awaitDone(5, TimeUnit.SECONDS) //
@@ -80,7 +80,7 @@ public class SerializersTest {
     @Test
     public void testUtf8() {
         Flowable.just("abc") //
-                .compose(FlowableTransformers.onBackpressureBufferToFile() //
+                .compose(Transformers.onBackpressureBufferToFile() //
                         .serializerUtf8()) //
                 .test() //
                 .awaitDone(5, TimeUnit.SECONDS) //

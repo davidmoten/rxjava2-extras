@@ -10,8 +10,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 import com.github.davidmoten.rx2.Consumers;
-import com.github.davidmoten.rx2.FlowableTransformers;
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
+import com.github.davidmoten.rx2.flowable.Transformers;
 
 import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
@@ -24,7 +24,7 @@ public class FlowableMaxRequestTest {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         Flowable.<Integer>empty() //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.maxRequest(1)) //
+                .compose(Transformers.maxRequest(1)) //
                 .test() //
                 .assertNoValues() //
                 .assertComplete();
@@ -36,7 +36,7 @@ public class FlowableMaxRequestTest {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         Flowable.<Integer>error(new ThrowingException()) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.maxRequest(1)) //
+                .compose(Transformers.maxRequest(1)) //
                 .test() //
                 .assertNoValues() //
                 .assertError(ThrowingException.class);
@@ -48,7 +48,7 @@ public class FlowableMaxRequestTest {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         Flowable.just(1) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.maxRequest(1)) //
+                .compose(Transformers.maxRequest(1)) //
                 .test() //
                 .assertValue(1) //
                 .assertComplete();
@@ -60,7 +60,7 @@ public class FlowableMaxRequestTest {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         Flowable.just(1) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.maxRequest(2)) //
+                .compose(Transformers.maxRequest(2)) //
                 .test() //
                 .assertValue(1) //
                 .assertComplete();
@@ -72,7 +72,7 @@ public class FlowableMaxRequestTest {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         Flowable.just(1) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.maxRequest(Long.MAX_VALUE)) //
+                .compose(Transformers.maxRequest(Long.MAX_VALUE)) //
                 .test() //
                 .assertValue(1) //
                 .assertComplete();
@@ -114,7 +114,7 @@ public class FlowableMaxRequestTest {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         Flowable.range(1, 10) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.maxRequest(3)) //
+                .compose(Transformers.maxRequest(3)) //
                 .rebatchRequests(4).test(11) //
                 .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
                 .assertComplete();
@@ -126,7 +126,7 @@ public class FlowableMaxRequestTest {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         TestSubscriber<Object> ts = Flowable.range(1, 10) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.maxRequest(3)) //
+                .compose(Transformers.maxRequest(3)) //
                 .test(4).assertValues(1, 2, 3, 4); //
         ts.cancel();
         ts.requestMore(3);
@@ -140,7 +140,7 @@ public class FlowableMaxRequestTest {
         int N = 10000;
         for (int m = 1; m <= N + 1; m++) {
             Flowable.range(1, N) //
-                    .compose(FlowableTransformers.maxRequest(m)) //
+                    .compose(Transformers.maxRequest(m)) //
                     .observeOn(Schedulers.computation()) //
                     .test() //
                     .awaitDone(1, TimeUnit.MINUTES) //
@@ -153,7 +153,7 @@ public class FlowableMaxRequestTest {
     public void testAsyncNotMaxValue() {
         int N = 10000;
         Flowable.range(1, N) //
-                .compose(FlowableTransformers.maxRequest(3)) //
+                .compose(Transformers.maxRequest(3)) //
                 .observeOn(Schedulers.computation()) //
                 .test(N + 10) //
                 .awaitDone(1, TimeUnit.MINUTES) //
@@ -165,7 +165,7 @@ public class FlowableMaxRequestTest {
     public void testAsyncMaxRequestIsMax() {
         int N = 10000;
         Flowable.range(1, N) //
-                .compose(FlowableTransformers.maxRequest(Long.MAX_VALUE)) //
+                .compose(Transformers.maxRequest(Long.MAX_VALUE)) //
                 .observeOn(Schedulers.computation()) //
                 .test(N + 10) //
                 .awaitDone(1, TimeUnit.MINUTES) //
@@ -178,7 +178,7 @@ public class FlowableMaxRequestTest {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         Flowable.range(1, 10) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.maxRequest(Long.MAX_VALUE)) //
+                .compose(Transformers.maxRequest(Long.MAX_VALUE)) //
                 .test() //
                 .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
                 .assertComplete();
@@ -189,7 +189,7 @@ public class FlowableMaxRequestTest {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
         Flowable.range(1, 10) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(FlowableTransformers.maxRequest(maxRequest)) //
+                .compose(Transformers.maxRequest(maxRequest)) //
                 .test() //
                 .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
                 .assertComplete();
@@ -200,7 +200,7 @@ public class FlowableMaxRequestTest {
         List<Long> list = new CopyOnWriteArrayList<Long>();
         Flowable.range(1, 10) //
                 .doOnRequest(Consumers.addLongTo(list)) //
-                .compose(FlowableTransformers.maxRequest(maxRequest)) //
+                .compose(Transformers.maxRequest(maxRequest)) //
                 .test(10) //
                 .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) //
                 .assertComplete();

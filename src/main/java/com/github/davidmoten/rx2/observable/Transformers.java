@@ -1,10 +1,10 @@
-package com.github.davidmoten.rx2;
+package com.github.davidmoten.rx2.observable;
 
 import com.github.davidmoten.rx2.buffertofile.Options;
 
-public final class ObservableTransformers {
+public final class Transformers {
 
-    private ObservableTransformers() {
+    private Transformers() {
         // prevent instantiation
     }
 

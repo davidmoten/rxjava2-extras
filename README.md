@@ -374,7 +374,6 @@ flowable
   .compose(FlowableTransformers.maxRequest(100, 256, 256, 256, Long.MAX_VALUE);
 ```
 
-
 See also: [`minRequest`](#minrequest), [`rebatchRequests`](#rebatchrequests)
 
 minRequest

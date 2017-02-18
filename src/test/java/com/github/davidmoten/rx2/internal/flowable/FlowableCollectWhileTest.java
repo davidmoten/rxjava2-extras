@@ -16,9 +16,9 @@ import com.github.davidmoten.rx2.BiFunctions;
 import com.github.davidmoten.rx2.BiPredicates;
 import com.github.davidmoten.rx2.Callables;
 import com.github.davidmoten.rx2.Consumers;
-import com.github.davidmoten.rx2.FlowableTransformers;
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
 import com.github.davidmoten.rx2.flowable.Burst;
+import com.github.davidmoten.rx2.flowable.Transformers;
 import com.google.common.collect.Lists;
 
 import io.reactivex.Flowable;
@@ -40,7 +40,7 @@ public final class FlowableCollectWhileTest {
     @Test
     public void testEmpty() {
         Flowable.<Integer>empty() //
-                .compose(FlowableTransformers. //
+                .compose(Transformers. //
                         toListWhile(BUFFER_TWO)) //
                 .test() //
                 .assertNoValues() //
@@ -50,7 +50,7 @@ public final class FlowableCollectWhileTest {
     @Test
     public void testOne() {
         Flowable.just(3) //
-                .compose(FlowableTransformers. //
+                .compose(Transformers. //
                         toListWhile(BUFFER_TWO)) //
                 .test() //
                 .assertValue(Lists.newArrayList(3)) //
@@ -60,7 +60,7 @@ public final class FlowableCollectWhileTest {
     @Test
     public void testTwo() {
         Flowable.just(3, 4) //
-                .compose(FlowableTransformers. //
+                .compose(Transformers. //
                         toListWhile(BUFFER_TWO)) //
                 .test() //
                 .assertValue(Lists.newArrayList(3, 4)) //
@@ -71,7 +71,7 @@ public final class FlowableCollectWhileTest {
     @Test
     public void testThree() {
         Flowable.just(3, 4, 5) //
-                .compose(FlowableTransformers. //
+                .compose(Transformers. //
                         toListWhile(BUFFER_TWO)) //
                 .test() //
                 .assertValues(Lists.newArrayList(3, 4), Lists.newArrayList(5)) //
@@ -81,7 +81,7 @@ public final class FlowableCollectWhileTest {
     @Test
     public void testFactoryReturnsNullShouldEmitNPE() {
         Flowable.just(3) //
-                .compose(FlowableTransformers. //
+                .compose(Transformers. //
                         collectWhile(Callables.<List<Integer>>toNull(), BiFunctions.constant(new ArrayList<Integer>()),
                                 BUFFER_TWO)) //
                 .test() //
@@ -92,7 +92,7 @@ public final class FlowableCollectWhileTest {
     @Test
     public void testAddReturnsNullShouldEmitNPE() {
         Flowable.just(3) //
-                .compose(FlowableTransformers. //
+                .compose(Transformers. //
                         collectWhile(Callables.<List<Integer>>toNull(),
                                 BiFunctions.<List<Integer>, Integer, List<Integer>>toNull(), BUFFER_TWO)) //
                 .test() //
@@ -103,7 +103,7 @@ public final class FlowableCollectWhileTest {
     @Test
     public void testAddReturnsNull() {
         Flowable.just(3) //
-                .compose(FlowableTransformers. //
+                .compose(Transformers. //
                         collectWhile( //
                                 Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()),
                                 BiFunctions.<List<Integer>, Integer, List<Integer>>toNull(), //
@@ -116,7 +116,7 @@ public final class FlowableCollectWhileTest {
     @Test
     public void testAddThrows() {
         Flowable.just(3) //
-                .compose(FlowableTransformers. //
+                .compose(Transformers. //
                         collectWhile( //
                                 Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()),
                                 BiFunctions.<List<Integer>, Integer, List<Integer>>throwing(), //
@@ -129,7 +129,7 @@ public final class FlowableCollectWhileTest {
     @Test
     public void testConditionThrows() {
         Flowable.just(3) //
-                .compose(FlowableTransformers. //
+                .compose(Transformers. //
                         collectWhile( //
                                 Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()), ADD, //
                                 BiPredicates.throwing())) //
@@ -141,7 +141,7 @@ public final class FlowableCollectWhileTest {
     @Test
     public void testDoesNotEmitAfterErrorInOnNextIfUpstreamDoesNotHonourCancellationImmediately() {
         Burst.items(1, 2).create() //
-                .compose(FlowableTransformers. //
+                .compose(Transformers. //
                         collectWhile( //
                                 Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()), ADD, //
                                 BiPredicates.throwing())) //
@@ -156,7 +156,7 @@ public final class FlowableCollectWhileTest {
             List<Throwable> list = new CopyOnWriteArrayList<Throwable>();
             RxJavaPlugins.setErrorHandler(Consumers.addTo(list));
             Burst.items(1).error(new ThrowingException())//
-                    .compose(FlowableTransformers. //
+                    .compose(Transformers. //
                             collectWhile( //
                                     Callables.<List<Integer>>constant(Lists.<Integer>newArrayList()), ADD, //
                                     BiPredicates.throwing())) //
@@ -174,7 +174,7 @@ public final class FlowableCollectWhileTest {
     @Test
     public void testBackpressure() {
         Flowable.just(3, 4, 5, 6, 7, 8) //
-                .compose(FlowableTransformers. //
+                .compose(Transformers. //
                         toListWhile(BUFFER_TWO)) //
                 .test(1) //
                 .assertValue(list(3, 4)) //
@@ -191,7 +191,7 @@ public final class FlowableCollectWhileTest {
     public void testBackpressureAndCancel() {
 
         TestSubscriber<List<Integer>> ts = Flowable.just(3, 4, 5, 6, 7, 8) //
-                .compose(FlowableTransformers. //
+                .compose(Transformers. //
                         toListWhile(BUFFER_TWO)) //
                 .test(1) //
                 .assertValue(list(3, 4)) //
@@ -232,7 +232,7 @@ public final class FlowableCollectWhileTest {
             }
         };
         Flowable.just(3, 4, 5, 6) //
-                .compose(FlowableTransformers. //
+                .compose(Transformers. //
                         toListWhile(BUFFER_TWO)) //
                 .subscribe(subscriber);
         assertEquals(list, Arrays.asList(list(3, 4), list(5, 6)));
@@ -268,7 +268,7 @@ public final class FlowableCollectWhileTest {
             }
         };
         Flowable.just(3, 4, 5, 6) //
-                .compose(FlowableTransformers. //
+                .compose(Transformers. //
                         toListWhile(BUFFER_TWO)) //
                 .subscribe(subscriber);
         assertEquals(Arrays.asList(list(3, 4)), list);
@@ -278,7 +278,7 @@ public final class FlowableCollectWhileTest {
     @Test
     public void testWhenEmitRemainderFalse() {
         Flowable.just(3, 4, 5) //
-                .compose(FlowableTransformers. //
+                .compose(Transformers. //
                         toListWhile(BUFFER_TWO, false)) //
                 .test() //
                 .assertValues(Lists.newArrayList(3, 4)) //

@@ -22,11 +22,10 @@ import org.reactivestreams.Subscription;
 
 import com.github.davidmoten.rx2.Callables;
 import com.github.davidmoten.rx2.Consumers;
-import com.github.davidmoten.rx2.FlowableTransformers;
 import com.github.davidmoten.rx2.Flowables;
-import com.github.davidmoten.rx2.ObservableTransformers;
 import com.github.davidmoten.rx2.buffertofile.Options.BuilderFlowable;
 import com.github.davidmoten.rx2.buffertofile.Options.BuilderObservable;
+import com.github.davidmoten.rx2.flowable.Transformers;
 import com.github.davidmoten.rx2.internal.flowable.buffertofile.FlowableOnBackpressureBufferToFile;
 import com.github.davidmoten.rx2.internal.flowable.buffertofile.FlowableOnBackpressureBufferToFile.BufferToFileSubscriberFlowable;
 import com.github.davidmoten.rx2.internal.flowable.buffertofile.PagedQueue;
@@ -76,13 +75,13 @@ public class FlowableOnBackpressureBufferToFileTest {
     }
 
     private static BuilderFlowable onBackpressureBufferToFile() {
-        return FlowableTransformers. //
+        return Transformers. //
                 onBackpressureBufferToFile() //
                 .fileFactory(FILE_FACTORY);
     }
 
     private static BuilderObservable onBackpressureBufferToFileObservable() {
-        return ObservableTransformers. //
+        return com.github.davidmoten.rx2.observable.Transformers. //
                 onBackpressureBufferToFile() //
                 .fileFactory(FILE_FACTORY);
     }
@@ -432,7 +431,7 @@ public class FlowableOnBackpressureBufferToFileTest {
             pageFile.delete();
             byte[] bytes = new byte[40];
             Flowables.repeat(bytes, n) //
-                    .compose(FlowableTransformers //
+                    .compose(Transformers //
                             .onBackpressureBufferToFile() //
                             .fileFactory(Callables.constant(pageFile)) //
                             .pageSizeBytes(20000000) //
@@ -465,7 +464,7 @@ public class FlowableOnBackpressureBufferToFileTest {
             byte[] bytes = new byte[40];
             Observable.just(bytes) //
                     .repeat(n) //
-                    .to(ObservableTransformers //
+                    .to(com.github.davidmoten.rx2.observable.Transformers //
                             .onBackpressureBufferToFile() //
                             .fileFactory(Callables.constant(pageFile)) //
                             .pageSizeBytes(20000000) //

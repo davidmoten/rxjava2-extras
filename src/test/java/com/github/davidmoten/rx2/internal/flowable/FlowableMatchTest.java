@@ -17,10 +17,10 @@ import org.reactivestreams.Subscription;
 import com.github.davidmoten.rx2.Actions;
 import com.github.davidmoten.rx2.BiFunctions;
 import com.github.davidmoten.rx2.Consumers;
-import com.github.davidmoten.rx2.FlowableTransformers;
 import com.github.davidmoten.rx2.Flowables;
 import com.github.davidmoten.rx2.Functions;
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
+import com.github.davidmoten.rx2.flowable.Transformers;
 
 import io.reactivex.Flowable;
 import io.reactivex.functions.BiFunction;
@@ -320,7 +320,7 @@ public class FlowableMatchTest {
     }
 
     private static Flowable<Integer> matchThem(Flowable<Integer> a, Flowable<Integer> b) {
-        return a.compose(FlowableTransformers.matchWith(b, Functions.identity(), Functions.identity(), COMBINER));
+        return a.compose(Transformers.matchWith(b, Functions.identity(), Functions.identity(), COMBINER));
     }
 
     private static void match(Flowable<Integer> a, Flowable<Integer> b, Integer... expected) {

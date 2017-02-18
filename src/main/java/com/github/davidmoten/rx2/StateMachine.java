@@ -3,6 +3,7 @@ package com.github.davidmoten.rx2;
 import java.util.concurrent.Callable;
 
 import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
+import com.github.davidmoten.rx2.flowable.Transformers;
 import com.github.davidmoten.rx2.functions.Consumer3;
 
 import io.reactivex.BackpressureStrategy;
@@ -124,7 +125,7 @@ public final class StateMachine {
         }
 
         public FlowableTransformer<In, Out> build() {
-            return FlowableTransformers.stateMachine(initialState, transition, completion, backpressureStrategy,
+            return Transformers.stateMachine(initialState, transition, completion, backpressureStrategy,
                     requestBatchSize);
         }
 

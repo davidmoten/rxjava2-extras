@@ -11,6 +11,7 @@ import com.github.davidmoten.junit.Asserts;
 import com.github.davidmoten.rx2.StateMachine.Completion;
 import com.github.davidmoten.rx2.StateMachine.CompletionAlwaysTrueHolder;
 import com.github.davidmoten.rx2.StateMachine.Transition;
+import com.github.davidmoten.rx2.flowable.Transformers;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -31,7 +32,7 @@ public class StateMachineTest {
 
     @Test
     public void testBuilder() {
-        FlowableTransformer<Integer, String> collectIntoStringsOfMinLength3 = FlowableTransformers.stateMachine() //
+        FlowableTransformer<Integer, String> collectIntoStringsOfMinLength3 = Transformers.stateMachine() //
                 .initialState("") //
                 .transition(new Transition<String, Integer, String>() {
                     @Override

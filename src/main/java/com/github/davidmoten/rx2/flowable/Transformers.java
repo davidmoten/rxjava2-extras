@@ -1,4 +1,4 @@
-package com.github.davidmoten.rx2;
+package com.github.davidmoten.rx2.flowable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -8,6 +8,12 @@ import java.util.concurrent.Callable;
 import org.reactivestreams.Publisher;
 
 import com.github.davidmoten.guavamini.Preconditions;
+import com.github.davidmoten.rx2.BiFunctions;
+import com.github.davidmoten.rx2.Flowables;
+import com.github.davidmoten.rx2.StateMachine;
+import com.github.davidmoten.rx2.StateMachine2;
+import com.github.davidmoten.rx2.Statistics;
+import com.github.davidmoten.rx2.StateMachine.Builder;
 import com.github.davidmoten.rx2.buffertofile.Options;
 import com.github.davidmoten.rx2.internal.flowable.FlowableCollectWhile;
 import com.github.davidmoten.rx2.internal.flowable.FlowableDoOnEmpty;
@@ -31,9 +37,9 @@ import io.reactivex.functions.BiPredicate;
 import io.reactivex.functions.Function;
 import io.reactivex.functions.Function3;
 
-public final class FlowableTransformers {
+public final class Transformers {
 
-    private FlowableTransformers() {
+    private Transformers() {
         // prevent instantiation
     }
 
@@ -211,7 +217,7 @@ public final class FlowableTransformers {
     }
 
     public static <T extends Comparable<T>> FlowableTransformer<T, T> windowMax(final int windowSize) {
-        return windowMax(windowSize, FlowableTransformers.<T>naturalComparator());
+        return windowMax(windowSize, Transformers.<T>naturalComparator());
     }
 
     public static <T> FlowableTransformer<T, T> windowMax(final int windowSize,
@@ -225,7 +231,7 @@ public final class FlowableTransformers {
     }
 
     public static <T extends Comparable<T>> FlowableTransformer<T, T> windowMin(final int windowSize) {
-        return windowMin(windowSize, FlowableTransformers.<T>naturalComparator());
+        return windowMin(windowSize, Transformers.<T>naturalComparator());
     }
 
     public static <T> FlowableTransformer<T, T> windowMin(final int windowSize,
@@ -284,8 +290,8 @@ public final class FlowableTransformers {
                     return source.rebatchRequests(minRequest);
                 } else {
                     return source.compose(
-                            FlowableTransformers.<T>minRequest(constrainFirstRequestMin ? minRequest : 1, minRequest))
-                            .compose(FlowableTransformers.<T>maxRequest(maxRequest));
+                            Transformers.<T>minRequest(constrainFirstRequestMin ? minRequest : 1, minRequest))
+                            .compose(Transformers.<T>maxRequest(maxRequest));
                 }
             }
         };
