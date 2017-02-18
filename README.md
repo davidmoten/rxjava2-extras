@@ -11,7 +11,7 @@ Features
 ----------
 * [`Strings`](#strings) - create/manipulate streams of `String`, conversions to and from
 * [`Bytes`](#bytes) - create/manipulate streams of `byte[]`
-* [`StateMachine`](#Transformers) - a more expressive form of `scan` that can emit multiple events for each source event
+* [`StateMachine`](#statemachine) - a more expressive form of `scan` that can emit multiple events for each source event
 * [`onBackpressureBufferToFile`](#onbackpressurebuffertofile) - high throughput with memory-mapped files
 * [`Flowable Transformers`](#transformers-flowable)
 * [`Observable Transformers`](#transformers-observable)
