@@ -47,6 +47,8 @@ import io.reactivex.subscribers.TestSubscriber;
 
 public final class FlowableServerSocketTest {
 
+    private static final String LOCALHOST = "127.0.0.1";
+
     private static final Charset UTF_8 = Charset.forName("UTF-8");
 
     // private static final int PORT = 12345;
@@ -196,7 +198,7 @@ public final class FlowableServerSocketTest {
                     .subscribeOn(scheduler) //
                     .subscribe(ts);
             Thread.sleep(300);
-            Socket socket = new Socket("localhost", port.get());
+            Socket socket = new Socket(LOCALHOST, port.get());
             OutputStream out = socket.getOutputStream();
             out.write("12345678901234567890".getBytes());
             out.close();
@@ -246,7 +248,7 @@ public final class FlowableServerSocketTest {
                     .subscribe(ts);
             Thread.sleep(300);
             @SuppressWarnings("resource")
-            Socket socket = new Socket("localhost", port.get());
+            Socket socket = new Socket(LOCALHOST, port.get());
             OutputStream out = socket.getOutputStream();
             out.write("hell".getBytes(UTF_8));
             out.flush();
@@ -328,7 +330,7 @@ public final class FlowableServerSocketTest {
                                 messages.add(s.toString());
                                 Socket socket = null;
                                 try {
-                                    socket = new Socket("localhost", port.get());
+                                    socket = new Socket(LOCALHOST, port.get());
                                     // allow reuse so we don't run out of
                                     // sockets
                                     socket.setReuseAddress(true);
@@ -407,7 +409,7 @@ public final class FlowableServerSocketTest {
             for (int i = 0; i < 15; i++) {
                 Thread.sleep(1000);
                 try {
-                    socket = new Socket("127.0.0.1", port.get());
+                    socket = new Socket(LOCALHOST, port.get());
                     break;
                 } catch (ConnectException e) {
                     System.out.println(e.getMessage());
@@ -442,7 +444,7 @@ public final class FlowableServerSocketTest {
                     .subscribeOn(scheduler) //
                     .subscribe(ts);
             Thread.sleep(300);
-            Socket socket = new Socket("localhost", port.get());
+            Socket socket = new Socket(LOCALHOST, port.get());
             OutputStream out = socket.getOutputStream();
             out.write("12345678901234567890".getBytes());
             out.close();
