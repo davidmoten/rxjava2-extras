@@ -31,11 +31,8 @@ public class FlowablePassThroughTest {
         new FlowablePassThrough<Integer>(Flowable.just(1, 2, 3)) //
                 .subscribe(new Subscriber<Integer>() {
 
-                    private Subscription s;
-
                     @Override
                     public void onSubscribe(Subscription s) {
-                        this.s = s;
                         s.request(Long.MAX_VALUE);
                     }
 
