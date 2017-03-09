@@ -8,6 +8,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
 import io.reactivex.Flowable;
+import io.reactivex.FlowableSubscriber;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.BiPredicate;
@@ -46,7 +47,7 @@ public final class FlowableCollectWhile<T, R> extends Flowable<R> {
 
     @SuppressWarnings("serial")
     private static final class CollectWhileSubscriber<T, R> extends AtomicInteger
-            implements Subscriber<T>, Subscription, ConditionalSubscriber<T> {
+            implements FlowableSubscriber<T>, Subscription, ConditionalSubscriber<T> {
 
         private final Callable<R> collectionFactory;
         private final BiFunction<? super R, ? super T, ? extends R> add;

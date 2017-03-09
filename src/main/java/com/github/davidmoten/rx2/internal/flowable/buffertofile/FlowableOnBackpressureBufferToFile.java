@@ -12,6 +12,7 @@ import com.github.davidmoten.rx2.buffertofile.Options;
 import com.github.davidmoten.rx2.buffertofile.Serializer;
 
 import io.reactivex.Flowable;
+import io.reactivex.FlowableSubscriber;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.Scheduler.Worker;
@@ -55,7 +56,7 @@ public final class FlowableOnBackpressureBufferToFile<T> extends Flowable<T> {
     @SuppressWarnings("serial")
     @VisibleForTesting
     public static final class BufferToFileSubscriberFlowable<T> extends BufferToFileSubscriber<T>
-            implements Subscriber<T>, Subscription {
+            implements FlowableSubscriber<T>, Subscription {
 
         private Subscription parent;
 

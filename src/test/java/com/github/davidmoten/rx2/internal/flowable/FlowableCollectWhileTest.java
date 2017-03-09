@@ -22,6 +22,7 @@ import com.github.davidmoten.rx2.flowable.Transformers;
 import com.google.common.collect.Lists;
 
 import io.reactivex.Flowable;
+import io.reactivex.exceptions.UndeliverableException;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.BiPredicate;
 import io.reactivex.plugins.RxJavaPlugins;
@@ -164,7 +165,9 @@ public final class FlowableCollectWhileTest {
                     .assertNoValues() //
                     .assertError(ThrowingException.class);
             assertEquals(1, list.size());
-            assertTrue(list.get(0) instanceof ThrowingException);
+            System.out.println(list.get(0));
+            assertTrue(list.get(0) instanceof UndeliverableException);
+            assertTrue(list.get(0).getCause() instanceof ThrowingException);
         } finally {
             RxJavaPlugins.reset();
         }

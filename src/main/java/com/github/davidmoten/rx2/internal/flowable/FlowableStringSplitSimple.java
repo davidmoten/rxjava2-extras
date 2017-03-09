@@ -10,6 +10,7 @@ import org.reactivestreams.Subscription;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
+import io.reactivex.FlowableSubscriber;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
@@ -35,7 +36,7 @@ public final class FlowableStringSplitSimple extends Flowable<String> {
 
     @SuppressWarnings("serial")
     private static final class StringSplitSubscriber extends AtomicLong
-            implements Subscriber<String>, Subscription {
+            implements FlowableSubscriber<String>, Subscription {
 
         private final Subscriber<? super String> actual;
         // queue of notifications

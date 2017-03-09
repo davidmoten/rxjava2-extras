@@ -7,6 +7,7 @@ import org.reactivestreams.Subscription;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
+import io.reactivex.FlowableSubscriber;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Action;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
@@ -34,7 +35,7 @@ public final class FlowableDoOnEmpty<T> extends Flowable<T> {
         source.subscribe(new DoOnEmptySubscriber<T>(child, onEmpty));
     }
 
-    private static final class DoOnEmptySubscriber<T> implements Subscriber<T>, Subscription {
+    private static final class DoOnEmptySubscriber<T> implements FlowableSubscriber<T>, Subscription {
 
         private final Subscriber<? super T> child;
         private final Action onEmpty;

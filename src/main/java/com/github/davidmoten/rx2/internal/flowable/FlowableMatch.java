@@ -14,6 +14,7 @@ import org.reactivestreams.Subscription;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
+import io.reactivex.FlowableSubscriber;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Function;
@@ -380,7 +381,7 @@ public final class FlowableMatch<A, B, K, C> extends Flowable<C> {
     }
 
     @SuppressWarnings("serial")
-    private static final class MySubscriber<T, K> extends AtomicReference<Subscription> implements Subscription, Subscriber<T> {
+    private static final class MySubscriber<T, K> extends AtomicReference<Subscription> implements FlowableSubscriber<T>, Subscription {
 
         private final Receiver receiver;
         private final Source source;

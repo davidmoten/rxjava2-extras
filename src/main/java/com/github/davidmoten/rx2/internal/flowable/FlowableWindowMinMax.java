@@ -12,6 +12,7 @@ import org.reactivestreams.Subscription;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
+import io.reactivex.FlowableSubscriber;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 
 /**
@@ -44,7 +45,7 @@ public final class FlowableWindowMinMax<T> extends Flowable<T> {
         source.subscribe(new WindowMinMaxSubscriber<T>(windowSize, comparator, metric, child));
     }
 
-    private static final class WindowMinMaxSubscriber<T> implements Subscriber<T>, Subscription {
+    private static final class WindowMinMaxSubscriber<T> implements FlowableSubscriber<T>, Subscription {
 
         private final int windowSize;
         private final Comparator<? super T> comparator;

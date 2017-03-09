@@ -168,7 +168,8 @@ public class FlowableMatchTest {
         final AtomicBoolean terminal = new AtomicBoolean();
         matchThem(a, b) //
                 .doOnTerminate(Actions.setToTrue(terminal)) //
-                .doOnNext(Consumers.println()).subscribe(new Subscriber<Integer>() {
+                .doOnNext(Consumers.println()) //
+                .subscribe(new Subscriber<Integer>() {
 
                     private Subscription s;
 
@@ -200,9 +201,45 @@ public class FlowableMatchTest {
     }
 
     @Test
+    public void testSubscribe() {
+        AtomicBoolean unsub = new AtomicBoolean(false);
+        final List<Integer> list = new ArrayList<Integer>();
+        Flowable.just(1, 2, 3, 4) //
+                .doOnCancel(Actions.setToTrue(unsub)) //
+                .subscribe(new Subscriber<Integer>() {
+
+                    private Subscription s;
+
+                    @Override
+                    public void onSubscribe(Subscription s) {
+                        this.s = s;
+                        s.request(Long.MAX_VALUE);
+                    }
+
+                    @Override
+                    public void onNext(Integer t) {
+                        list.add(t);
+                        s.cancel();
+                    }
+
+                    @Override
+                    public void onError(Throwable t) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        System.out.println("completed");
+                    }
+                });
+        assertEquals(Arrays.asList(1), list);
+        assertTrue(unsub.get());
+    }
+
+    @Test
     public void testError() {
         RuntimeException e = new RuntimeException();
-        Flowable<Integer> a = Flowable.just(1, 2).concatWith(Flowable.<Integer>error(e));
+        Flowable<Integer> a = Flowable.just(1, 2).concatWith(Flowable.<Integer> error(e));
         Flowable<Integer> b = Flowable.just(1, 2, 3);
         match(a, b).assertNoValues().assertError(e);
     }
@@ -211,7 +248,10 @@ public class FlowableMatchTest {
     public void testKeyFunctionAThrowsResultsInErrorEmission() {
         Flowable<Integer> a = Flowable.just(1);
         Flowable<Integer> b = Flowable.just(1);
-        Flowables.match(a, b, Functions.<Integer, Integer>throwing(), Functions.<Integer>identity(), COMBINER).test() //
+        Flowables
+                .match(a, b, Functions.<Integer, Integer> throwing(),
+                        Functions.<Integer> identity(), COMBINER)
+                .test() //
                 .assertNoValues() //
                 .assertError(ThrowingException.class);
     }
@@ -231,7 +271,7 @@ public class FlowableMatchTest {
         Flowable<Integer> b = Flowable.just(2, 1);
         Flowables
                 .match(a, b, Functions.identity(), Functions.identity(),
-                        BiFunctions.<Integer, Integer, Integer>throwing())
+                        BiFunctions.<Integer, Integer, Integer> throwing())
                 .test() //
                 .assertNoValues() //
                 .assertError(ThrowingException.class);
@@ -243,7 +283,7 @@ public class FlowableMatchTest {
         Flowable<Integer> b = Flowable.just(1, 2);
         Flowables
                 .match(a, b, Functions.identity(), Functions.identity(),
-                        BiFunctions.<Integer, Integer, Integer>throwing()) //
+                        BiFunctions.<Integer, Integer, Integer> throwing()) //
                 .test() //
                 .assertNoValues() //
                 .assertError(ThrowingException.class);
@@ -251,7 +291,7 @@ public class FlowableMatchTest {
 
     @Test(timeout = 5000)
     public void testOneDoesNotCompleteAndOtherMatchedAllShouldFinish() {
-        Flowable<Integer> a = Flowable.just(1, 2).concatWith(Flowable.<Integer>never());
+        Flowable<Integer> a = Flowable.just(1, 2).concatWith(Flowable.<Integer> never());
         Flowable<Integer> b = Flowable.just(1, 2);
         match(a, b).assertValues(1, 2).assertComplete();
     }
@@ -259,14 +299,14 @@ public class FlowableMatchTest {
     @Test(timeout = 5000)
     public void testOneDoesNotCompleteAndOtherMatchedAllShouldFinishSwitched() {
         Flowable<Integer> a = Flowable.just(1, 2);
-        Flowable<Integer> b = Flowable.just(1, 2).concatWith(Flowable.<Integer>never());
+        Flowable<Integer> b = Flowable.just(1, 2).concatWith(Flowable.<Integer> never());
         match(a, b).assertValues(1, 2).assertComplete();
     }
 
     @Test
     public void testOneDoesNotCompleteAndOtherMatchedAllShouldFinishSwitched2() {
         Flowable<Integer> a = Flowable.just(1, 2);
-        Flowable<Integer> b = Flowable.just(1, 3).concatWith(Flowable.<Integer>never());
+        Flowable<Integer> b = Flowable.just(1, 3).concatWith(Flowable.<Integer> never());
         match(a, b).assertValues(1).assertNotTerminated();
     }
 
@@ -281,7 +321,8 @@ public class FlowableMatchTest {
                 }
             });
             Flowable<Integer> b = Flowable.range(1, n);
-            boolean equals = Flowable.sequenceEqual(matchThem(a, b).sorted(), Flowable.range(1, n)).blockingGet();
+            boolean equals = Flowable.sequenceEqual(matchThem(a, b).sorted(), Flowable.range(1, n))
+                    .blockingGet();
             assertTrue(equals);
         }
     }
@@ -320,7 +361,8 @@ public class FlowableMatchTest {
     }
 
     private static Flowable<Integer> matchThem(Flowable<Integer> a, Flowable<Integer> b) {
-        return a.compose(Transformers.matchWith(b, Functions.identity(), Functions.identity(), COMBINER));
+        return a.compose(
+                Transformers.matchWith(b, Functions.identity(), Functions.identity(), COMBINER));
     }
 
     private static void match(Flowable<Integer> a, Flowable<Integer> b, Integer... expected) {

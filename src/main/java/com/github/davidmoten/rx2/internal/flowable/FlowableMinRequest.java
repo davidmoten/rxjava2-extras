@@ -9,6 +9,7 @@ import org.reactivestreams.Subscription;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
+import io.reactivex.FlowableSubscriber;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
@@ -34,7 +35,7 @@ public final class FlowableMinRequest<T> extends Flowable<T> {
     }
 
     @SuppressWarnings("serial")
-    private static final class MinRequestSubscriber<T> extends AtomicInteger implements Subscriber<T>, Subscription {
+    private static final class MinRequestSubscriber<T> extends AtomicInteger implements FlowableSubscriber<T>, Subscription {
 
         private final int[] minRequests;
         private int requestNum;

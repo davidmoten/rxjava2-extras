@@ -9,6 +9,7 @@ import org.reactivestreams.Subscription;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
+import io.reactivex.FlowableSubscriber;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 
@@ -32,7 +33,7 @@ public final class FlowableMaxRequest<T> extends Flowable<T> {
     }
 
     @SuppressWarnings("serial")
-    private static final class MaxRequestSubscriber<T> extends AtomicInteger implements Subscriber<T>, Subscription {
+    private static final class MaxRequestSubscriber<T> extends AtomicInteger implements FlowableSubscriber<T>, Subscription {
 
         private final long[] maxRequests;
         private int requestNum;

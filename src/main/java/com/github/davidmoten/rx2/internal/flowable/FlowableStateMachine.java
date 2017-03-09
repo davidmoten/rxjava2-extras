@@ -13,6 +13,7 @@ import com.github.davidmoten.rx2.functions.Consumer3;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import io.reactivex.FlowableSubscriber;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Function3;
@@ -62,7 +63,7 @@ public final class FlowableStateMachine<State, In, Out> extends Flowable<Out> {
 
     @SuppressWarnings("serial")
     private static final class StateMachineSubscriber<State, In, Out> extends AtomicInteger
-            implements Subscriber<In>, Subscription, Emitter<Out> {
+            implements FlowableSubscriber<In>, Subscription, Emitter<Out> {
         private final Callable<? extends State> initialState;
         private final Function3<? super State, ? super In, ? super Emitter<Out>, ? extends State> transition;
         private final BiConsumer<? super State, ? super Emitter<Out>> completionAction;

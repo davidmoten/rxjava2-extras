@@ -6,6 +6,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
 import io.reactivex.Flowable;
+import io.reactivex.FlowableSubscriber;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Function;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
@@ -25,7 +26,7 @@ public final class FlowableMapLast<T> extends Flowable<T> {
         source.subscribe(new MapLastSubscriber<T>(s, function));
     }
 
-    private final static class MapLastSubscriber<T> implements Subscriber<T>, Subscription {
+    private final static class MapLastSubscriber<T> implements FlowableSubscriber<T>, Subscription {
 
         private static final Object EMPTY = new Object();
 
