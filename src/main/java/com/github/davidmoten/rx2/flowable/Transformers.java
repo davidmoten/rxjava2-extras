@@ -13,7 +13,6 @@ import com.github.davidmoten.rx2.Flowables;
 import com.github.davidmoten.rx2.StateMachine;
 import com.github.davidmoten.rx2.StateMachine2;
 import com.github.davidmoten.rx2.Statistics;
-import com.github.davidmoten.rx2.StateMachine.Builder;
 import com.github.davidmoten.rx2.buffertofile.Options;
 import com.github.davidmoten.rx2.internal.flowable.FlowableCollectWhile;
 import com.github.davidmoten.rx2.internal.flowable.FlowableDoOnEmpty;
