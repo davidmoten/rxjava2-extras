@@ -3,7 +3,7 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-extras/badge.svg?style=flat)](https://maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-extras)<br/>
 [![codecov](https://codecov.io/gh/davidmoten/rxjava2-extras/branch/master/graph/badge.svg)](https://codecov.io/gh/davidmoten/rxjava2-extras)<br/>
 
-Utilities for use with RxJava 2
+Utilities for use with RxJava 2 (>= 2.0.7)
 
 Bit by bit, features from [rxjava-extras](https://github.com/davidmoten/rxjava-extras) will be migrated to use RxJava2 (and of course new features will be added here too).
 
@@ -18,6 +18,7 @@ Features
 * [`Serialized`](#serialized)
 * tests pass on Linux, Windows 10, Solaris 10
 * supports Java 1.6+
+* requires rxjava 2.0.7+
 
 Status: *released to Maven Central*
 
