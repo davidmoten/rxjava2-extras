@@ -80,7 +80,7 @@ public class TransformersTest {
         assertEquals(8.75, s.b().mean(), 0.00001);
         assertEquals(7.258615570478987, s.b().sd(), 0.00001);
     }
-    
+
     @Test
     public void testToString() {
         Statistics s = Statistics.create();
