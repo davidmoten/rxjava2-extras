@@ -1,8 +1,10 @@
-package com.github.davidmoten.rx2.internal.flowable;
+package com.github.davidmoten.rx2.flowable;
 
 
 import io.reactivex.Flowable;
 import org.reactivestreams.Subscriber;
+
+import com.github.davidmoten.rx2.internal.flowable.OnSubscribeCacheResettable;
 
 public final class CachedFlowable<T> extends Flowable<T> {
 

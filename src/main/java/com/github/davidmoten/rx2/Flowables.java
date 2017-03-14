@@ -1,6 +1,8 @@
 package com.github.davidmoten.rx2;
 
 import com.github.davidmoten.guavamini.Optional;
+import com.github.davidmoten.rx2.flowable.CachedFlowable;
+import com.github.davidmoten.rx2.flowable.CloseableFlowableWithReset;
 import com.github.davidmoten.rx2.internal.flowable.*;
 
 import io.reactivex.Flowable;

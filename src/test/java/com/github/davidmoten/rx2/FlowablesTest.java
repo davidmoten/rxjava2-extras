@@ -1,6 +1,5 @@
 package com.github.davidmoten.rx2;
 
-import com.github.davidmoten.rx2.internal.flowable.CloseableFlowableWithReset;
 import io.reactivex.Flowable;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Consumer;
@@ -8,6 +7,8 @@ import io.reactivex.schedulers.Schedulers;
 import org.junit.Test;
 
 import com.github.davidmoten.junit.Asserts;
+import com.github.davidmoten.rx2.flowable.CloseableFlowableWithReset;
+
 import org.reactivestreams.Subscription;
 
 import java.util.List;

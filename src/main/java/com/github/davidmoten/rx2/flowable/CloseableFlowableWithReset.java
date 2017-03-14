@@ -1,4 +1,4 @@
-package com.github.davidmoten.rx2.internal.flowable;
+package com.github.davidmoten.rx2.flowable;
 
 import io.reactivex.Flowable;
 
