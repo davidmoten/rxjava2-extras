@@ -1,59 +1,24 @@
 package com.github.davidmoten.rx2;
 
 import com.github.davidmoten.guavamini.Optional;
-import com.github.davidmoten.rx2.internal.flowable.*;
-
+import com.github.davidmoten.rx2.internal.flowable.CachedFlowable;
+import com.github.davidmoten.rx2.observable.CachedObservable;
+import com.github.davidmoten.rx2.observable.CloseableObservableWithReset;
 import io.reactivex.Flowable;
+import io.reactivex.Observable;
 import io.reactivex.Scheduler;
-import io.reactivex.functions.BiFunction;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
-import io.reactivex.functions.Function;
-import org.reactivestreams.Subscription;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-public final class Flowables {
+public final class Observables {
 
-    private static final int DEFAULT_MATCH_BATCH_SIZE = 128;
 
-    private Flowables() {
+    private Observables() {
         // prevent instantiation
     }
-
-    public static <A, B, K, C> Flowable<C> match(Flowable<A> a, Flowable<B> b, Function<? super A, K> aKey,
-            Function<? super B, K> bKey, BiFunction<? super A, ? super B, C> combiner, int requestSize) {
-        return new FlowableMatch<A, B, K, C>(a, b, aKey, bKey, combiner, requestSize);
-    }
-
-    public static <A, B, K, C> Flowable<C> match(Flowable<A> a, Flowable<B> b, Function<? super A, K> aKey,
-            Function<? super B, K> bKey, BiFunction<? super A, ? super B, C> combiner) {
-        return match(a, b, aKey, bKey, combiner, DEFAULT_MATCH_BATCH_SIZE);
-    }
-
-    public static <T> Flowable<T> repeat(T t) {
-        return new FlowableRepeat<T>(t, -1);
-    }
-
-    public static <T> Flowable<T> repeat(T t, long count) {
-        return new FlowableRepeat<T>(t, count);
-    }
-
-    public static <T> Flowable<T> fetchPagesByRequest(final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch,
-            long start, int maxConcurrent) {
-        return FlowableFetchPagesByRequest.create(fetch, start, maxConcurrent);
-    }
-
-    public static <T> Flowable<T> fetchPagesByRequest(final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch,
-            long start) {
-        return fetchPagesByRequest(fetch, start, 2);
-    }
-
-    public static <T> Flowable<T> fetchPagesByRequest(final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch) {
-        return fetchPagesByRequest(fetch, 0, 2);
-    }
-
-
 
     /**
      * Returns a cached {@link Flowable} like {@link Flowable#cache()}
@@ -66,14 +31,14 @@ public final class Flowables {
      *            the generic type of the source
      * @return a cached observable whose cache can be reset.
      */
-    public static <T> CachedFlowable<T> cache(Flowable<T> source) {
-        return new CachedFlowable<T>(source);
+    public static <T> CachedObservable<T> cache(Observable<T> source) {
+        return new CachedObservable<T>(source);
     }
 
     /**
-     * Returns a cached {@link Flowable} like {@link Flowable#cache()}
+     * Returns a cached {@link Observable} like {@link Observable#cache()}
      * except that the cache can be reset by calling
-     * {@link CachedFlowable#reset()} and the cache will be automatically
+     * {@link CachedObservable#reset()} and the cache will be automatically
      * reset an interval after first subscription (or first subscription after
      * reset). The interval is defined by {@code duration} and {@code unit} .
      *
@@ -90,14 +55,14 @@ public final class Flowables {
      *            the generic type of the source
      * @return cached observable that resets regularly on a time interval
      */
-    public static <T> Flowable<T> cache(final Flowable<T> source, final long duration,
+    public static <T> Observable<T> cache(final Observable<T> source, final long duration,
                                         final TimeUnit unit, final Scheduler.Worker worker) {
-        final AtomicReference<CachedFlowable<T>> cacheRef = new AtomicReference<CachedFlowable<T>>();
-        CachedFlowable<T> cache = new CachedFlowable<T>(source);
+        final AtomicReference<CachedObservable<T>> cacheRef = new AtomicReference<CachedObservable<T>>();
+        CachedObservable<T> cache = new CachedObservable<T>(source);
         cacheRef.set(cache);
-        return cache.doOnSubscribe(new Consumer<Subscription>() {
+        return cache.doOnSubscribe(new Consumer<Disposable>() {
             @Override
-            public void accept(Subscription d) {
+            public void accept(Disposable d) {
                 Runnable action = new Runnable() {
                     @Override
                     public void run() {
@@ -110,9 +75,9 @@ public final class Flowables {
     }
 
     /**
-     * Returns a cached {@link Flowable} like {@link Flowable#cache()}
+     * Returns a cached {@link Observable} like {@link Observable#cache()}
      * except that the cache may be reset by the user calling
-     * {@link CloseableFlowableWithReset#reset}.
+     * {@link CloseableObservableWithReset#reset}.
      *
      * @param source
      *            the source observable
@@ -124,15 +89,15 @@ public final class Flowables {
      *            scheduler to use for scheduling reset.
      * @param <T>
      *            generic type of source observable
-     * @return {@link CloseableFlowableWithReset} that should be closed once
+     * @return {@link CloseableObservableWithReset} that should be closed once
      *         finished to prevent worker memory leak.
      */
-    public static <T> CloseableFlowableWithReset<T> cache(final Flowable<T> source,
-                                                          final long duration, final TimeUnit unit, final Scheduler scheduler) {
-        final AtomicReference<CachedFlowable<T>> cacheRef = new AtomicReference<CachedFlowable<T>>();
+    public static <T> CloseableObservableWithReset<T> cache(final Observable<T> source,
+                                                            final long duration, final TimeUnit unit, final Scheduler scheduler) {
+        final AtomicReference<CachedObservable<T>> cacheRef = new AtomicReference<CachedObservable<T>>();
         final AtomicReference<Optional<Scheduler.Worker>> workerRef = new AtomicReference<Optional<Scheduler.Worker>>(
                 Optional.<Scheduler.Worker> absent());
-        CachedFlowable<T> cache = new CachedFlowable<T>(source);
+        CachedObservable<T> cache = new CachedObservable<T>(source);
         cacheRef.set(cache);
         Runnable closeAction = new Runnable() {
             @Override
@@ -163,12 +128,12 @@ public final class Flowables {
                 startScheduledResetAgain(duration, unit, scheduler, cacheRef, workerRef);
             }
         };
-        return new CloseableFlowableWithReset<T>(cache, closeAction, resetAction);
+        return new CloseableObservableWithReset<T>(cache, closeAction, resetAction);
     }
 
 
     private static <T> void startScheduledResetAgain(final long duration, final TimeUnit unit,
-                                                     final Scheduler scheduler, final AtomicReference<CachedFlowable<T>> cacheRef,
+                                                     final Scheduler scheduler, final AtomicReference<CachedObservable<T>> cacheRef,
                                                      final AtomicReference<Optional<Scheduler.Worker>> workerRef) {
 
         Runnable action = new Runnable() {

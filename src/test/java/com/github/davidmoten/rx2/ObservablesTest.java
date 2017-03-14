@@ -1,13 +1,13 @@
 package com.github.davidmoten.rx2;
 
-import com.github.davidmoten.rx2.internal.flowable.CloseableFlowableWithReset;
+import com.github.davidmoten.junit.Asserts;
+import com.github.davidmoten.rx2.observable.CloseableObservableWithReset;
 import io.reactivex.Flowable;
+import io.reactivex.Observable;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import org.junit.Test;
-
-import com.github.davidmoten.junit.Asserts;
 import org.reactivestreams.Subscription;
 
 import java.util.List;
@@ -16,12 +16,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertTrue;
 
-public class FlowablesTest {
+public class ObservablesTest {
 
     @Test
     public void isUtilityClass() {
-        Asserts.assertIsUtilityClass(Flowables.class);
+        Asserts.assertIsUtilityClass(Observables.class);
     }
+
 
 
     @Test
@@ -32,16 +33,16 @@ public class FlowablesTest {
         Flowable<String> source =
                 Flowable.just("Alpha", "Beta", "Gamma", "Delta", "Epsilon");
 
-        final CloseableFlowableWithReset<List<String>> closeable = Flowables.cache(
+        final CloseableObservableWithReset<List<String>> closeable = Observables.cache(
                 source.doOnSubscribe(new Consumer<Subscription>() {
                                          @Override
                                          public void accept(@NonNull Subscription subscription) throws Exception {
                                              subscriptionCount.incrementAndGet();
                                          }
                                      }
-                ).toList().toFlowable(), 3, TimeUnit.SECONDS, Schedulers.computation());
+                ).toList().toObservable(), 3, TimeUnit.SECONDS, Schedulers.computation());
 
-        Flowable<List<String>> timed = closeable.flowable().doOnNext(new Consumer<List<String>>() {
+        Observable<List<String>> timed = closeable.observable().doOnNext(new Consumer<List<String>>() {
             @Override
             public void accept(@NonNull List<String> s) throws Exception {
                 closeable.reset();
@@ -67,5 +68,5 @@ public class FlowablesTest {
 
         assertTrue(subscriptionCount.get() == 2);
     }
-    
+
 }
