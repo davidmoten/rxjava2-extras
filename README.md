@@ -286,10 +286,13 @@ Righto, Fred now uses the new API like this:
 
 ```java
 Movie top = mostPopularMovies()
+    .compose(Transformers.maxRequest(1))
     .first()
     .blockingFirst();
 ```
-and Greta uses it like this:
+The use of `maxRequest` above may seem unnecessary but strangely enough the `first` operator requests `Long.MAX_VALUE` of upstream and cancels as soon as one arrives. The `take`, `elemnentAt` and `firstXXX` operators all have this counter-intuitive characteristic.
+
+Greta uses the new API like this:
 
 ```java
 mostPopularMovies()
