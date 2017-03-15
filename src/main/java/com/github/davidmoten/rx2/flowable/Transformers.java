@@ -20,6 +20,7 @@ import com.github.davidmoten.rx2.internal.flowable.FlowableMapLast;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMatch;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMaxRequest;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMinRequest;
+import com.github.davidmoten.rx2.internal.flowable.FlowableReduce;
 import com.github.davidmoten.rx2.internal.flowable.FlowableReverse;
 import com.github.davidmoten.rx2.internal.flowable.FlowableWindowMinMax;
 import com.github.davidmoten.rx2.internal.flowable.FlowableWindowMinMax.Metric;
@@ -318,5 +319,16 @@ public final class Transformers {
 
     public static <T> FlowableTransformer<T, T> rebatchRequests(int minRequest, long maxRequest) {
         return rebatchRequests(minRequest, maxRequest, true);
+    }
+
+    public static <T> FlowableTransformer<T, T> reduce(
+            final Function<? super Flowable<T>, ? extends Flowable<T>> reducer, final int depth) {
+        return new FlowableTransformer<T, T>() {
+
+            @Override
+            public Publisher<T> apply(Flowable<T> source) {
+                return new FlowableReduce<T>(source, reducer, depth);
+            }
+        };
     }
 }
