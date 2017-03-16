@@ -23,12 +23,8 @@ public class FlowableReduce<T> extends Flowable<T> {
     private final Flowable<T> source;
     private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
     private final int depth;
-    private final Action finished;
 
-    public FlowableReduce(Flowable<T> source,
-            Function<? super Flowable<T>, ? extends Flowable<T>> reducer, Action finished,
-            int depth) {
-        this.finished = finished;
+    public FlowableReduce(Flowable<T> source, Function<? super Flowable<T>, ? extends Flowable<T>> reducer, int depth) {
         Preconditions.checkArgument(depth > 0, "depth must be 1 or greater");
         this.source = source;
         this.reducer = reducer;
@@ -38,62 +34,14 @@ public class FlowableReduce<T> extends Flowable<T> {
     @Override
     protected void subscribeActual(Subscriber<? super T> child) {
         AtomicInteger numLevels = new AtomicInteger();
-
-    }
-
-    private static final class FlowableReduceSubscriber<T>
-            implements FlowableSubscriber<T>, Subscription {
-
-        private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
-        private final int depth;
-        private final Subscriber<? super T> child;
-
-        private Subscription parent;
-
-        FlowableReduceSubscriber(Flowable<T> source,
-                Function<? super Flowable<T>, ? extends Flowable<T>> reducer, int depth,
-                Subscriber<? super T> child) {
-            this.reducer = reducer;
-            this.depth = depth;
-            this.child = child;
+        Flowable<T> f;
+        try {
+            f = reducer.apply(source);
+        } catch (Exception e) {
+            child.onError(e);
+            return;
         }
-
-        public void subscribe() {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onSubscribe(Subscription parent) {
-            if (SubscriptionHelper.validate(this.parent, parent)) {
-                this.parent = parent;
-            }
-        }
-
-        @Override
-        public void request(long n) {
-            if (SubscriptionHelper.validate(n)) {
-                parent.request(n);
-            }
-        }
-
-        @Override
-        public void onNext(T t) {
-        }
-
-        @Override
-        public void onError(Throwable t) {
-        }
-
-        @Override
-        public void onComplete() {
-        }
-
-        @Override
-        public void cancel() {
-            parent.cancel();
-        }
-
+        f.subscribe(new ReduceReplaySubject<T>(numLevels, depth, reducer, child));
     }
 
     /**
@@ -103,9 +51,12 @@ public class FlowableReduce<T> extends Flowable<T> {
      * @param <T>
      *            generic type
      */
-    private static class ReduceReplaySubject<T> extends Flowable<T>
-            implements FlowableSubscriber<T>, Subscription {
+    private static class ReduceReplaySubject<T> extends Flowable<T> implements FlowableSubscriber<T>, Subscription {
 
+        private final AtomicInteger numLevels;
+        private final int depth;
+        private final Subscriber<? super T> finalSubscriber;
+        private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
         private final SimplePlainQueue<T> queue = new SpscLinkedArrayQueue<T>(16);
         private final AtomicLong requested = new AtomicLong();
         private final AtomicLong unreconciledRequests = new AtomicLong();
@@ -116,6 +67,16 @@ public class FlowableReduce<T> extends Flowable<T> {
         private volatile boolean done;
         private Throwable error;
         private volatile boolean cancelled;
+        private int count;
+        private boolean finished;
+
+        ReduceReplaySubject(AtomicInteger numLevels, int depth,
+                Function<? super Flowable<T>, ? extends Flowable<T>> reducer, Subscriber<? super T> finalSubscriber) {
+            this.numLevels = numLevels;
+            this.depth = depth;
+            this.reducer = reducer;
+            this.finalSubscriber = finalSubscriber;
+        }
 
         @Override
         public void onSubscribe(Subscription parent) {
@@ -156,7 +117,22 @@ public class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onNext(T t) {
+            count++;
             queue.offer(t);
+            if (count == 2) {
+                if (numLevels.get() < depth) {
+                    numLevels.incrementAndGet();
+                    Flowable<T> f;
+                    try {
+                        f = reducer.apply(this);
+                    } catch (Exception e) {
+                        onError(e);
+                        return;
+                    }
+                    ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(numLevels, depth, reducer, finalSubscriber);
+                    f.subscribe(sub);
+                }
+            }
             if (child.get() != null) {
                 drain();
             } else {
@@ -177,9 +153,13 @@ public class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onComplete() {
-            done = true;
-            if (child.get() != null) {
-                drain();
+            if (count == 1) {
+                finished = true;
+            } else {
+                done = true;
+                if (child.get() != null) {
+                    drain();
+                }
             }
         }
 
@@ -205,7 +185,12 @@ public class FlowableReduce<T> extends Flowable<T> {
                                     child.get().onError(err);
                                 } else {
                                     child.get().onComplete();
+                                    if (finished) {
+                                        //TODO
+                                    }
                                 }
+                                // TODO set parent to null so can be GC'd
+                                break;
                             } else {
                                 break;
                             }
