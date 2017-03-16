@@ -44,7 +44,8 @@ public final class FlowableReduce<T> extends Maybe<T> {
             observer.onError(e);
             return;
         }
-        f.subscribe(new ReduceReplaySubject<T>(numLevels, maxDepthConcurrent, reducer, observer));
+        f.onTerminateDetach() //
+                .subscribe(new ReduceReplaySubject<T>(numLevels, maxDepthConcurrent, reducer, observer));
     }
 
     /**
@@ -67,7 +68,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
         private final AtomicInteger wip = new AtomicInteger();
         private final AtomicReference<Subscriber<? super T>> child = new AtomicReference<Subscriber<? super T>>();
 
-        private Subscription parent;
+        private final AtomicReference<Subscription> parent = new AtomicReference<Subscription>();
         private volatile boolean done;
         private Throwable error;
         private volatile boolean cancelled;
@@ -84,8 +85,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
 
         @Override
         public void onSubscribe(Subscription parent) {
-            if (SubscriptionHelper.validate(this.parent, parent)) {
-                this.parent = parent;
+            if (SubscriptionHelper.setOnce(this.parent, parent)) {
                 unreconciledRequests.incrementAndGet();
                 parent.request(1);
             }
@@ -102,18 +102,21 @@ public final class FlowableReduce<T> extends Maybe<T> {
         public void request(long n) {
             if (SubscriptionHelper.validate(n)) {
                 BackpressureHelper.add(requested, n);
-                if (n < Long.MAX_VALUE) {
-                    while (true) {
-                        long p = unreconciledRequests.get();
-                        long r = Math.max(0, n - p);
-                        long p2 = p - (n - r);
-                        if (unreconciledRequests.compareAndSet(p, p2)) {
-                            parent.request(r);
-                            break;
+                Subscription par = parent.get();
+                if (par != null) {
+                    if (n < Long.MAX_VALUE) {
+                        while (true) {
+                            long p = unreconciledRequests.get();
+                            long r = Math.max(0, n - p);
+                            long p2 = p - (n - r);
+                            if (unreconciledRequests.compareAndSet(p, p2)) {
+                                par.request(r);
+                                break;
+                            }
                         }
+                    } else {
+                        par.request(Long.MAX_VALUE);
                     }
-                } else {
-                    parent.request(Long.MAX_VALUE);
                 }
                 drain();
             }
@@ -139,7 +142,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
                     }
                     ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(numLevels, maxDepthConcurrent, reducer,
                             observer);
-                    f.subscribe(sub);
+                    f.onTerminateDetach().subscribe(sub);
                 }
             }
             if (child.get() != null) {
@@ -147,7 +150,10 @@ public final class FlowableReduce<T> extends Maybe<T> {
             } else {
                 // make minimal request to keep upstream producing
                 unreconciledRequests.incrementAndGet();
-                parent.request(1);
+                Subscription par = parent.get();
+                if (par != null) {
+                    par.request(1);
+                }
             }
         }
 
@@ -170,6 +176,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
                 return;
             }
             if (count <= 1) {
+                // we are finished so report to the observer
                 cancel();
                 if (last == null) {
                     observer.onComplete();
@@ -202,7 +209,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
                         T t = queue.poll();
                         if (t == null) {
                             if (d) {
-                                parent.cancel();
+                                parent.get().cancel();
                                 Throwable err = error;
                                 if (err != null) {
                                     error = null;
@@ -210,8 +217,11 @@ public final class FlowableReduce<T> extends Maybe<T> {
                                 } else {
                                     child.get().onComplete();
                                 }
-                                // TODO set parent to null so can be GC'd
-                                break;
+                                // set parent to null so can be GC'd (to avoid
+                                // GC nepotism use Flowable.onTerminateDetach()
+                                // upstream)
+                                parent.set(null);
+                                return;
                             } else {
                                 break;
                             }
@@ -235,7 +245,10 @@ public final class FlowableReduce<T> extends Maybe<T> {
         @Override
         public void cancel() {
             cancelled = true;
-            parent.cancel();
+            Subscription par = parent.get();
+            if (par != null) {
+                par.cancel();
+            }
         }
 
     }
