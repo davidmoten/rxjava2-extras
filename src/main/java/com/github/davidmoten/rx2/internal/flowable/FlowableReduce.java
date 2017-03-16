@@ -18,8 +18,9 @@ import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
+import io.reactivex.plugins.RxJavaPlugins;
 
-public class FlowableReduce<T> extends Maybe<T> {
+public final class FlowableReduce<T> extends Maybe<T> {
 
     private final Flowable<T> source;
     private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
@@ -52,7 +53,7 @@ public class FlowableReduce<T> extends Maybe<T> {
      * @param <T>
      *            generic type
      */
-    private static class ReduceReplaySubject<T> extends Flowable<T> implements FlowableSubscriber<T>, Subscription {
+    private static final class ReduceReplaySubject<T> extends Flowable<T> implements FlowableSubscriber<T>, Subscription {
 
         private final AtomicInteger numLevels;
         private final int depth;
@@ -69,7 +70,7 @@ public class FlowableReduce<T> extends Maybe<T> {
         private Throwable error;
         private volatile boolean cancelled;
         private int count;
-        private boolean finished;
+        private T last;
 
         ReduceReplaySubject(AtomicInteger numLevels, int depth,
                 Function<? super Flowable<T>, ? extends Flowable<T>> reducer, MaybeObserver<? super T> observer) {
@@ -118,7 +119,11 @@ public class FlowableReduce<T> extends Maybe<T> {
 
         @Override
         public void onNext(T t) {
+            if (done) {
+                return;
+            }
             count++;
+            last = t;
             queue.offer(t);
             if (count == 2) {
                 if (numLevels.get() < depth) {
@@ -145,6 +150,10 @@ public class FlowableReduce<T> extends Maybe<T> {
 
         @Override
         public void onError(Throwable t) {
+            if (done) {
+                RxJavaPlugins.onError(t);
+                return;
+            }
             error = t;
             done = true;
             if (child.get() != null) {
@@ -154,17 +163,26 @@ public class FlowableReduce<T> extends Maybe<T> {
 
         @Override
         public void onComplete() {
-            if (count == 1) {
-                finished = true;
+            if (done) {
+                return;
+            }
+            if (count <= 1) {
+                cancel();
+                if (last == null) {
+                    observer.onComplete();
+                } else {
+                    T t = last;
+                    last = null;
+                    observer.onSuccess(t);
+                }
             } else {
+                numLevels.decrementAndGet();
                 done = true;
                 if (child.get() != null) {
                     drain();
                 }
             }
         }
-
-        private T last;
 
         private void drain() {
             if (wip.getAndIncrement() == 0) {
@@ -188,13 +206,6 @@ public class FlowableReduce<T> extends Maybe<T> {
                                     child.get().onError(err);
                                 } else {
                                     child.get().onComplete();
-                                    if (finished) {
-                                        if (t == null) {
-                                            observer.onComplete();
-                                        } else {
-                                            observer.onSuccess(last);
-                                        }
-                                    }
                                 }
                                 // TODO set parent to null so can be GC'd
                                 break;
