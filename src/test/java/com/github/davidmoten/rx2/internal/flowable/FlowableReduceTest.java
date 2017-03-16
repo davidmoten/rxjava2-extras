@@ -5,6 +5,7 @@ import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.github.davidmoten.rx2.flowable.Transformers;
@@ -45,34 +46,52 @@ public final class FlowableReduceTest {
 
     @Test
     public void testOne() {
-        int result = Flowable.just(10) //
-                .to(Transformers.reduce(reducer, 2)) //
-                .blockingGet(-1);
-        Assert.assertEquals(10, result);
+        check(1, 2);
     }
 
     @Test
     public void testCompletesFirstLevel() {
-        int result = Flowable.just(1, 2) //
-                .to(Transformers.reduce(reducer, 2)) //
-                .blockingGet(-1);
-        Assert.assertEquals(3, result);
+        check(2, 2);
     }
 
     @Test
     public void testCompletesSecondLevel() {
-        int result = Flowable.just(1, 2, 3) //
-                .to(Transformers.reduce(reducer, 2)) //
-                .blockingGet(-1);
-        Assert.assertEquals(6, result);
+        check(3, 2);
     }
 
     @Test
     public void testCompletesThirdLevel() {
-        int result = Flowable.range(1, 4) //
-                .to(Transformers.reduce(reducer, 2)) //
+        check(4, 2);
+    }
+
+    private static void check(int n, int maxDepthConcurrent) {
+        int result = Flowable.range(1, n) //
+                .to(Transformers.reduce(reducer, maxDepthConcurrent)) //
                 .blockingGet(-1);
-        Assert.assertEquals(10, result);
+        Assert.assertEquals(sum(n), result);
+    }
+
+    @Test(timeout = 2000)
+    @Ignore
+    public void testCompletesFourLevels() {
+        check(8, 2);
+    }
+
+    @Test
+    @Ignore
+    public void testCompletesVariableLevels() {
+        for (int n = 5; n <= 100; n++) {
+            System.out.println(n);
+            check(n, 2);
+        }
+    }
+
+    private static int sum(int n) {
+        int sum = 0;
+        for (int i = 1; i <= n; i++) {
+            sum += i;
+        }
+        return sum;
     }
 
 }
