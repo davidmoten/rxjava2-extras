@@ -24,13 +24,14 @@ public final class FlowableReduce<T> extends Maybe<T> {
 
     private final Flowable<T> source;
     private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
-    private final int depth;
+    private final int maxDepthConcurrent;
 
-    public FlowableReduce(Flowable<T> source, Function<? super Flowable<T>, ? extends Flowable<T>> reducer, int depth) {
-        Preconditions.checkArgument(depth > 0, "depth must be 1 or greater");
+    public FlowableReduce(Flowable<T> source, Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
+            int maxDepthConcurrent) {
+        Preconditions.checkArgument(maxDepthConcurrent > 0, "depth must be 1 or greater");
         this.source = source;
         this.reducer = reducer;
-        this.depth = depth;
+        this.maxDepthConcurrent = maxDepthConcurrent;
     }
 
     @Override
@@ -43,7 +44,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
             observer.onError(e);
             return;
         }
-        f.subscribe(new ReduceReplaySubject<T>(numLevels, depth, reducer, observer));
+        f.subscribe(new ReduceReplaySubject<T>(numLevels, maxDepthConcurrent, reducer, observer));
     }
 
     /**
@@ -53,10 +54,11 @@ public final class FlowableReduce<T> extends Maybe<T> {
      * @param <T>
      *            generic type
      */
-    private static final class ReduceReplaySubject<T> extends Flowable<T> implements FlowableSubscriber<T>, Subscription {
+    private static final class ReduceReplaySubject<T> extends Flowable<T>
+            implements FlowableSubscriber<T>, Subscription {
 
         private final AtomicInteger numLevels;
-        private final int depth;
+        private final int maxDepthConcurrent;
         private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
         private final MaybeObserver<? super T> observer;
         private final SimplePlainQueue<T> queue = new SpscLinkedArrayQueue<T>(16);
@@ -72,10 +74,10 @@ public final class FlowableReduce<T> extends Maybe<T> {
         private int count;
         private T last;
 
-        ReduceReplaySubject(AtomicInteger numLevels, int depth,
+        ReduceReplaySubject(AtomicInteger numLevels, int maxDepthConcurrent,
                 Function<? super Flowable<T>, ? extends Flowable<T>> reducer, MaybeObserver<? super T> observer) {
             this.numLevels = numLevels;
-            this.depth = depth;
+            this.maxDepthConcurrent = maxDepthConcurrent;
             this.reducer = reducer;
             this.observer = observer;
         }
@@ -126,7 +128,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
             last = t;
             queue.offer(t);
             if (count == 2) {
-                if (numLevels.get() < depth) {
+                if (numLevels.get() < maxDepthConcurrent) {
                     numLevels.incrementAndGet();
                     Flowable<T> f;
                     try {
@@ -135,7 +137,8 @@ public final class FlowableReduce<T> extends Maybe<T> {
                         onError(e);
                         return;
                     }
-                    ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(numLevels, depth, reducer, observer);
+                    ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(numLevels, maxDepthConcurrent, reducer,
+                            observer);
                     f.subscribe(sub);
                 }
             }
