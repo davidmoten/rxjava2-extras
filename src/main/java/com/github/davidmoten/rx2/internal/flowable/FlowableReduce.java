@@ -11,14 +11,15 @@ import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
 import io.reactivex.FlowableSubscriber;
-import io.reactivex.functions.Action;
+import io.reactivex.Maybe;
+import io.reactivex.MaybeObserver;
 import io.reactivex.functions.Function;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 
-public class FlowableReduce<T> extends Flowable<T> {
+public class FlowableReduce<T> extends Maybe<T> {
 
     private final Flowable<T> source;
     private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
@@ -32,16 +33,16 @@ public class FlowableReduce<T> extends Flowable<T> {
     }
 
     @Override
-    protected void subscribeActual(Subscriber<? super T> child) {
-        AtomicInteger numLevels = new AtomicInteger();
+    protected void subscribeActual(MaybeObserver<? super T> observer) {
+        AtomicInteger numLevels = new AtomicInteger(1);
         Flowable<T> f;
         try {
             f = reducer.apply(source);
         } catch (Exception e) {
-            child.onError(e);
+            observer.onError(e);
             return;
         }
-        f.subscribe(new ReduceReplaySubject<T>(numLevels, depth, reducer, child));
+        f.subscribe(new ReduceReplaySubject<T>(numLevels, depth, reducer, observer));
     }
 
     /**
@@ -55,8 +56,8 @@ public class FlowableReduce<T> extends Flowable<T> {
 
         private final AtomicInteger numLevels;
         private final int depth;
-        private final Subscriber<? super T> finalSubscriber;
         private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
+        private final MaybeObserver<? super T> observer;
         private final SimplePlainQueue<T> queue = new SpscLinkedArrayQueue<T>(16);
         private final AtomicLong requested = new AtomicLong();
         private final AtomicLong unreconciledRequests = new AtomicLong();
@@ -71,11 +72,11 @@ public class FlowableReduce<T> extends Flowable<T> {
         private boolean finished;
 
         ReduceReplaySubject(AtomicInteger numLevels, int depth,
-                Function<? super Flowable<T>, ? extends Flowable<T>> reducer, Subscriber<? super T> finalSubscriber) {
+                Function<? super Flowable<T>, ? extends Flowable<T>> reducer, MaybeObserver<? super T> observer) {
             this.numLevels = numLevels;
             this.depth = depth;
             this.reducer = reducer;
-            this.finalSubscriber = finalSubscriber;
+            this.observer = observer;
         }
 
         @Override
@@ -129,7 +130,7 @@ public class FlowableReduce<T> extends Flowable<T> {
                         onError(e);
                         return;
                     }
-                    ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(numLevels, depth, reducer, finalSubscriber);
+                    ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(numLevels, depth, reducer, observer);
                     f.subscribe(sub);
                 }
             }
@@ -163,6 +164,8 @@ public class FlowableReduce<T> extends Flowable<T> {
             }
         }
 
+        private T last;
+
         private void drain() {
             if (wip.getAndIncrement() == 0) {
                 int missed = 1;
@@ -186,7 +189,11 @@ public class FlowableReduce<T> extends Flowable<T> {
                                 } else {
                                     child.get().onComplete();
                                     if (finished) {
-                                        //TODO
+                                        if (t == null) {
+                                            observer.onComplete();
+                                        } else {
+                                            observer.onSuccess(last);
+                                        }
                                     }
                                 }
                                 // TODO set parent to null so can be GC'd
@@ -195,6 +202,7 @@ public class FlowableReduce<T> extends Flowable<T> {
                                 break;
                             }
                         } else {
+                            last = t;
                             child.get().onNext(t);
                             e++;
                         }
