@@ -37,6 +37,7 @@ public class FlowableReduce<T> extends Flowable<T> {
 
     @Override
     protected void subscribeActual(Subscriber<? super T> child) {
+        AtomicInteger numLevels = new AtomicInteger();
 
     }
 
