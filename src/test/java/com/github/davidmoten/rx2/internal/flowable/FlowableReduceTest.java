@@ -42,7 +42,7 @@ public final class FlowableReduceTest {
                 .blockingGet(-1);
         Assert.assertEquals(-1, result);
     }
-    
+
     @Test
     public void testOne() {
         int result = Flowable.just(10) //
@@ -50,13 +50,29 @@ public final class FlowableReduceTest {
                 .blockingGet(-1);
         Assert.assertEquals(10, result);
     }
-    
+
     @Test
-    public void testTwo() {
+    public void testCompletesFirstLevel() {
         int result = Flowable.just(1, 2) //
                 .to(Transformers.reduce(reducer, 2)) //
                 .blockingGet(-1);
         Assert.assertEquals(3, result);
+    }
+
+    @Test
+    public void testCompletesSecondLevel() {
+        int result = Flowable.just(1, 2, 3) //
+                .to(Transformers.reduce(reducer, 2)) //
+                .blockingGet(-1);
+        Assert.assertEquals(6, result);
+    }
+
+    @Test
+    public void testCompletesThirdLevel() {
+        int result = Flowable.range(1, 4) //
+                .to(Transformers.reduce(reducer, 2)) //
+                .blockingGet(-1);
+        Assert.assertEquals(10, result);
     }
 
 }

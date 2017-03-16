@@ -110,7 +110,9 @@ public final class FlowableReduce<T> extends Maybe<T> {
                             long r = Math.max(0, n - p);
                             long p2 = p - (n - r);
                             if (unreconciledRequests.compareAndSet(p, p2)) {
-                                par.request(r);
+                                if (r > 0) {
+                                    par.request(r);
+                                }
                                 break;
                             }
                         }
