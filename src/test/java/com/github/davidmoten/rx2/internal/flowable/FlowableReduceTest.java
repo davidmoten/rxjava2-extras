@@ -1,6 +1,9 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
+import static org.junit.Assert.assertTrue;
+
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
@@ -8,6 +11,7 @@ import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.github.davidmoten.rx2.Actions;
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
 import com.github.davidmoten.rx2.flowable.Transformers;
 
@@ -51,7 +55,7 @@ public final class FlowableReduceTest {
 
         @Override
         public Flowable<Integer> apply(Flowable<Integer> f) throws Exception {
-            if (count.incrementAndGet()>= 3) {
+            if (count.incrementAndGet() >= 3) {
                 throw new ThrowingException();
             } else {
                 return reducer.apply(f);
@@ -136,6 +140,34 @@ public final class FlowableReduceTest {
     public void testReducerThrowsOnThirdCall() {
         Flowable.range(1, 128) //
                 .to(Transformers.reduce(reducerThrowsOnThird, 2)) //
+                .test() //
+                .assertNoValues() //
+                .assertError(ThrowingException.class);
+    }
+
+    @Test
+    public void testDisposerCalled() {
+        AtomicBoolean cancelled = new AtomicBoolean();
+        Flowable.<Integer> never() //
+                .doOnCancel(Actions.setToTrue(cancelled)) //
+                .to(Transformers.reduce(reducer, 2)) //
+                .test().cancel();
+        assertTrue(cancelled.get());
+    }
+
+    @Test
+    public void testErrorPreChaining() {
+        Flowable.<Integer> error(new ThrowingException()) //
+                .to(Transformers.reduce(reducer, 2)) //
+                .test() //
+                .assertNoValues() //
+                .assertError(ThrowingException.class);
+    }
+
+    @Test
+    public void testErrorPostChaining() {
+        Flowable.range(1, 100).concatWith(Flowable.<Integer> error(new ThrowingException())) //
+                .to(Transformers.reduce(reducer, 2)) //
                 .test() //
                 .assertNoValues() //
                 .assertError(ThrowingException.class);

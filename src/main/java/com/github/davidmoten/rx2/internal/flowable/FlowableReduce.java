@@ -53,7 +53,8 @@ public final class FlowableReduce<T> extends Maybe<T> {
         ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, maxChained, reducer,
                 observer);
         info.set(new CountAndFinalSub<T>(1, sub));
-        observer.onSubscribe(new InfoDisposable<T>(info));
+        InfoDisposable<T> disposable = new InfoDisposable<T>(info);
+        observer.onSubscribe(disposable);
         // TODO ensure observer dispose gets called
         f.onTerminateDetach() //
                 .subscribe(sub);
@@ -98,6 +99,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
             this.count = count;
             this.finalSubscriber = finalSubscriber;
         }
+
     }
 
     /**
@@ -217,6 +219,9 @@ public final class FlowableReduce<T> extends Maybe<T> {
             done = true;
             if (childExists()) {
                 drain();
+            } else {
+                cancel();
+                observer.onError(t);
             }
         }
 
