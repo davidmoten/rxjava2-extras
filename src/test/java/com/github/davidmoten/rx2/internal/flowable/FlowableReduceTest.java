@@ -11,6 +11,7 @@ import com.github.davidmoten.rx2.flowable.Transformers;
 
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
 
 public final class FlowableReduceTest {
 
@@ -32,6 +33,14 @@ public final class FlowableReduceTest {
         @Override
         public Flowable<Integer> apply(Flowable<Integer> f) throws Exception {
             return f.buffer(2).map(sum);
+        }
+    };
+
+    static final Function<Flowable<Integer>, Flowable<Integer>> reducerAsync = new Function<Flowable<Integer>, Flowable<Integer>>() {
+
+        @Override
+        public Flowable<Integer> apply(Flowable<Integer> f) throws Exception {
+            return f.subscribeOn(Schedulers.computation()).buffer(2).map(sum);
         }
     };
 
@@ -63,13 +72,13 @@ public final class FlowableReduceTest {
         check(4, 2);
     }
 
-    @Test(timeout = 200000000)
+    @Test
     public void testCompletesFourLevels() {
         check(8, 2);
     }
 
     @Test
-    public void testCompletesVariableLevelsWithVaryingDepths() {
+    public void testMany() {
         for (int maxDepthConcurrent = 1; maxDepthConcurrent < 5; maxDepthConcurrent++) {
             for (int n = 5; n <= 100; n++) {
                 check(n, maxDepthConcurrent);
@@ -77,9 +86,26 @@ public final class FlowableReduceTest {
         }
     }
 
+    @Test
+    public void testManyAsync() {
+        for (int maxDepthConcurrent = 1; maxDepthConcurrent < 5; maxDepthConcurrent++) {
+            for (int n = 5; n <= 100; n++) {
+                checkAsync(n, maxDepthConcurrent);
+            }
+        }
+    }
+
+    
     private static void check(int n, int maxDepthConcurrent) {
         int result = Flowable.range(1, n) //
                 .to(Transformers.reduce(reducer, maxDepthConcurrent)) //
+                .blockingGet(-1);
+        Assert.assertEquals(sum(n), result);
+    }
+
+    private static void checkAsync(int n, int maxDepthConcurrent) {
+        int result = Flowable.range(1, n) //
+                .to(Transformers.reduce(reducerAsync, maxDepthConcurrent)) //
                 .blockingGet(-1);
         Assert.assertEquals(sum(n), result);
     }
