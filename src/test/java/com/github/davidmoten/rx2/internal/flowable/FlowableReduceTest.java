@@ -9,6 +9,7 @@ import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.github.davidmoten.rx2.Actions;
@@ -146,7 +147,7 @@ public final class FlowableReduceTest {
     }
 
     @Test
-    public void testDisposerCalled() {
+    public void testUpstreamCancelled() {
         AtomicBoolean cancelled = new AtomicBoolean();
         Flowable.<Integer> never() //
                 .doOnCancel(Actions.setToTrue(cancelled)) //
@@ -156,12 +157,16 @@ public final class FlowableReduceTest {
     }
 
     @Test
+    @Ignore
     public void testErrorPreChaining() {
+        AtomicBoolean cancelled = new AtomicBoolean();
         Flowable.<Integer> error(new ThrowingException()) //
+                .doOnCancel(Actions.setToTrue(cancelled)) //
                 .to(Transformers.reduce(reducer, 2)) //
                 .test() //
                 .assertNoValues() //
                 .assertError(ThrowingException.class);
+        assertTrue(cancelled.get());
     }
 
     @Test
