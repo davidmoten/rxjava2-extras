@@ -15,6 +15,7 @@ import io.reactivex.Maybe;
 import io.reactivex.MaybeObserver;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
+import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Function;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.SpscLinkedArrayQueue;
@@ -43,6 +44,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
         try {
             f = reducer.apply(source);
         } catch (Exception e) {
+            Exceptions.throwIfFatal(e);
             observer.onSubscribe(Disposables.empty());
             observer.onError(e);
             return;
@@ -52,11 +54,12 @@ public final class FlowableReduce<T> extends Maybe<T> {
                 observer);
         info.set(new CountAndFinalSub<T>(1, sub));
         observer.onSubscribe(new InfoDisposable<T>(info));
+        //TODO ensure observer.
         f.onTerminateDetach() //
                 .subscribe(sub);
     }
 
-    private static class InfoDisposable<T> implements Disposable {
+    private static final class InfoDisposable<T> implements Disposable {
 
         private final AtomicReference<CountAndFinalSub<T>> info;
 
@@ -282,6 +285,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
                             try {
                                 f = reducer.apply(previous);
                             } catch (Exception e) {
+                                Exceptions.throwIfFatal(e);
                                 cancelParentAndClear();
                                 observer.onError(e);
                                 return;
