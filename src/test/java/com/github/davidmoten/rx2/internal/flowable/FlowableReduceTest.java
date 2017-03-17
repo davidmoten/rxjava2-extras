@@ -5,7 +5,6 @@ import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.github.davidmoten.rx2.flowable.Transformers;
