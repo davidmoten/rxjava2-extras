@@ -70,11 +70,11 @@ public final class FlowableReduceTest {
     }
 
     @Test
-    @Ignore
-    public void testCompletesVariableLevels() {
-        for (int n = 5; n <= 100; n++) {
-            System.out.println(n);
-            check(n, 2);
+    public void testCompletesVariableLevelsWithVaryingDepths() {
+        for (int maxDepthConcurrent = 1; maxDepthConcurrent < 5; maxDepthConcurrent++) {
+            for (int n = 5; n <= 100; n++) {
+                check(n, maxDepthConcurrent);
+            }
         }
     }
 
