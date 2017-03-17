@@ -47,6 +47,10 @@ dependencies {
 }
 ```
 
+Android
+--------------
+To use *rxjava2-extras* on Android you need these [proguard rules](src/main/proguard/proguard-rules.txt).
+
 Migration
 ------------
 * Primary target type is `Flowable` (the backpressure supporting stream)

@@ -1,0 +1,4 @@
+-dontwarn sun.misc.**
+-dontwarn com.github.davidmoten.rx2.flowable.Serialized*
+-dontwarn com.github.davidmoten.rx2.internal.flowable.buffertofile.MemoryMappedFile
+-dontwarn com.github.davidmoten.rx2.internal.flowable.buffertofile.UnsafeAccess
