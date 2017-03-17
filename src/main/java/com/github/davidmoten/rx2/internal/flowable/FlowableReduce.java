@@ -50,55 +50,13 @@ public final class FlowableReduce<T> extends Maybe<T> {
             return;
         }
         AtomicReference<CountAndFinalSub<T>> info = new AtomicReference<CountAndFinalSub<T>>();
-        InfoDisposable<T> disposable = new InfoDisposable<T>(info);
+        ReduceDisposable<T> disposable = new ReduceDisposable<T>(info);
         ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, disposable, maxChained,
                 reducer, observer);
         info.set(new CountAndFinalSub<T>(1, sub));
         observer.onSubscribe(disposable);
         f.onTerminateDetach() //
                 .subscribe(sub);
-    }
-
-    private static final class InfoDisposable<T> implements Disposable {
-
-        private final AtomicReference<CountAndFinalSub<T>> info;
-
-        InfoDisposable(AtomicReference<CountAndFinalSub<T>> info) {
-            this.info = info;
-        }
-
-        @Override
-        public void dispose() {
-            // CAS loop to dispose final subscriber
-            while (true) {
-                CountAndFinalSub<T> c = info.get();
-                CountAndFinalSub<T> c2 = CountAndFinalSub.create(c.count, c.finalSubscriber);
-                if (info.compareAndSet(c, c2)) {
-                    c.finalSubscriber.cancel();
-                    break;
-                }
-            }
-        }
-
-        @Override
-        public boolean isDisposed() {
-            return info.get().finalSubscriber.cancelled();
-        }
-    }
-
-    private static final class CountAndFinalSub<T> {
-        final int count;
-        final ReduceReplaySubject<T> finalSubscriber;
-
-        static <T> CountAndFinalSub<T> create(int count, ReduceReplaySubject<T> finalSubscriber) {
-            return new CountAndFinalSub<T>(count, finalSubscriber);
-        }
-
-        CountAndFinalSub(int count, ReduceReplaySubject<T> finalSubscriber) {
-            this.count = count;
-            this.finalSubscriber = finalSubscriber;
-        }
-
     }
 
     /**
@@ -117,7 +75,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
         private final int maxChained;
         private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
         private final MaybeObserver<? super T> observer;
-        private final InfoDisposable<T> disposable;
+        private final ReduceDisposable<T> disposable;
 
         // assigned here
         private final SimplePlainQueue<T> queue = new SpscLinkedArrayQueue<T>(16);
@@ -135,8 +93,8 @@ public final class FlowableReduce<T> extends Maybe<T> {
         private T last;
         private boolean childExists;
 
-        ReduceReplaySubject(AtomicReference<CountAndFinalSub<T>> info, InfoDisposable<T> disposable,
-                int maxDepthConcurrent,
+        ReduceReplaySubject(AtomicReference<CountAndFinalSub<T>> info,
+                ReduceDisposable<T> disposable, int maxDepthConcurrent,
                 Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
                 MaybeObserver<? super T> observer) {
             this.info = info;
@@ -256,7 +214,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
                 }
             }
         }
-        
+
         private void cancelWholeChain() {
             disposable.dispose();
         }
@@ -333,7 +291,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
 
         private void drain() {
             // this is a pretty standard drain loop
-            // TODO don't delay errors
+            // default is to shortcut errors (don't delay them)
             if (wip.getAndIncrement() == 0) {
                 int missed = 1;
                 while (true) {
@@ -345,23 +303,24 @@ public final class FlowableReduce<T> extends Maybe<T> {
                             return;
                         }
                         boolean d = done;
+                        Throwable err = error;
+                        if (err != null) {
+                            queue.clear();
+                            error = null;
+                            cancel();
+                            child.get().onError(err);
+                            return;
+                        }
                         T t = queue.poll();
                         if (t == null) {
                             if (d) {
                                 cancel();
-                                Throwable err = error;
-                                if (err != null) {
-                                    error = null;
-                                    child.get().onError(err);
-                                } else {
-                                    child.get().onComplete();
-                                }
+                                child.get().onComplete();
                                 return;
                             } else {
                                 break;
                             }
                         } else {
-                            last = t;
                             child.get().onNext(t);
                             e++;
                         }
@@ -398,4 +357,45 @@ public final class FlowableReduce<T> extends Maybe<T> {
 
     }
 
+    private static final class ReduceDisposable<T> implements Disposable {
+
+        private final AtomicReference<CountAndFinalSub<T>> info;
+
+        ReduceDisposable(AtomicReference<CountAndFinalSub<T>> info) {
+            this.info = info;
+        }
+
+        @Override
+        public void dispose() {
+            // CAS loop to dispose final subscriber
+            while (true) {
+                CountAndFinalSub<T> c = info.get();
+                CountAndFinalSub<T> c2 = CountAndFinalSub.create(c.count, c.finalSubscriber);
+                if (info.compareAndSet(c, c2)) {
+                    c.finalSubscriber.cancel();
+                    break;
+                }
+            }
+        }
+
+        @Override
+        public boolean isDisposed() {
+            return info.get().finalSubscriber.cancelled();
+        }
+    }
+
+    private static final class CountAndFinalSub<T> {
+        final int count;
+        final ReduceReplaySubject<T> finalSubscriber;
+
+        static <T> CountAndFinalSub<T> create(int count, ReduceReplaySubject<T> finalSubscriber) {
+            return new CountAndFinalSub<T>(count, finalSubscriber);
+        }
+
+        CountAndFinalSub(int count, ReduceReplaySubject<T> finalSubscriber) {
+            this.count = count;
+            this.finalSubscriber = finalSubscriber;
+        }
+
+    }
 }
