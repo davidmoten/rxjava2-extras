@@ -175,21 +175,15 @@ public final class FlowableReduce<T> extends Maybe<T> {
             if (done) {
                 return;
             }
-            cancelParentAndClear();
+            cancelParent();
             if (count <= 1) {
                 // we are finished so report to the observer
                 cancelWholeChain();
-                T t = last;
-                if (t == null) {
-                    observer.onComplete();
-                } else {
-                    last = null;
-                    observer.onSuccess(t);
-                }
+                reportResultToObserver();
             } else {
+                done = true;
                 decrementChainSize();
                 tryToAddSubscriberToChain();
-                done = true;
                 if (childExists()) {
                     drain();
                 }
@@ -207,7 +201,6 @@ public final class FlowableReduce<T> extends Maybe<T> {
             if (childExists()) {
                 drain();
             } else {
-                cancel();
                 cancelWholeChain();
                 observer.onError(t);
             }
@@ -228,6 +221,16 @@ public final class FlowableReduce<T> extends Maybe<T> {
                 } else {
                     return false;
                 }
+            }
+        }
+
+        private void reportResultToObserver() {
+            T t = last;
+            if (t == null) {
+                observer.onComplete();
+            } else {
+                last = null;
+                observer.onSuccess(t);
             }
         }
 
@@ -338,11 +341,17 @@ public final class FlowableReduce<T> extends Maybe<T> {
         public void cancel() {
             if (!cancelled) {
                 cancelled = true;
-                cancelParentAndClear();
+                cancelParentTryToAddSubscriberToChain();
             }
         }
+        
+        private void cancelParentTryToAddSubscriberToChain() {
+            cancelParent();
+            decrementChainSize();
+            tryToAddSubscriberToChain();
+        }
 
-        private void cancelParentAndClear() {
+        private void cancelParent() {
             Subscription par = parent.get();
             if (par != null) {
                 par.cancel();
