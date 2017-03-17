@@ -1,5 +1,6 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -26,8 +27,8 @@ public final class FlowableReduce<T> extends Maybe<T> {
     private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
     private final int maxDepthConcurrent;
 
-    public FlowableReduce(Flowable<T> source, Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
-            int maxDepthConcurrent) {
+    public FlowableReduce(Flowable<T> source,
+            Function<? super Flowable<T>, ? extends Flowable<T>> reducer, int maxDepthConcurrent) {
         Preconditions.checkArgument(maxDepthConcurrent > 0, "depth must be 1 or greater");
         this.source = source;
         this.reducer = reducer;
@@ -36,7 +37,6 @@ public final class FlowableReduce<T> extends Maybe<T> {
 
     @Override
     protected void subscribeActual(MaybeObserver<? super T> observer) {
-        AtomicInteger numLevels = new AtomicInteger(1);
         Flowable<T> f;
         try {
             f = reducer.apply(source);
@@ -44,8 +44,26 @@ public final class FlowableReduce<T> extends Maybe<T> {
             observer.onError(e);
             return;
         }
+        AtomicReference<CountAndFinalSub<T>> info = new AtomicReference<CountAndFinalSub<T>>();
+        ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, maxDepthConcurrent, reducer,
+                observer);
+        info.set(new CountAndFinalSub<T>(1, sub));
         f.onTerminateDetach() //
-                .subscribe(new ReduceReplaySubject<T>(numLevels, maxDepthConcurrent, reducer, observer));
+                .subscribe(sub);
+    }
+
+    private static final class CountAndFinalSub<T> {
+        final int count;
+        final ReduceReplaySubject<T> finalSubscriber;
+
+        static <T> CountAndFinalSub<T> create(int count, ReduceReplaySubject<T> finalSubscriber) {
+            return new CountAndFinalSub<T>(count, finalSubscriber);
+        }
+
+        CountAndFinalSub(int count, ReduceReplaySubject<T> finalSubscriber) {
+            this.count = count;
+            this.finalSubscriber = finalSubscriber;
+        }
     }
 
     /**
@@ -58,7 +76,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
     private static final class ReduceReplaySubject<T> extends Flowable<T>
             implements FlowableSubscriber<T>, Subscription {
 
-        private final AtomicInteger numLevels;
+        private final AtomicReference<CountAndFinalSub<T>> info;
         private final int maxDepthConcurrent;
         private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
         private final MaybeObserver<? super T> observer;
@@ -75,9 +93,10 @@ public final class FlowableReduce<T> extends Maybe<T> {
         private int count;
         private T last;
 
-        ReduceReplaySubject(AtomicInteger numLevels, int maxDepthConcurrent,
-                Function<? super Flowable<T>, ? extends Flowable<T>> reducer, MaybeObserver<? super T> observer) {
-            this.numLevels = numLevels;
+        ReduceReplaySubject(AtomicReference<CountAndFinalSub<T>> info, int maxDepthConcurrent,
+                Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
+                MaybeObserver<? super T> observer) {
+            this.info = info;
             this.maxDepthConcurrent = maxDepthConcurrent;
             this.reducer = reducer;
             this.observer = observer;
@@ -132,20 +151,8 @@ public final class FlowableReduce<T> extends Maybe<T> {
             count++;
             last = t;
             queue.offer(t);
-            if (count == 2) {
-                if (numLevels.get() < maxDepthConcurrent) {
-                    numLevels.incrementAndGet();
-                    Flowable<T> f;
-                    try {
-                        f = reducer.apply(this);
-                    } catch (Exception e) {
-                        onError(e);
-                        return;
-                    }
-                    ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(numLevels, maxDepthConcurrent, reducer,
-                            observer);
-                    f.onTerminateDetach().subscribe(sub);
-                }
+            if (count >= 2) {
+                checkAddSubscriber();
             }
             if (child.get() != null) {
                 drain();
@@ -155,6 +162,46 @@ public final class FlowableReduce<T> extends Maybe<T> {
                 Subscription par = parent.get();
                 if (par != null) {
                     par.request(1);
+                }
+            }
+        }
+
+        private void checkAddSubscriber() {
+
+            while (true) {
+                CountAndFinalSub<T> c = info.get();
+                CountAndFinalSub<T> c2;
+                if (c.count == maxDepthConcurrent) {
+                    c2 = CountAndFinalSub.create(c.count, c.finalSubscriber);
+                    if (info.compareAndSet(c, c2)) {
+                        // don't subscribe again right now
+                        break;
+                    }
+                } else {
+                    ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info,
+                            maxDepthConcurrent, reducer, observer);
+                    ReduceReplaySubject<T> previous = c.finalSubscriber;
+                    c2 = CountAndFinalSub.create(c.count + 1, sub);
+                    if (info.compareAndSet(c, c2)) {
+                        Flowable<T> f;
+                        try {
+                            f = reducer.apply(previous);
+                        } catch (Exception e) {
+                            onError(e);
+                            return;
+                        }
+                        f.onTerminateDetach().subscribe(sub);
+                    }
+                }
+            }
+        }
+
+        private void checkRemoveSubscriber() {
+            while (true) {
+                CountAndFinalSub<T> c = info.get();
+                CountAndFinalSub<T> c2 = CountAndFinalSub.create(c.count - 1, c.finalSubscriber);
+                if (info.compareAndSet(c, c2)) {
+                    break;
                 }
             }
         }
@@ -188,7 +235,8 @@ public final class FlowableReduce<T> extends Maybe<T> {
                     observer.onSuccess(t);
                 }
             } else {
-                numLevels.decrementAndGet();
+                checkRemoveSubscriber();
+                checkAddSubscriber();
                 done = true;
                 if (child.get() != null) {
                     drain();

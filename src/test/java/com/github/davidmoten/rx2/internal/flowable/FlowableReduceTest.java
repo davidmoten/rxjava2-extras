@@ -20,11 +20,11 @@ public final class FlowableReduceTest {
         public Integer apply(List<Integer> list) throws Exception {
             return list.stream().collect(Collectors.summingInt( //
                     new ToIntFunction<Integer>() {
-                        @Override
-                        public int applyAsInt(Integer x) {
-                            return x;
-                        }
-                    }));
+                @Override
+                public int applyAsInt(Integer x) {
+                    return x;
+                }
+            }));
         }
     });
 
@@ -38,7 +38,7 @@ public final class FlowableReduceTest {
 
     @Test
     public void testEmpty() {
-        int result = Flowable.<Integer>empty() //
+        int result = Flowable.<Integer> empty() //
                 .to(Transformers.reduce(reducer, 2)) //
                 .blockingGet(-1);
         Assert.assertEquals(-1, result);
@@ -64,15 +64,7 @@ public final class FlowableReduceTest {
         check(4, 2);
     }
 
-    private static void check(int n, int maxDepthConcurrent) {
-        int result = Flowable.range(1, n) //
-                .to(Transformers.reduce(reducer, maxDepthConcurrent)) //
-                .blockingGet(-1);
-        Assert.assertEquals(sum(n), result);
-    }
-
-    @Test(timeout = 2000)
-    @Ignore
+    @Test(timeout = 200000000)
     public void testCompletesFourLevels() {
         check(8, 2);
     }
@@ -84,6 +76,13 @@ public final class FlowableReduceTest {
             System.out.println(n);
             check(n, 2);
         }
+    }
+
+    private static void check(int n, int maxDepthConcurrent) {
+        int result = Flowable.range(1, n) //
+                .to(Transformers.reduce(reducer, maxDepthConcurrent)) //
+                .blockingGet(-1);
+        Assert.assertEquals(sum(n), result);
     }
 
     private static int sum(int n) {
