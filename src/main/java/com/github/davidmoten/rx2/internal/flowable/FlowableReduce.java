@@ -54,7 +54,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
                 observer);
         info.set(new CountAndFinalSub<T>(1, sub));
         observer.onSubscribe(new InfoDisposable<T>(info));
-        //TODO ensure observer.
+        // TODO ensure observer dispose gets called
         f.onTerminateDetach() //
                 .subscribe(sub);
     }
@@ -286,7 +286,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
                                 f = reducer.apply(previous);
                             } catch (Exception e) {
                                 Exceptions.throwIfFatal(e);
-                                cancelParentAndClear();
+                                cancel();
                                 observer.onError(e);
                                 return;
                             }
@@ -331,7 +331,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
                         T t = queue.poll();
                         if (t == null) {
                             if (d) {
-                                cancelParentAndClear();
+                                cancel();
                                 Throwable err = error;
                                 if (err != null) {
                                     error = null;
@@ -362,8 +362,10 @@ public final class FlowableReduce<T> extends Maybe<T> {
 
         @Override
         public void cancel() {
-            cancelled = true;
-            cancelParentAndClear();
+            if (!cancelled) {
+                cancelled = true;
+                cancelParentAndClear();
+            }
         }
 
         private void cancelParentAndClear() {
