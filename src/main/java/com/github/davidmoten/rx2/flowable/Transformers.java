@@ -313,11 +313,11 @@ public final class Transformers {
     }
 
     public static <T> Function<Flowable<T>, Maybe<T>> reduce(
-            final Function<? super Flowable<T>, ? extends Flowable<T>> reducer, final int maxDepthConcurrent) {
+            final Function<? super Flowable<T>, ? extends Flowable<T>> reducer, final int maxChained) {
         return new Function<Flowable<T>, Maybe<T>>() {
             @Override
             public Maybe<T> apply(Flowable<T> source) {
-                return new FlowableReduce<T>(source, reducer, maxDepthConcurrent);
+                return new FlowableReduce<T>(source, reducer, maxChained);
             }
         };
     }
