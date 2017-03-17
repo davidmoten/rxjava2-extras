@@ -55,7 +55,6 @@ public final class FlowableReduce<T> extends Maybe<T> {
         info.set(new CountAndFinalSub<T>(1, sub));
         InfoDisposable<T> disposable = new InfoDisposable<T>(info);
         observer.onSubscribe(disposable);
-        // TODO ensure observer dispose gets called
         f.onTerminateDetach() //
                 .subscribe(sub);
     }
