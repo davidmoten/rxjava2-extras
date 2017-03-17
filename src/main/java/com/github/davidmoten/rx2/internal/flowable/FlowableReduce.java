@@ -29,8 +29,8 @@ public final class FlowableReduce<T> extends Maybe<T> {
     private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
     private final int maxChained;
 
-    public FlowableReduce(Flowable<T> source,
-            Function<? super Flowable<T>, ? extends Flowable<T>> reducer, int maxChained) {
+    public FlowableReduce(Flowable<T> source, Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
+            int maxChained) {
         Preconditions.checkArgument(maxChained > 0, "maxChained must be 1 or greater");
         this.source = source;
         this.reducer = reducer;
@@ -51,8 +51,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
         }
         AtomicReference<CountAndFinalSub<T>> info = new AtomicReference<CountAndFinalSub<T>>();
         ReduceDisposable<T> disposable = new ReduceDisposable<T>(info);
-        ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, disposable, maxChained,
-                reducer, observer);
+        ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, disposable, maxChained, reducer, observer);
         info.set(new CountAndFinalSub<T>(1, sub));
         observer.onSubscribe(disposable);
         f.onTerminateDetach() //
@@ -93,9 +92,8 @@ public final class FlowableReduce<T> extends Maybe<T> {
         private T last;
         private boolean childExists;
 
-        ReduceReplaySubject(AtomicReference<CountAndFinalSub<T>> info,
-                ReduceDisposable<T> disposable, int maxDepthConcurrent,
-                Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
+        ReduceReplaySubject(AtomicReference<CountAndFinalSub<T>> info, ReduceDisposable<T> disposable,
+                int maxDepthConcurrent, Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
                 MaybeObserver<? super T> observer) {
             this.info = info;
             this.disposable = disposable;
@@ -173,6 +171,32 @@ public final class FlowableReduce<T> extends Maybe<T> {
         }
 
         @Override
+        public void onComplete() {
+            if (done) {
+                return;
+            }
+            cancelParentAndClear();
+            if (count <= 1) {
+                // we are finished so report to the observer
+                cancelWholeChain();
+                T t = last;
+                if (t == null) {
+                    observer.onComplete();
+                } else {
+                    last = null;
+                    observer.onSuccess(t);
+                }
+            } else {
+                decrementChainSize();
+                tryToAddSubscriberToChain();
+                done = true;
+                if (childExists()) {
+                    drain();
+                }
+            }
+        }
+
+        @Override
         public void onError(Throwable t) {
             if (done) {
                 RxJavaPlugins.onError(t);
@@ -186,32 +210,6 @@ public final class FlowableReduce<T> extends Maybe<T> {
                 cancel();
                 cancelWholeChain();
                 observer.onError(t);
-            }
-        }
-
-        @Override
-        public void onComplete() {
-            if (done) {
-                return;
-            }
-            cancelParentAndClear();
-            if (count <= 1) {
-                // we are finished so report to the observer
-                cancelWholeChain();
-                if (last == null) {
-                    observer.onComplete();
-                } else {
-                    T t = last;
-                    last = null;
-                    observer.onSuccess(t);
-                }
-            } else {
-                removeSubscriberFromChain();
-                tryToAddSubscriberToChain();
-                done = true;
-                if (childExists()) {
-                    drain();
-                }
             }
         }
 
@@ -247,8 +245,8 @@ public final class FlowableReduce<T> extends Maybe<T> {
                         break;
                     }
                 } else {
-                    ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, disposable,
-                            maxChained, reducer, observer);
+                    ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, disposable, maxChained, reducer,
+                            observer);
                     ReduceReplaySubject<T> previous = c.finalSubscriber;
                     if (previous.count >= 2) {
                         // only add a subscriber to the chain once the number of
@@ -278,7 +276,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
             }
         }
 
-        private void removeSubscriberFromChain() {
+        private void decrementChainSize() {
             // CAS loop to reduce the number of chained subscribers by 1
             while (true) {
                 CountAndFinalSub<T> c = info.get();
