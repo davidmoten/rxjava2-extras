@@ -5,8 +5,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.ToIntFunction;
-import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -25,13 +23,11 @@ public final class FlowableReduceTest {
     private static final Function<List<Integer>, Integer> sum = (new Function<List<Integer>, Integer>() {
         @Override
         public Integer apply(List<Integer> list) throws Exception {
-            return list.stream().collect(Collectors.summingInt( //
-                    new ToIntFunction<Integer>() {
-                @Override
-                public int applyAsInt(Integer x) {
-                    return x;
-                }
-            }));
+            int sum = 0;
+            for (int value:list) {
+                sum+= value;
+            };
+            return sum;
         }
     });
 

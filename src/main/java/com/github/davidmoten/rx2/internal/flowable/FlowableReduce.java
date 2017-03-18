@@ -28,6 +28,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
     private final Flowable<T> source;
     private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
     private final int maxChained;
+    private final long maxIterations = 100;
 
     public FlowableReduce(Flowable<T> source, Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
             int maxChained) {
@@ -51,7 +52,8 @@ public final class FlowableReduce<T> extends Maybe<T> {
         }
         AtomicReference<CountAndFinalSub<T>> info = new AtomicReference<CountAndFinalSub<T>>();
         ReduceDisposable<T> disposable = new ReduceDisposable<T>(info);
-        ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, disposable, maxChained, reducer, observer);
+        ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, disposable, maxChained, reducer, maxIterations, 1,
+                observer);
         info.set(new CountAndFinalSub<T>(1, sub));
         observer.onSubscribe(disposable);
         f.onTerminateDetach() //
@@ -75,6 +77,8 @@ public final class FlowableReduce<T> extends Maybe<T> {
         private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
         private final MaybeObserver<? super T> observer;
         private final ReduceDisposable<T> disposable;
+        private final long maxIterations;
+        private final long iteration;
 
         // assigned here
         private final SimplePlainQueue<T> queue = new SpscLinkedArrayQueue<T>(16);
@@ -94,11 +98,13 @@ public final class FlowableReduce<T> extends Maybe<T> {
 
         ReduceReplaySubject(AtomicReference<CountAndFinalSub<T>> info, ReduceDisposable<T> disposable,
                 int maxDepthConcurrent, Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
-                MaybeObserver<? super T> observer) {
+                long maxIterations, long iteration, MaybeObserver<? super T> observer) {
             this.info = info;
             this.disposable = disposable;
             this.maxChained = maxDepthConcurrent;
             this.reducer = reducer;
+            this.maxIterations = maxIterations;
+            this.iteration = iteration;
             this.observer = observer;
         }
 
@@ -109,7 +115,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
         @Override
         public void onSubscribe(Subscription parent) {
             if (SubscriptionHelper.setOnce(this.parent, parent)) {
-                unreconciledRequests.incrementAndGet();
+                unreconciledRequests.getAndIncrement();
                 parent.request(1);
             }
         }
@@ -249,7 +255,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
                     }
                 } else {
                     ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, disposable, maxChained, reducer,
-                            observer);
+                            maxIterations, iteration + 1, observer);
                     ReduceReplaySubject<T> previous = c.finalSubscriber;
                     if (previous.count >= 2) {
                         // only add a subscriber to the chain once the number of
@@ -344,7 +350,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
                 cancelParentTryToAddSubscriberToChain();
             }
         }
-        
+
         private void cancelParentTryToAddSubscriberToChain() {
             cancelParent();
             decrementChainSize();
