@@ -316,7 +316,7 @@ public final class Transformers {
         return new Function<Flowable<T>, Flowable<T>>() {
             @Override
             public Flowable<T> apply(Flowable<T> source) {
-                return new FlowableReduce<T>(source, reducer, maxChained);
+                return new FlowableReduce<T>(source, reducer, maxChained, 0);
             }
         };
     }
