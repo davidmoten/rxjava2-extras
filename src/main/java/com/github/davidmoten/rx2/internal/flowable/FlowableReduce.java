@@ -11,10 +11,6 @@ import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
 import io.reactivex.FlowableSubscriber;
-import io.reactivex.Maybe;
-import io.reactivex.MaybeObserver;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.disposables.Disposables;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Function;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
@@ -23,7 +19,7 @@ import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 import io.reactivex.plugins.RxJavaPlugins;
 
-public final class FlowableReduce<T> extends Maybe<T> {
+public final class FlowableReduce<T> extends Flowable<T> {
 
     private final Flowable<T> source;
     private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
@@ -39,23 +35,33 @@ public final class FlowableReduce<T> extends Maybe<T> {
     }
 
     @Override
-    protected void subscribeActual(MaybeObserver<? super T> observer) {
+    protected void subscribeActual(Subscriber<? super T> child) {
 
         Flowable<T> f;
         try {
             f = reducer.apply(source);
         } catch (Exception e) {
             Exceptions.throwIfFatal(e);
-            observer.onSubscribe(Disposables.empty());
-            observer.onError(e);
+            child.onSubscribe(new Subscription() {
+
+                @Override
+                public void request(long n) {
+                    //do nothing
+                }
+
+                @Override
+                public void cancel() {
+                    //do nothing
+                }});
+            child.onError(e);
             return;
         }
         AtomicReference<CountAndFinalSub<T>> info = new AtomicReference<CountAndFinalSub<T>>();
         ReduceDisposable<T> disposable = new ReduceDisposable<T>(info);
         ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, disposable, maxChained, reducer, maxIterations, 1,
-                observer);
+                child);
         info.set(new CountAndFinalSub<T>(1, sub));
-        observer.onSubscribe(disposable);
+        child.onSubscribe(disposable);
         f.onTerminateDetach() //
                 .subscribe(sub);
     }
@@ -75,7 +81,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
         private final AtomicReference<CountAndFinalSub<T>> info;
         private final int maxChained;
         private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
-        private final MaybeObserver<? super T> observer;
+        private final Subscriber<? super T> destination;
         private final ReduceDisposable<T> disposable;
         private final long maxIterations;
         private final long iteration;
@@ -98,14 +104,14 @@ public final class FlowableReduce<T> extends Maybe<T> {
 
         ReduceReplaySubject(AtomicReference<CountAndFinalSub<T>> info, ReduceDisposable<T> disposable,
                 int maxDepthConcurrent, Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
-                long maxIterations, long iteration, MaybeObserver<? super T> observer) {
+                long maxIterations, long iteration, Subscriber<? super T> destination) {
             this.info = info;
             this.disposable = disposable;
             this.maxChained = maxDepthConcurrent;
             this.reducer = reducer;
             this.maxIterations = maxIterations;
             this.iteration = iteration;
-            this.observer = observer;
+            this.destination = destination;
         }
 
         public boolean cancelled() {
@@ -208,12 +214,12 @@ public final class FlowableReduce<T> extends Maybe<T> {
                 drain();
             } else {
                 cancelWholeChain();
-                observer.onError(t);
+                destination.onError(t);
             }
         }
 
         private void cancelWholeChain() {
-            disposable.dispose();
+            disposable.cancel();
         }
 
         private boolean childExists() {
@@ -233,10 +239,11 @@ public final class FlowableReduce<T> extends Maybe<T> {
         private void reportResultToObserver() {
             T t = last;
             if (t == null) {
-                observer.onComplete();
+                destination.onComplete();
             } else {
                 last = null;
-                observer.onSuccess(t);
+                destination.onNext(t);
+                destination.onComplete();
             }
         }
 
@@ -255,7 +262,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
                     }
                 } else {
                     ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, disposable, maxChained, reducer,
-                            maxIterations, iteration + 1, observer);
+                            maxIterations, iteration + 1, destination);
                     ReduceReplaySubject<T> previous = c.finalSubscriber;
                     if (previous.count >= 2) {
                         // only add a subscriber to the chain once the number of
@@ -269,7 +276,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
                                 Exceptions.throwIfFatal(e);
                                 cancel();
                                 cancelWholeChain();
-                                observer.onError(e);
+                                destination.onError(e);
                                 return;
                             }
                             f.onTerminateDetach().subscribe(sub);
@@ -370,7 +377,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
 
     }
 
-    private static final class ReduceDisposable<T> implements Disposable {
+    private static final class ReduceDisposable<T> implements Subscription {
 
         private final AtomicReference<CountAndFinalSub<T>> info;
 
@@ -379,7 +386,7 @@ public final class FlowableReduce<T> extends Maybe<T> {
         }
 
         @Override
-        public void dispose() {
+        public void cancel() {
             // CAS loop to dispose final subscriber
             while (true) {
                 CountAndFinalSub<T> c = info.get();
@@ -392,9 +399,10 @@ public final class FlowableReduce<T> extends Maybe<T> {
         }
 
         @Override
-        public boolean isDisposed() {
-            return info.get().finalSubscriber.cancelled();
+        public void request(long n) {
+            //do nothing
         }
+
     }
 
     private static final class CountAndFinalSub<T> {

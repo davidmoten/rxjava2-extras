@@ -31,7 +31,6 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableTransformer;
-import io.reactivex.Maybe;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.BiPredicate;
@@ -312,11 +311,11 @@ public final class Transformers {
         return rebatchRequests(minRequest, maxRequest, true);
     }
 
-    public static <T> Function<Flowable<T>, Maybe<T>> reduce(
+    public static <T> Function<Flowable<T>, Flowable<T>> reduce(
             final Function<? super Flowable<T>, ? extends Flowable<T>> reducer, final int maxChained) {
-        return new Function<Flowable<T>, Maybe<T>>() {
+        return new Function<Flowable<T>, Flowable<T>>() {
             @Override
-            public Maybe<T> apply(Flowable<T> source) {
+            public Flowable<T> apply(Flowable<T> source) {
                 return new FlowableReduce<T>(source, reducer, maxChained);
             }
         };

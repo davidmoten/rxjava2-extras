@@ -72,7 +72,8 @@ public final class FlowableReduceTest {
     public void testEmpty() {
         int result = Flowable.<Integer> empty() //
                 .to(Transformers.reduce(reducer, 2)) //
-                .blockingGet(-1);
+                .single(-1) //
+                .blockingGet();
         Assert.assertEquals(-1, result);
     }
 
@@ -177,14 +178,16 @@ public final class FlowableReduceTest {
     private static void check(int n, int maxChained) {
         int result = Flowable.range(1, n) //
                 .to(Transformers.reduce(reducer, maxChained)) //
-                .blockingGet(-1);
+                .single(-1) //
+                .blockingGet();
         Assert.assertEquals(sum(n), result);
     }
 
     private static void checkAsync(int n, int maxChained) {
         int result = Flowable.range(1, n) //
                 .to(Transformers.reduce(reducerAsync, maxChained)) //
-                .blockingGet(-1);
+                .single(-1) //
+                .blockingGet();
         Assert.assertEquals(sum(n), result);
     }
 
