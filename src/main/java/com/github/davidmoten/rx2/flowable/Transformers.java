@@ -312,12 +312,18 @@ public final class Transformers {
     }
 
     public static <T> Function<Flowable<T>, Flowable<T>> reduce(
-            final Function<? super Flowable<T>, ? extends Flowable<T>> reducer, final int maxChained) {
+            final Function<? super Flowable<T>, ? extends Flowable<T>> reducer, final int maxChained,
+            final int maxIterations) {
         return new Function<Flowable<T>, Flowable<T>>() {
             @Override
             public Flowable<T> apply(Flowable<T> source) {
-                return new FlowableReduce<T>(source, reducer, maxChained, 0);
+                return new FlowableReduce<T>(source, reducer, maxChained, maxIterations);
             }
         };
+    }
+
+    public static <T> Function<Flowable<T>, Flowable<T>> reduce(
+            final Function<? super Flowable<T>, ? extends Flowable<T>> reducer, final int maxChained) {
+        return reduce(reducer, maxChained, 0);
     }
 }
