@@ -274,16 +274,15 @@ public final class FlowableReduce<T> extends Flowable<T> {
                             }
                             f.onTerminateDetach().subscribe(destination);
                         }
-                    } else {
+                    } else if (maxIterations == 0) {
                         ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, disposable, maxChained, reducer,
                                 maxIterations, iteration + 1, destination);
                         ReduceReplaySubject<T> previous = c.finalSubscriber;
                         final CountAndFinalSub<T> c2;
                         if (previous.count >= 2) {
                             // only add a subscriber to the chain once the
-                            // number of
-                            // items received by the final subscriber reaches
-                            // two
+                            // number of items received by the final subscriber
+                            // reaches two
                             c2 = CountAndFinalSub.create(c.count + 1, sub);
                             if (info.compareAndSet(c, c2)) {
                                 Flowable<T> f;

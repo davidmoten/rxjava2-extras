@@ -24,9 +24,10 @@ public final class FlowableReduceTest {
         @Override
         public Integer apply(List<Integer> list) throws Exception {
             int sum = 0;
-            for (int value:list) {
-                sum+= value;
-            };
+            for (int value : list) {
+                sum += value;
+            }
+            ;
             return sum;
         }
     });
@@ -36,6 +37,20 @@ public final class FlowableReduceTest {
         @Override
         public Flowable<Integer> apply(Flowable<Integer> f) throws Exception {
             return f.buffer(2).map(sum);
+        }
+    };
+
+    private static final Function<Flowable<Integer>, Flowable<Integer>> plusOne = new Function<Flowable<Integer>, Flowable<Integer>>() {
+
+        @Override
+        public Flowable<Integer> apply(Flowable<Integer> f) throws Exception {
+            return f.map(new Function<Integer, Integer>() {
+
+                @Override
+                public Integer apply(Integer t) throws Exception {
+                    return t + 1;
+                }
+            });
         }
     };
 
@@ -70,7 +85,7 @@ public final class FlowableReduceTest {
 
     @Test
     public void testEmpty() {
-        int result = Flowable.<Integer> empty() //
+        int result = Flowable.<Integer>empty() //
                 .to(Transformers.reduce(reducer, 2)) //
                 .single(-1) //
                 .blockingGet();
@@ -146,7 +161,7 @@ public final class FlowableReduceTest {
     @Test
     public void testUpstreamCancelled() {
         AtomicBoolean cancelled = new AtomicBoolean();
-        Flowable.<Integer> never() //
+        Flowable.<Integer>never() //
                 .doOnCancel(Actions.setToTrue(cancelled)) //
                 .to(Transformers.reduce(reducer, 2)) //
                 .test().cancel();
@@ -157,7 +172,7 @@ public final class FlowableReduceTest {
     @Ignore
     public void testErrorPreChaining() {
         AtomicBoolean cancelled = new AtomicBoolean();
-        Flowable.<Integer> error(new ThrowingException()) //
+        Flowable.<Integer>error(new ThrowingException()) //
                 .doOnCancel(Actions.setToTrue(cancelled)) //
                 .to(Transformers.reduce(reducer, 2)) //
                 .test() //
@@ -168,11 +183,21 @@ public final class FlowableReduceTest {
 
     @Test
     public void testErrorPostChaining() {
-        Flowable.range(1, 100).concatWith(Flowable.<Integer> error(new ThrowingException())) //
+        Flowable.range(1, 100) //
+                .concatWith(Flowable.<Integer>error(new ThrowingException())) //
                 .to(Transformers.reduce(reducer, 2)) //
                 .test() //
                 .assertNoValues() //
                 .assertError(ThrowingException.class);
+    }
+
+    @Test(timeout=2000)
+    @Ignore
+    public void testMaxIterations() {
+        Flowable.range(1, 3) //
+                .to(Transformers.reduce(plusOne, 3, 10)) //
+                .test().assertValues(11, 12, 13) //
+                .assertComplete();
     }
 
     private static void check(int n, int maxChained) {
