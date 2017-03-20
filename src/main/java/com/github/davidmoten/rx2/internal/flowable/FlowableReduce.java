@@ -43,18 +43,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
             f = reducer.apply(source);
         } catch (Exception e) {
             Exceptions.throwIfFatal(e);
-            child.onSubscribe(new Subscription() {
-
-                @Override
-                public void request(long n) {
-                    // do nothing
-                }
-
-                @Override
-                public void cancel() {
-                    // do nothing
-                }
-            });
+            child.onSubscribe(SubscriptionHelper.CANCELLED);
             child.onError(e);
             return;
         }
