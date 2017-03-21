@@ -11,6 +11,7 @@ import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
 import io.reactivex.FlowableSubscriber;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Function;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
@@ -18,6 +19,7 @@ import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 import io.reactivex.plugins.RxJavaPlugins;
+import rx.subscriptions.CompositeSubscription;
 
 public final class FlowableReduce<T> extends Flowable<T> {
 
@@ -48,12 +50,11 @@ public final class FlowableReduce<T> extends Flowable<T> {
             return;
         }
         AtomicReference<CountAndFinalSub<T>> info = new AtomicReference<CountAndFinalSub<T>>();
-        ReduceDisposable<T> disposable = new ReduceDisposable<T>(info);
-        Buffering<T> destination = new Buffering<T>(child);
+        ChainSubscription<T> disposable = new ChainSubscription<T>(info);
+        Buffering<T> destination = new Buffering<T>(child, disposable);
         ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, disposable, maxChained, reducer, maxIterations, 1,
                 destination);
         info.set(new CountAndFinalSub<T>(1, sub));
-        child.onSubscribe(disposable);
         f.onTerminateDetach() //
                 .subscribe(sub);
     }
@@ -62,6 +63,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
     private static class Buffering<T> extends AtomicInteger implements Subscriber<T>, Subscription {
 
         private final Subscriber<? super T> child;
+        private final ChainSubscription<T> disposable;
 
         private final AtomicReference<Subscription> parent = new AtomicReference<Subscription>();
         private final AtomicLong requested = new AtomicLong();
@@ -71,14 +73,15 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private volatile boolean done;
         private volatile boolean cancelled;
 
-        public Buffering(Subscriber<? super T> child) {
+        public Buffering(Subscriber<? super T> child, ChainSubscription<T> chainSubscription) {
             this.child = child;
+            this.disposable = chainSubscription;
         }
 
         @Override
         public void onSubscribe(Subscription parent) {
             if (SubscriptionHelper.deferredSetOnce(this.parent, requested, parent)) {
-                child.onSubscribe(this);
+                child.onSubscribe(new MultiSubscription(this, disposable));
                 drain();
             }
         }
@@ -179,7 +182,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private final int maxChained;
         private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
         private final Buffering<T> destination;
-        private final ReduceDisposable<T> disposable;
+        private final ChainSubscription<T> disposable;
         private final long maxIterations;
         private final long iteration;
 
@@ -199,7 +202,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private T last;
         private boolean childExists;
 
-        ReduceReplaySubject(AtomicReference<CountAndFinalSub<T>> info, ReduceDisposable<T> disposable,
+        ReduceReplaySubject(AtomicReference<CountAndFinalSub<T>> info, ChainSubscription<T> disposable,
                 int maxDepthConcurrent, Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
                 long maxIterations, long iteration, Buffering<T> destination) {
             this.info = info;
@@ -489,11 +492,11 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
     }
 
-    private static final class ReduceDisposable<T> implements Subscription {
+    private static final class ChainSubscription<T> implements Subscription {
 
         private final AtomicReference<CountAndFinalSub<T>> info;
 
-        ReduceDisposable(AtomicReference<CountAndFinalSub<T>> info) {
+        ChainSubscription(AtomicReference<CountAndFinalSub<T>> info) {
             this.info = info;
         }
 
@@ -531,4 +534,28 @@ public final class FlowableReduce<T> extends Flowable<T> {
         }
 
     }
+
+    private static final class MultiSubscription implements Subscription {
+
+        private final Subscription primary;
+        private final Subscription secondary;
+
+        MultiSubscription(Subscription primary, Subscription secondary) {
+            this.primary = primary;
+            this.secondary = secondary;
+        }
+
+        @Override
+        public void request(long n) {
+            primary.request(n);
+        }
+
+        @Override
+        public void cancel() {
+            primary.cancel();
+            secondary.cancel();
+        }
+
+    }
+
 }
