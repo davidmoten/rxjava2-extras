@@ -49,12 +49,118 @@ public final class FlowableReduce<T> extends Flowable<T> {
         }
         AtomicReference<CountAndFinalSub<T>> info = new AtomicReference<CountAndFinalSub<T>>();
         ReduceDisposable<T> disposable = new ReduceDisposable<T>(info);
+        Buffering<T> destination = new Buffering<T>(child);
         ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, disposable, maxChained, reducer, maxIterations, 1,
-                child);
+                destination);
         info.set(new CountAndFinalSub<T>(1, sub));
         child.onSubscribe(disposable);
         f.onTerminateDetach() //
                 .subscribe(sub);
+    }
+
+    @SuppressWarnings("serial")
+    private static class Buffering<T> extends AtomicInteger implements Subscriber<T>, Subscription {
+
+        private final Subscriber<? super T> child;
+
+        private final AtomicReference<Subscription> parent = new AtomicReference<Subscription>();
+        private final AtomicLong requested = new AtomicLong();
+        private final SimplePlainQueue<T> queue = new SpscLinkedArrayQueue<T>(16);
+
+        private Throwable error;
+        private volatile boolean done;
+        private volatile boolean cancelled;
+
+        public Buffering(Subscriber<? super T> child) {
+            this.child = child;
+        }
+
+        @Override
+        public void onSubscribe(Subscription parent) {
+            if (SubscriptionHelper.deferredSetOnce(this.parent, requested, parent)) {
+                child.onSubscribe(this);
+                drain();
+            }
+        }
+
+        @Override
+        public void request(long n) {
+            SubscriptionHelper.deferredRequest(this.parent, requested, n);
+            drain();
+        }
+
+        @Override
+        public void cancel() {
+            cancelled = true;
+            SubscriptionHelper.cancel(this.parent);
+        }
+
+        @Override
+        public void onNext(T t) {
+            queue.offer(t);
+            drain();
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            error = e;
+            done = true;
+            drain();
+        }
+
+        @Override
+        public void onComplete() {
+            done = true;
+            drain();
+        }
+
+        private void drain() {
+            // this is a pretty standard drain loop
+            // default is to shortcut errors (don't delay them)
+            if (getAndIncrement() == 0) {
+                int missed = 1;
+                while (true) {
+                    long r = requested.get();
+                    long e = 0;
+                    while (e != r) {
+                        if (cancelled) {
+                            queue.clear();
+                            return;
+                        }
+                        boolean d = done;
+                        Throwable err = error;
+                        if (err != null) {
+                            queue.clear();
+                            error = null;
+                            cancel();
+                            child.onError(err);
+                            return;
+                        }
+                        T t = queue.poll();
+                        if (t == null) {
+                            if (d) {
+                                cancel();
+                                child.onComplete();
+                                return;
+                            } else {
+                                break;
+                            }
+                        } else {
+                            child.onNext(t);
+                            e++;
+                        }
+                    }
+                    if (e != 0 && r != Long.MAX_VALUE) {
+                        r = requested.addAndGet(-e);
+                    }
+                    missed = addAndGet(-missed);
+                    if (missed == 0) {
+                        return;
+                    }
+                }
+            }
+        }
+
     }
 
     /**
@@ -72,7 +178,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private final AtomicReference<CountAndFinalSub<T>> info;
         private final int maxChained;
         private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
-        private final Subscriber<? super T> destination;
+        private final Buffering<T> destination;
         private final ReduceDisposable<T> disposable;
         private final long maxIterations;
         private final long iteration;
@@ -95,7 +201,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         ReduceReplaySubject(AtomicReference<CountAndFinalSub<T>> info, ReduceDisposable<T> disposable,
                 int maxDepthConcurrent, Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
-                long maxIterations, long iteration, Subscriber<? super T> destination) {
+                long maxIterations, long iteration, Buffering<T> destination) {
             this.info = info;
             this.disposable = disposable;
             this.maxChained = maxDepthConcurrent;
