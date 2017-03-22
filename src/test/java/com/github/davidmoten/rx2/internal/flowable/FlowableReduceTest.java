@@ -202,6 +202,16 @@ public final class FlowableReduceTest {
                 .assertValues(3, 7) //
                 .assertComplete();
     }
+    
+    @Test(timeout = 2000)
+    @Ignore
+    public void testMaxIterationsTwoMaxChainedThree() {
+        Flowable.just(1, 5) //
+                .to(Transformers.reduce(plusOne, 3, 2)) //
+                .test() //
+                .assertValues(4, 8) //
+                .assertComplete();
+    }
 
     @Test(timeout = 2000)
     @Ignore
