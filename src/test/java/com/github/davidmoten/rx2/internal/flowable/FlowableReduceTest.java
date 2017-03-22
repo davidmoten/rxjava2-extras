@@ -107,7 +107,7 @@ public final class FlowableReduceTest {
         check(3, 2);
     }
 
-    @Test(timeout=1000)
+    @Test(timeout = 1000)
     public void testCompletesThirdLevel() {
         check(4, 2);
     }
@@ -191,12 +191,23 @@ public final class FlowableReduceTest {
                 .assertError(ThrowingException.class);
     }
 
-    @Test(timeout=2000)
+    @Test
+    @Ignore
+    public void testMaxIterationsOne() {
+        Flowable.range(1, 3) //
+                .to(Transformers.reduce(plusOne, 3, 1)) //
+                .test() //
+                .assertValues(2, 3, 4) //
+                .assertComplete();
+    }
+
+    @Test(timeout = 2000)
     @Ignore
     public void testMaxIterations() {
         Flowable.range(1, 3) //
                 .to(Transformers.reduce(plusOne, 3, 10)) //
-                .test().assertValues(11, 12, 13) //
+                .test() //
+                .assertValues(11, 12, 13) //
                 .assertComplete();
     }
 
