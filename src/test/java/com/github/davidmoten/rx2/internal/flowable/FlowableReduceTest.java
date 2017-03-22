@@ -18,7 +18,6 @@ import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
-@Ignore
 public final class FlowableReduceTest {
 
     private static final Function<List<Integer>, Integer> sum = (new Function<List<Integer>, Integer>() {

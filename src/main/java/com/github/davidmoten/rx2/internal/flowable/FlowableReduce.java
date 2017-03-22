@@ -11,7 +11,6 @@ import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
 import io.reactivex.FlowableSubscriber;
-import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Function;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
@@ -19,7 +18,6 @@ import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 import io.reactivex.plugins.RxJavaPlugins;
-import rx.subscriptions.CompositeSubscription;
 
 public final class FlowableReduce<T> extends Flowable<T> {
 
@@ -52,6 +50,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         AtomicReference<CountAndFinalSub<T>> info = new AtomicReference<CountAndFinalSub<T>>();
         ChainSubscription<T> disposable = new ChainSubscription<T>(info);
         Buffering<T> destination = new Buffering<T>(child, disposable);
+        destination.subscribe(child);
         ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, disposable, maxChained, reducer, maxIterations, 1,
                 destination);
         info.set(new CountAndFinalSub<T>(1, sub));
@@ -59,12 +58,12 @@ public final class FlowableReduce<T> extends Flowable<T> {
                 .subscribe(sub);
     }
 
-    @SuppressWarnings("serial")
-    private static class Buffering<T> extends AtomicInteger implements Subscriber<T>, Subscription {
+    private static class Buffering<T> extends Flowable<T> implements Subscriber<T>, Subscription {
 
         private final Subscriber<? super T> child;
         private final ChainSubscription<T> disposable;
 
+        private final AtomicInteger wip = new AtomicInteger();
         private final AtomicReference<Subscription> parent = new AtomicReference<Subscription>();
         private final AtomicLong requested = new AtomicLong();
         private final SimplePlainQueue<T> queue = new SpscLinkedArrayQueue<T>(16);
@@ -79,9 +78,13 @@ public final class FlowableReduce<T> extends Flowable<T> {
         }
 
         @Override
+        protected void subscribeActual(Subscriber<? super T> child) {
+            child.onSubscribe(new MultiSubscription(this, disposable));
+        }
+
+        @Override
         public void onSubscribe(Subscription parent) {
             if (SubscriptionHelper.deferredSetOnce(this.parent, requested, parent)) {
-                child.onSubscribe(new MultiSubscription(this, disposable));
                 drain();
             }
         }
@@ -120,7 +123,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private void drain() {
             // this is a pretty standard drain loop
             // default is to shortcut errors (don't delay them)
-            if (getAndIncrement() == 0) {
+            if (wip.getAndIncrement() == 0) {
                 int missed = 1;
                 while (true) {
                     long r = requested.get();
@@ -156,7 +159,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                     if (e != 0 && r != Long.MAX_VALUE) {
                         r = requested.addAndGet(-e);
                     }
-                    missed = addAndGet(-missed);
+                    missed = wip.addAndGet(-missed);
                     if (missed == 0) {
                         return;
                     }
@@ -320,6 +323,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         private boolean childExists() {
             // do a little dance to avoid volatile reads of child
+            // TODO establish if worth it via jmh benchmark
             if (childExists) {
                 return true;
             } else {
