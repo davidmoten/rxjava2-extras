@@ -49,16 +49,16 @@ public final class FlowableReduce<T> extends Flowable<T> {
         }
         AtomicReference<CountAndFinalSub<T>> info = new AtomicReference<CountAndFinalSub<T>>();
         ChainSubscription<T> disposable = new ChainSubscription<T>(info);
-        Buffering<T> destination = new Buffering<T>(child, disposable);
+        FinalReplaySubject<T> destination = new FinalReplaySubject<T>(child, disposable);
         destination.subscribe(child);
-        ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, disposable, maxChained, reducer, maxIterations, 1,
+        ChainedReplaySubject<T> sub = new ChainedReplaySubject<T>(info, disposable, maxChained, reducer, maxIterations, 1,
                 destination);
         info.set(new CountAndFinalSub<T>(1, sub));
         f.onTerminateDetach() //
                 .subscribe(sub);
     }
 
-    private static class Buffering<T> extends Flowable<T> implements Subscriber<T>, Subscription {
+    private static class FinalReplaySubject<T> extends Flowable<T> implements Subscriber<T>, Subscription {
 
         private final Subscriber<? super T> child;
         private final ChainSubscription<T> disposable;
@@ -72,7 +72,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private volatile boolean done;
         private volatile boolean cancelled;
 
-        public Buffering(Subscriber<? super T> child, ChainSubscription<T> chainSubscription) {
+        public FinalReplaySubject(Subscriber<? super T> child, ChainSubscription<T> chainSubscription) {
             this.child = child;
             this.disposable = chainSubscription;
         }
@@ -177,14 +177,14 @@ public final class FlowableReduce<T> extends Flowable<T> {
      * @param <T>
      *            generic type
      */
-    private static final class ReduceReplaySubject<T> extends Flowable<T>
+    private static final class ChainedReplaySubject<T> extends Flowable<T>
             implements FlowableSubscriber<T>, Subscription {
 
         // assigned in constructor
         private final AtomicReference<CountAndFinalSub<T>> info;
         private final int maxChained;
         private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
-        private final Buffering<T> destination;
+        private final FinalReplaySubject<T> destination;
         private final ChainSubscription<T> disposable;
         private final long maxIterations;
         private final long iteration;
@@ -205,9 +205,9 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private T last;
         private boolean childExists;
 
-        ReduceReplaySubject(AtomicReference<CountAndFinalSub<T>> info, ChainSubscription<T> disposable,
+        ChainedReplaySubject(AtomicReference<CountAndFinalSub<T>> info, ChainSubscription<T> disposable,
                 int maxDepthConcurrent, Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
-                long maxIterations, long iteration, Buffering<T> destination) {
+                long maxIterations, long iteration, FinalReplaySubject<T> destination) {
             this.info = info;
             this.disposable = disposable;
             this.maxChained = maxDepthConcurrent;
@@ -362,7 +362,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                 } else {
                     if (maxIterations != 0 && iteration >= maxIterations - 1) {
                         CountAndFinalSub<T> c2 = CountAndFinalSub.create(c.count + 1, c.finalSubscriber);
-                        ReduceReplaySubject<T> previous = c.finalSubscriber;
+                        ChainedReplaySubject<T> previous = c.finalSubscriber;
                         if (info.compareAndSet(c, c2)) {
                             Flowable<T> f;
                             try {
@@ -377,9 +377,9 @@ public final class FlowableReduce<T> extends Flowable<T> {
                             f.onTerminateDetach().subscribe(destination);
                         }
                     } else if (maxIterations == 0) {
-                        ReduceReplaySubject<T> sub = new ReduceReplaySubject<T>(info, disposable, maxChained, reducer,
+                        ChainedReplaySubject<T> sub = new ChainedReplaySubject<T>(info, disposable, maxChained, reducer,
                                 maxIterations, iteration + 1, destination);
-                        ReduceReplaySubject<T> previous = c.finalSubscriber;
+                        ChainedReplaySubject<T> previous = c.finalSubscriber;
                         final CountAndFinalSub<T> c2;
                         if (previous.count >= 2) {
                             // only add a subscriber to the chain once the
@@ -526,13 +526,13 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
     private static final class CountAndFinalSub<T> {
         final int count;
-        final ReduceReplaySubject<T> finalSubscriber;
+        final ChainedReplaySubject<T> finalSubscriber;
 
-        static <T> CountAndFinalSub<T> create(int count, ReduceReplaySubject<T> finalSubscriber) {
+        static <T> CountAndFinalSub<T> create(int count, ChainedReplaySubject<T> finalSubscriber) {
             return new CountAndFinalSub<T>(count, finalSubscriber);
         }
 
-        CountAndFinalSub(int count, ReduceReplaySubject<T> finalSubscriber) {
+        CountAndFinalSub(int count, ChainedReplaySubject<T> finalSubscriber) {
             this.count = count;
             this.finalSubscriber = finalSubscriber;
         }
