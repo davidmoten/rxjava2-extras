@@ -7,8 +7,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
+import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import com.github.davidmoten.rx2.Actions;
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
@@ -18,6 +20,7 @@ import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public final class FlowableReduceTest {
 
     private static final Function<List<Integer>, Integer> sum = (new Function<List<Integer>, Integer>() {
@@ -192,12 +195,11 @@ public final class FlowableReduceTest {
     }
 
     @Test
-    @Ignore
     public void testMaxIterationsOne() {
-        Flowable.range(1, 3) //
+        Flowable.just(1, 5) //
                 .to(Transformers.reduce(plusOne, 3, 1)) //
                 .test() //
-                .assertValues(2, 3, 4) //
+                .assertValues(3, 7) //
                 .assertComplete();
     }
 

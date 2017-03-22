@@ -51,8 +51,8 @@ public final class FlowableReduce<T> extends Flowable<T> {
         ChainSubscription<T> disposable = new ChainSubscription<T>(info);
         FinalReplaySubject<T> destination = new FinalReplaySubject<T>(child, disposable);
         destination.subscribe(child);
-        ChainedReplaySubject<T> sub = new ChainedReplaySubject<T>(info, disposable, maxChained, reducer, maxIterations, 1,
-                destination);
+        ChainedReplaySubject<T> sub = new ChainedReplaySubject<T>(info, disposable, maxChained, reducer, maxIterations,
+                1, destination);
         info.set(new CountAndFinalSub<T>(1, sub));
         f.onTerminateDetach() //
                 .subscribe(sub);
@@ -84,15 +84,23 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onSubscribe(Subscription parent) {
-            if (SubscriptionHelper.deferredSetOnce(this.parent, requested, parent)) {
-                drain();
+            long r = requested.get();
+            if (r != 0L) {
+                parent.request(r);
             }
+            drain();
         }
 
         @Override
         public void request(long n) {
-            SubscriptionHelper.deferredRequest(this.parent, requested, n);
-            drain();
+            if (SubscriptionHelper.validate(n)) {
+                BackpressureHelper.add(requested, n);
+                Subscription p = parent.get();
+                if (p != null) {
+                    p.request(n);
+                }
+                drain();
+            }
         }
 
         @Override
@@ -360,8 +368,8 @@ public final class FlowableReduce<T> extends Flowable<T> {
                         break;
                     }
                 } else {
-                    if (maxIterations != 0 && iteration >= maxIterations - 1) {
-                        CountAndFinalSub<T> c2 = CountAndFinalSub.create(c.count + 1, c.finalSubscriber);
+                    if (maxIterations != 0 && iteration == maxIterations) {
+                        CountAndFinalSub<T> c2 = CountAndFinalSub.create(c.count, c.finalSubscriber);
                         ChainedReplaySubject<T> previous = c.finalSubscriber;
                         if (info.compareAndSet(c, c2)) {
                             Flowable<T> f;
@@ -375,6 +383,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                                 return;
                             }
                             f.onTerminateDetach().subscribe(destination);
+                            break;
                         }
                     } else if (maxIterations == 0) {
                         ChainedReplaySubject<T> sub = new ChainedReplaySubject<T>(info, disposable, maxChained, reducer,
@@ -398,6 +407,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                                     return;
                                 }
                                 f.onTerminateDetach().subscribe(sub);
+                                break;
                             }
                         } else {
                             c2 = CountAndFinalSub.create(c.count, c.finalSubscriber);
