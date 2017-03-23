@@ -21,6 +21,7 @@ import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@Ignore
 public final class FlowableReduceTest {
 
     private static final Function<List<Integer>, Integer> sum = (new Function<List<Integer>, Integer>() {
@@ -203,8 +204,8 @@ public final class FlowableReduceTest {
                 .assertComplete();
     }
     
-    @Test(timeout = 2000)
-    @Ignore
+    @Test(timeout = 2000000)
+//    @Ignore
     public void testMaxIterationsTwoMaxChainedThree() {
         Flowable.just(1, 5) //
                 .to(Transformers.reduce(plusOne, 3, 2)) //
