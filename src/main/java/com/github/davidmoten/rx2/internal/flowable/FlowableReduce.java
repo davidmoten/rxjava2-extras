@@ -62,13 +62,13 @@ public final class FlowableReduce<T> extends Flowable<T> {
         ADD, DONE, COMPLETE_OR_CANCEL;
     }
 
-    private static final class SubjectTestResult<T> {
+    private static final class Event<T> {
 
         final EventType eventType;
         final ChainedReplaySubject<T> subject;
 
-        SubjectTestResult(EventType event, ChainedReplaySubject<T> subject) {
-            this.eventType = event;
+        Event(EventType eventType, ChainedReplaySubject<T> subject) {
+            this.eventType = eventType;
             this.subject = subject;
         }
     }
@@ -76,7 +76,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
     private static final class Chain<T> extends AtomicInteger {
 
         private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
-        private final SimplePlainQueue<SubjectTestResult<T>> queue;
+        private final SimplePlainQueue<Event<T>> queue;
         private final FinalReplaySubject<T> destination;
         private final long maxIterations;
 
@@ -92,47 +92,45 @@ public final class FlowableReduce<T> extends Flowable<T> {
             this.destination = destination;
             this.maxIterations = maxIterations;
             this.disposable = disposable;
-            this.queue = new SpscLinkedArrayQueue<SubjectTestResult<T>>(16);
+            this.queue = new SpscLinkedArrayQueue<Event<T>>(16);
         }
 
         void testEmitsAdd(ChainedReplaySubject<T> subject) {
-            queue.offer(new SubjectTestResult<T>(EventType.ADD, subject));
+            queue.offer(new Event<T>(EventType.ADD, subject));
             drain();
         }
 
         void testEmitsDone(ChainedReplaySubject<T> subject) {
-            queue.offer(new SubjectTestResult<T>(EventType.DONE, subject));
+            queue.offer(new Event<T>(EventType.DONE, subject));
             drain();
         }
 
         void completeOrCancel(ChainedReplaySubject<T> subject) {
-            queue.offer(new SubjectTestResult<T>(EventType.COMPLETE_OR_CANCEL, subject));
+            queue.offer(new Event<T>(EventType.COMPLETE_OR_CANCEL, subject));
             drain();
         }
 
         void drain() {
             if (getAndIncrement() == 0) {
-                if (destinationAttached)
+                if (destinationAttached) {
                     return;
+                }
                 int missed = 1;
                 while (true) {
                     while (true) {
-                        SubjectTestResult<T> v = queue.poll();
+                        Event<T> v = queue.poll();
                         if (v == null) {
                             break;
                         } else if (v.eventType == EventType.ADD) {
-                            length += 1;
-                            ChainedReplaySubject<T> sub = new ChainedReplaySubject<T>(disposable, destination);
-                            Flowable<T> f;
-                            try {
-                                f = reducer.apply(finalSubscriber);
-                            } catch (Exception e) {
-                                Exceptions.throwIfFatal(e);
-                                cancelWholeChain();
-                                destination.onError(e);
-                                return;
+                            if (length < maxIterations - 1) {
+                                ChainedReplaySubject<T> sub = new ChainedReplaySubject<T>(disposable, destination);
+                                addToChain(sub);
+                                finalSubscriber = sub;
+                            } else {
+                                addToChain(destination);
+                                destinationAttached = true;
                             }
-                            f.onTerminateDetach().subscribe(sub);
+                            length += 1;
                         } else if (v.eventType == EventType.DONE) {
 
                         } else {
@@ -145,6 +143,19 @@ public final class FlowableReduce<T> extends Flowable<T> {
                     }
                 }
             }
+        }
+
+        private void addToChain(Subscriber<T> sub) {
+            Flowable<T> f;
+            try {
+                f = reducer.apply(finalSubscriber);
+            } catch (Exception e) {
+                Exceptions.throwIfFatal(e);
+                cancelWholeChain();
+                destination.onError(e);
+                return;
+            }
+            f.onTerminateDetach().subscribe(sub);
         }
 
         private void cancelWholeChain() {
