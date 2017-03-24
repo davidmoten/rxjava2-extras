@@ -113,6 +113,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         void drain() {
             if (getAndIncrement() == 0) {
                 if (destinationAttached) {
+                    queue.clear();
                     return;
                 }
                 int missed = 1;
@@ -121,7 +122,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                         Event<T> v = queue.poll();
                         if (v == null) {
                             break;
-                        } else if (v.eventType == EventType.ADD) {
+                        } else if (v.eventType == EventType.ADD && v.subject == finalSubscriber) {
                             if (length < maxIterations - 1) {
                                 ChainedReplaySubject<T> sub = new ChainedReplaySubject<T>(disposable, destination);
                                 addToChain(sub);
@@ -131,10 +132,15 @@ public final class FlowableReduce<T> extends Flowable<T> {
                                 destinationAttached = true;
                             }
                             length += 1;
-                        } else if (v.eventType == EventType.DONE) {
-
+                        } else if (v.eventType == EventType.DONE && v.subject == finalSubscriber) {
+                            addToChain(destination);
+                            destinationAttached = true;
                         } else {
-
+                            //completeOrCancel
+                            ChainedReplaySubject<T> sub = new ChainedReplaySubject<T>(disposable, destination);
+                            addToChain(sub);
+                            finalSubscriber = sub;
+                            //length unchanged
                         }
                     }
                     missed = addAndGet(-missed);
