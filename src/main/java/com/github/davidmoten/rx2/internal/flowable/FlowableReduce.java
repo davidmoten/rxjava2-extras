@@ -30,12 +30,12 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
     public FlowableReduce(Flowable<T> source, Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
             int maxChained, int maxIterations, Function<Observable<T>, Observable<TestResult>> test) {
-        this.test = test;
         Preconditions.checkArgument(maxChained > 0, "maxChained must be 1 or greater");
         this.source = source;
         this.reducer = reducer;
         this.maxChained = maxChained;
         this.maxIterations = maxIterations;
+        this.test = test;
     }
 
     // TODO move to public api
@@ -58,9 +58,9 @@ public final class FlowableReduce<T> extends Flowable<T> {
         AtomicReference<CountAndFinalSub<T>> info = new AtomicReference<CountAndFinalSub<T>>();
         ChainSubscription<T> disposable = new ChainSubscription<T>(info);
         FinalReplaySubject<T> destination = new FinalReplaySubject<T>(child, disposable);
-        Chain<T> chain = new Chain<T>(reducer, destination, maxIterations, disposable);
+        Chain<T> chain = new Chain<T>(reducer, destination, maxIterations, maxChained, disposable, test);
         destination.subscribe(child);
-        ChainedReplaySubject<T> sub = new ChainedReplaySubject<T>(disposable, destination, chain);
+        ChainedReplaySubject<T> sub = new ChainedReplaySubject<T>(disposable, destination, chain, test);
         info.set(new CountAndFinalSub<T>(1, sub));
         f.onTerminateDetach() //
                 .subscribe(sub);
@@ -88,19 +88,22 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private final SimplePlainQueue<Event<T>> queue;
         private final FinalReplaySubject<T> destination;
         private final long maxIterations;
+        private final ChainSubscription<T> disposable;
+        private final Function<Observable<T>, Observable<TestResult>> test;
 
         // state
         private int length;
         private ChainedReplaySubject<T> finalSubscriber;
         private boolean destinationAttached;
-        private final ChainSubscription<T> disposable;
 
-        public Chain(Function<? super Flowable<T>, ? extends Flowable<T>> reducer, FinalReplaySubject<T> destination,
-                long maxIterations, ChainSubscription<T> disposable) {
+        Chain(Function<? super Flowable<T>, ? extends Flowable<T>> reducer, FinalReplaySubject<T> destination,
+                long maxIterations, int maxChained, ChainSubscription<T> disposable,
+                Function<Observable<T>, Observable<TestResult>> test) {
             this.reducer = reducer;
             this.destination = destination;
             this.maxIterations = maxIterations;
             this.disposable = disposable;
+            this.test = test;
             this.queue = new SpscLinkedArrayQueue<Event<T>>(16);
         }
 
@@ -133,8 +136,8 @@ public final class FlowableReduce<T> extends Flowable<T> {
                             break;
                         } else if (v.eventType == EventType.ADD && v.subject == finalSubscriber) {
                             if (length < maxIterations - 1) {
-                                ChainedReplaySubject<T> sub = new ChainedReplaySubject<T>(disposable, destination,
-                                        this);
+                                ChainedReplaySubject<T> sub = new ChainedReplaySubject<T>(disposable, destination, this,
+                                        test);
                                 addToChain(sub);
                                 finalSubscriber = sub;
                             } else {
@@ -147,7 +150,8 @@ public final class FlowableReduce<T> extends Flowable<T> {
                             destinationAttached = true;
                         } else {
                             // completeOrCancel
-                            ChainedReplaySubject<T> sub = new ChainedReplaySubject<T>(disposable, destination, this);
+                            ChainedReplaySubject<T> sub = new ChainedReplaySubject<T>(disposable, destination, this,
+                                    test);
                             addToChain(sub);
                             finalSubscriber = sub;
                             // length unchanged
@@ -336,11 +340,14 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private volatile int count;
         private T last;
         private boolean childExists;
+        private final Function<Observable<T>, Observable<TestResult>> test;
 
-        ChainedReplaySubject(ChainSubscription<T> disposable, FinalReplaySubject<T> destination, Chain<T> chain) {
+        ChainedReplaySubject(ChainSubscription<T> disposable, FinalReplaySubject<T> destination, Chain<T> chain,
+                Function<Observable<T>, Observable<TestResult>> test) {
             this.disposable = disposable;
             this.destination = destination;
             this.chain = chain;
+            this.test = test;
         }
 
         @Override
@@ -424,7 +431,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                 reportResultToObserver();
             } else {
                 done = true;
-                tryToAddSubscriberToChain();
+                chain.completeOrCancel(this);
                 if (childExists()) {
                     drain();
                 }
