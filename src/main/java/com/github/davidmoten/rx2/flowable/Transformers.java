@@ -31,9 +31,13 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableTransformer;
+import io.reactivex.Notification;
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.BiPredicate;
+import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.functions.Function3;
 
@@ -317,10 +321,57 @@ public final class Transformers {
         return new Function<Flowable<T>, Flowable<T>>() {
             @Override
             public Flowable<T> apply(Flowable<T> source) {
-                return new FlowableReduce<T>(source, reducer, maxChained, maxIterations);
+                return new FlowableReduce<T>(source, reducer, maxChained, maxIterations,
+                        Transformers.<T>finishWhenSingle());
             }
         };
     }
+
+    @SuppressWarnings("unchecked")
+    private static <T> Function<Observable<T>, Observable<?>> finishWhenSingle() {
+        return (Function<Observable<T>, Observable<?>>) (Function<?, Observable<?>>) FINISH_WHEN_SINGLE;
+    }
+
+    private static final Function<Observable<Object>, Observable<?>> FINISH_WHEN_SINGLE = new Function<Observable<Object>, Observable<?>>() {
+
+        @Override
+        public Observable<?> apply(final Observable<Object> o) throws Exception {
+            return Observable.defer(new Callable<ObservableSource<Boolean>>() {
+
+                final int[] count = new int[1];
+
+                @Override
+                public ObservableSource<Boolean> call() throws Exception {
+                    return o.materialize() //
+                            .flatMap(new Function<Notification<Object>, Observable<Notification<Object>>>() {
+                                @SuppressWarnings("unchecked")
+                                @Override
+                                public Observable<Notification<Object>> apply(Notification<Object> x) throws Exception {
+                                    if (x.isOnNext()) {
+                                        count[0]++;
+                                        if (count[0] >= 2) {
+                                            return Observable.just(Notification.createOnNext((Object) 1));
+                                        } else {
+                                            return Observable.just(x);
+                                        }
+                                    } else if (x.isOnComplete()) {
+                                        if (count[0] <= 1) {
+                                            // complete the stream
+                                            return Observable.just(x);
+                                        } else {
+                                            // never complete
+                                            return Observable.never();
+                                        }
+                                    } else {
+                                        return Observable.just(x);
+                                    }
+                                }
+                            }) //
+                            .dematerialize();
+                }
+            });
+        }
+    };
 
     public static <T> Function<Flowable<T>, Flowable<T>> reduce(
             final Function<? super Flowable<T>, ? extends Flowable<T>> reducer, final int maxChained) {

@@ -29,10 +29,10 @@ public final class FlowableReduce<T> extends Flowable<T> {
     private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
     private final int maxChained;
     private final long maxIterations;
-    private final Function<Observable<T>, Observable<Object>> test;
+    private final Function<Observable<T>, ? extends Observable<?>> test;
 
     public FlowableReduce(Flowable<T> source, Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
-            int maxChained, int maxIterations, Function<Observable<T>, Observable<Object>> test) {
+            int maxChained, int maxIterations, Function<Observable<T>, Observable<?>> test) {
         Preconditions.checkArgument(maxChained > 0, "maxChained must be 1 or greater");
         this.source = source;
         this.reducer = reducer;
@@ -87,7 +87,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private final FinalReplaySubject<T> destination;
         private final long maxIterations;
         private final ChainSubscription<T> disposable;
-        private final Function<Observable<T>, Observable<Object>> test;
+        private final Function<Observable<T>, ? extends Observable<?>> test;
 
         // state
         private int length;
@@ -96,7 +96,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         Chain(Function<? super Flowable<T>, ? extends Flowable<T>> reducer, FinalReplaySubject<T> destination,
                 long maxIterations, int maxChained, ChainSubscription<T> disposable,
-                Function<Observable<T>, Observable<Object>> test) {
+                Function<Observable<T>, ? extends Observable<?>> test) {
             this.reducer = reducer;
             this.destination = destination;
             this.maxIterations = maxIterations;
@@ -361,7 +361,8 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onError(Throwable e) {
-            // TODO
+            subject.cancelWholeChain();
+            subject.destination().onError(e);
         }
 
         @Override
@@ -400,10 +401,17 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private Throwable error;
         private volatile boolean cancelled;
         private boolean childExists;
-        private final Function<Observable<T>, Observable<Object>> test;
+        private final Function<Observable<T>, ? extends Observable<?>> test;
+
+        static <T> ChainedReplaySubject<T> create(ChainSubscription<T> disposable, FinalReplaySubject<T> destination,
+                Chain<T> chain, Function<Observable<T>, ? extends Observable<?>> test) {
+            ChainedReplaySubject<T> c = new ChainedReplaySubject<T>(disposable, destination, chain, test);
+            c.init();
+            return c;
+        }
 
         private ChainedReplaySubject(ChainSubscription<T> disposable, FinalReplaySubject<T> destination, Chain<T> chain,
-                Function<Observable<T>, Observable<Object>> test) {
+                Function<Observable<T>, ? extends Observable<?>> test) {
             this.disposable = disposable;
             this.destination = destination;
             this.chain = chain;
@@ -411,22 +419,19 @@ public final class FlowableReduce<T> extends Flowable<T> {
             this.tester = new Tester<T>();
         }
 
-        static <T> ChainedReplaySubject<T> create(ChainSubscription<T> disposable, FinalReplaySubject<T> destination,
-                Chain<T> chain, Function<Observable<T>, Observable<Object>> test) {
-            ChainedReplaySubject<T> c = new ChainedReplaySubject<T>(disposable, destination, chain, test);
-            c.init();
-            return c;
-        }
-
         private void init() {
-            Observable<Object> o;
+            Observable<?> o;
             try {
                 o = test.apply(tester);
             } catch (Exception e) {
-                //TODO
+                // TODO
                 throw new RuntimeException(e);
             }
             o.subscribe(new TesterObserver<T>(chain, this));
+        }
+
+        FinalReplaySubject<T> destination() {
+            return destination;
         }
 
         @Override
