@@ -168,7 +168,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                                 addToChain(sub);
                                 finalSubscriber = sub;
                             }
-                            //length unchanged
+                            // length unchanged
                         }
                     }
                     missed = addAndGet(-missed);
