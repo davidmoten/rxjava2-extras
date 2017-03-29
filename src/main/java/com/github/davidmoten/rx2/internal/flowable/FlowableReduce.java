@@ -93,12 +93,14 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private ChainedReplaySubject<T> finalSubscriber;
         private boolean destinationAttached;
         private volatile boolean cancelled;
+        private int maxChained;
 
         Chain(Function<? super Flowable<T>, ? extends Flowable<T>> reducer, FinalReplaySubject<T> destination,
                 long maxIterations, int maxChained, Function<Observable<T>, ? extends Observable<?>> test) {
             this.reducer = reducer;
             this.destination = destination;
             this.maxIterations = maxIterations;
+            this.maxChained = maxChained;
             this.test = test;
             this.queue = new SpscLinkedArrayQueue<Event<T>>(16);
         }
