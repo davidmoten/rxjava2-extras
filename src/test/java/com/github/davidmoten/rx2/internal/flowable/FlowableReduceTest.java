@@ -22,7 +22,7 @@ import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-//@Ignore
+// @Ignore
 public final class FlowableReduceTest {
 
     private static final Function<List<Integer>, Integer> sum = (new Function<List<Integer>, Integer>() {
@@ -219,10 +219,10 @@ public final class FlowableReduceTest {
     @Test(timeout = 200000000)
     // @Ignore
     public void testMaxIterations() {
-        Flowable.range(1, 3) //
-                .to(Transformers.reduce(plusOne, 3, 10)) //
+        Flowable.range(1, 2) //
+                .to(Transformers.reduce(plusOne, 2, 3)) //
                 .test() //
-                .assertValues(11, 12, 13) //
+                .assertValues(5, 6) //
                 .assertComplete();
     }
 

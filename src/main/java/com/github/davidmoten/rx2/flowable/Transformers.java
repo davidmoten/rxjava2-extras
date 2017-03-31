@@ -33,11 +33,9 @@ import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableTransformer;
 import io.reactivex.Notification;
 import io.reactivex.Observable;
-import io.reactivex.ObservableSource;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.BiPredicate;
-import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.functions.Function3;
 
@@ -346,12 +344,12 @@ public final class Transformers {
 
         @Override
         public Observable<?> apply(final Observable<Object> o) throws Exception {
-            return Observable.defer(new Callable<ObservableSource<Boolean>>() {
+            return Observable.defer(new Callable<Observable<Object>>() {
 
                 final int[] count = new int[1];
 
                 @Override
-                public ObservableSource<Boolean> call() throws Exception {
+                public Observable<Object> call() throws Exception {
                     return o.materialize() //
                             .flatMap(
                                     new Function<Notification<Object>, Observable<Notification<Object>>>() {
@@ -361,9 +359,9 @@ public final class Transformers {
                             if (x.isOnNext()) {
                                 count[0]++;
                                 if (count[0] >= 2) {
-                                    return Observable.just(Notification.createOnNext((Object) 1));
-                                } else {
                                     return Observable.just(x);
+                                } else {
+                                    return Observable.empty();
                                 }
                             } else if (x.isOnComplete()) {
                                 if (count[0] <= 1) {
@@ -371,7 +369,7 @@ public final class Transformers {
                                     return Observable.just(x);
                                 } else {
                                     // never complete
-                                    return Observable.never();
+                                    return Observable.empty();
                                 }
                             } else {
                                 return Observable.just(x);

@@ -305,6 +305,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onComplete() {
+            System.out.println("final complete");
             done = true;
             drain();
         }
@@ -407,7 +408,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onNext(Object t) {
-            System.out.println("TestObserver for " + subject + " receives " + t);
+            System.out.println("TestObserver for " + subject + " emits add " + t);
             chain.testEmitsAdd(subject);
         }
 
@@ -419,6 +420,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onComplete() {
+            System.out.println("TestObserver for " + subject + " emits done");
             chain.testEmitsDone(subject);
         }
     }
@@ -557,6 +559,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
             }
             done = true;
             cancelParent();
+            System.out.println(this + " emits complete to tester");
             tester.onComplete();
             if (childExists()) {
                 drain();
