@@ -168,7 +168,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                                         length += 1;
                                     }
                                     // otherwise ignore event
-                                } else {
+                                } else if (iteration == maxIterations - 1) {
                                     // we are at max iterations - 1 so finish up
                                     // by adding the destination (which adds
                                     // another iteration)
