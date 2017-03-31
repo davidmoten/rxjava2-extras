@@ -122,6 +122,7 @@ public final class FlowableReduceTest {
     }
 
     @Test
+    @Ignore
     public void testMany() {
         for (int maxChained = 1; maxChained < 5; maxChained++) {
             for (int n = 5; n <= 100; n++) {
@@ -131,6 +132,7 @@ public final class FlowableReduceTest {
     }
 
     @Test
+    @Ignore
     public void testManyAsync() {
         for (int maxChained = 1; maxChained < 5; maxChained++) {
             for (int n = 5; n <= 100; n++) {

@@ -31,8 +31,9 @@ public final class FlowableReduce<T> extends Flowable<T> {
     private final long maxIterations;
     private final Function<Observable<T>, ? extends Observable<?>> test;
 
-    public FlowableReduce(Flowable<T> source, Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
-            int maxChained, int maxIterations, Function<Observable<T>, Observable<?>> test) {
+    public FlowableReduce(Flowable<T> source,
+            Function<? super Flowable<T>, ? extends Flowable<T>> reducer, int maxChained,
+            int maxIterations, Function<Observable<T>, Observable<?>> test) {
         Preconditions.checkArgument(maxChained > 0, "maxChained must be 1 or greater");
         this.source = source;
         this.reducer = reducer;
@@ -86,17 +87,19 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private final SimplePlainQueue<Event<T>> queue;
         private final FinalReplaySubject<T> destination;
         private final long maxIterations;
+        private final int maxChained;
         private final Function<Observable<T>, ? extends Observable<?>> test;
 
         // state
+        private int iteration;
         private int length;
         private ChainedReplaySubject<T> finalSubscriber;
         private boolean destinationAttached;
         private volatile boolean cancelled;
-        private int maxChained;
 
-        Chain(Function<? super Flowable<T>, ? extends Flowable<T>> reducer, FinalReplaySubject<T> destination,
-                long maxIterations, int maxChained, Function<Observable<T>, ? extends Observable<?>> test) {
+        Chain(Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
+                FinalReplaySubject<T> destination, long maxIterations, int maxChained,
+                Function<Observable<T>, ? extends Observable<?>> test) {
             this.reducer = reducer;
             this.destination = destination;
             this.maxIterations = maxIterations;
@@ -146,27 +149,44 @@ public final class FlowableReduce<T> extends Flowable<T> {
                         Event<T> v = queue.poll();
                         if (v == null) {
                             break;
+                        } else if (destinationAttached) {
+                            queue.clear();
+                            break;
                         } else if (v.eventType == EventType.INITIAL) {
                             finalSubscriber = v.subject;
                         } else if (v.eventType == EventType.ADD && v.subject == finalSubscriber) {
-                            if (length < maxIterations - 1) {
-                                ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, this, test);
-                                addToChain(sub);
-                                finalSubscriber = sub;
-                            } else {
-                                addToChain(destination);
-                                destinationAttached = true;
+                            if (length < maxChained - 1) {
+                                if (iteration < maxIterations - 1) {
+                                    // ok to add another subject to the chain
+                                    ChainedReplaySubject<T> sub = ChainedReplaySubject
+                                            .create(destination, this, test);
+                                    addToChain(sub);
+                                    finalSubscriber = sub;
+                                    iteration++;
+                                    length += 1;
+                                } else {
+                                    // we are at max iterations - 1 so finish up
+                                    // by adding the destination (which adds
+                                    // another iteration)
+                                    addToChain(destination);
+                                    destinationAttached = true;
+                                    length += 1;
+                                    iteration += 1;
+                                }
                             }
-                            length += 1;
+                            // else do nothing
                         } else if (v.eventType == EventType.DONE && v.subject == finalSubscriber) {
                             addToChain(destination);
                             destinationAttached = true;
+                            length++;
+                            iteration++;
                         } else {
                             // completeOrCancel
                             if (v.subject == finalSubscriber) {
                                 cancelWholeChain();
                             } else {
-                                ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, this, test);
+                                ChainedReplaySubject<T> sub = ChainedReplaySubject
+                                        .create(destination, this, test);
                                 addToChain(sub);
                                 finalSubscriber = sub;
                             }
@@ -212,7 +232,8 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
     }
 
-    private static class FinalReplaySubject<T> extends Flowable<T> implements Subscriber<T>, Subscription {
+    private static class FinalReplaySubject<T> extends Flowable<T>
+            implements Subscriber<T>, Subscription {
 
         private final Subscriber<? super T> child;
         private final AtomicReference<Chain<T>> chain;
