@@ -156,7 +156,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                             finalSubscriber = v.subject;
                         } else if (v.eventType == EventType.ADD && v.subject == finalSubscriber) {
                             if (length < maxChained - 1) {
-                                if (iteration < maxIterations - 1) {
+                                if (maxIterations == 0 || iteration < maxIterations - 1) {
                                     // ok to add another subject to the chain
                                     ChainedReplaySubject<T> sub = ChainedReplaySubject
                                             .create(destination, this, test);
@@ -174,7 +174,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                                     iteration += 1;
                                 }
                             }
-                            // else do nothing
+                            // else ignore event
                         } else if (v.eventType == EventType.DONE && v.subject == finalSubscriber) {
                             addToChain(destination);
                             destinationAttached = true;
@@ -189,6 +189,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                                         .create(destination, this, test);
                                 addToChain(sub);
                                 finalSubscriber = sub;
+                                iteration++;
                             }
                             // length unchanged
                         }
@@ -401,6 +402,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onNext(Object t) {
+            System.out.println("TestObserver for "+ subject + " receives "+ t);
             chain.testEmitsAdd(subject);
         }
 

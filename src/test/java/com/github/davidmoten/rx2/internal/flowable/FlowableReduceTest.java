@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import com.github.davidmoten.rx2.Actions;
+import com.github.davidmoten.rx2.Consumers;
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
 import com.github.davidmoten.rx2.flowable.Transformers;
 
@@ -229,6 +230,7 @@ public final class FlowableReduceTest {
     private static void check(int n, int maxChained) {
         int result = Flowable.range(1, n) //
                 .to(Transformers.reduce(reducer, maxChained)) //
+                .doOnNext(Consumers.println()) //
                 .single(-1) //
                 .blockingGet();
         Assert.assertEquals(sum(n), result);
