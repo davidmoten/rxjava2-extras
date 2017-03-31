@@ -188,11 +188,14 @@ public final class FlowableReduce<T> extends Flowable<T> {
                             // completeOrCancel
                             if (v.subject == finalSubscriber) {
                                 cancelWholeChain();
-                            } else if (!finalSubscriber.finished) {
+                            } else if (!finalSubscriber.finished
+                                    && (maxIterations == 0 || iteration < maxIterations - 1)) {
                                 ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, this, test);
                                 addToChain(sub);
                                 finalSubscriber = sub;
                                 iteration++;
+                            } else {
+                                length--;
                             }
                             // length unchanged
                         }
