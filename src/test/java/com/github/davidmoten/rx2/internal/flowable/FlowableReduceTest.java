@@ -216,8 +216,8 @@ public final class FlowableReduceTest {
                 .assertComplete();
     }
 
-    @Test(timeout = 2000)
-    @Ignore
+    @Test(timeout = 200000000)
+    // @Ignore
     public void testMaxIterations() {
         Flowable.range(1, 3) //
                 .to(Transformers.reduce(plusOne, 3, 10)) //
