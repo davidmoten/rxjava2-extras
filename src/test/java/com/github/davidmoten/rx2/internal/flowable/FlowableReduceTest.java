@@ -32,7 +32,6 @@ public final class FlowableReduceTest {
             for (int value : list) {
                 sum += value;
             }
-            ;
             return sum;
         }
     });
