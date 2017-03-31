@@ -122,10 +122,11 @@ public final class FlowableReduceTest {
     }
 
     @Test
-    @Ignore
+//    @Ignore
     public void testMany() {
-        for (int maxChained = 1; maxChained < 5; maxChained++) {
+        for (int maxChained = 2; maxChained < 5; maxChained++) {
             for (int n = 5; n <= 100; n++) {
+                System.out.println("maxChained="+ maxChained + "," + n);
                 check(n, maxChained);
             }
         }
