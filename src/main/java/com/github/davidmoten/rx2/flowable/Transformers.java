@@ -372,6 +372,7 @@ public final class Transformers {
                                     return Observable.empty();
                                 }
                             } else {
+                                //is onError
                                 return Observable.just(x);
                             }
                         }
