@@ -22,7 +22,7 @@ import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-// @Ignore
+@Ignore
 public final class FlowableReduceTest {
 
     private static final Function<List<Integer>, Integer> sum = (new Function<List<Integer>, Integer>() {
@@ -122,21 +122,22 @@ public final class FlowableReduceTest {
     }
 
     @Test
-//    @Ignore
+    // @Ignore
     public void testMany() {
-        for (int maxChained = 2; maxChained < 5; maxChained++) {
-            for (int n = 5; n <= 100; n++) {
-                System.out.println("maxChained="+ maxChained + "," + n);
+        for (int n = 5; n <= 100; n++) {
+            int m = (int) Math.round(Math.floor(Math.log(n) / Math.log(2))) - 1;
+            for (int maxChained = Math.max(3, m); maxChained < 6; maxChained++) {
+                System.out.println("maxChained=" + maxChained + "," + n);
                 check(n, maxChained);
             }
         }
     }
 
-    @Test
-    @Ignore
+    @Test(timeout = 10000)
     public void testManyAsync() {
-        for (int maxChained = 1; maxChained < 5; maxChained++) {
-            for (int n = 5; n <= 100; n++) {
+        for (int n = 5; n <= 100; n++) {
+            int m = (int) Math.round(Math.floor(Math.log(n) / Math.log(2))) - 1;
+            for (int maxChained = Math.max(3, m); maxChained < 6; maxChained++) {
                 checkAsync(n, maxChained);
             }
         }
@@ -189,6 +190,7 @@ public final class FlowableReduceTest {
     }
 
     @Test
+    @Ignore
     public void testErrorPostChaining() {
         Flowable.range(1, 100) //
                 .concatWith(Flowable.<Integer>error(new ThrowingException())) //
