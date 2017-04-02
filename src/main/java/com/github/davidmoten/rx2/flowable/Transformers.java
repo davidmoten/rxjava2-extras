@@ -358,7 +358,7 @@ public final class Transformers {
                                 throws Exception {
                             if (x.isOnNext()) {
                                 count[0]++;
-                                if (count[0] >= 2) {
+                                if (count[0] > 1) {
                                     return Observable.just(x);
                                 } else {
                                     return Observable.empty();

@@ -408,7 +408,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onNext(Object t) {
-            System.out.println("TestObserver for " + subject + " emits add " + t);
+            System.out.println(subject + "TestObserver emits add " + t);
             chain.testEmitsAdd(subject);
         }
 
@@ -420,7 +420,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onComplete() {
-            System.out.println("TestObserver for " + subject + " emits done");
+            System.out.println(subject + " TestObserver emits done");
             chain.testEmitsDone(subject);
         }
     }
