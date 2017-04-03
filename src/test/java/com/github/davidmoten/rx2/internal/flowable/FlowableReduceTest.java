@@ -19,6 +19,7 @@ import com.github.davidmoten.rx2.flowable.Transformers;
 
 import io.reactivex.Flowable;
 import io.reactivex.Notification;
+import io.reactivex.Observable;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
@@ -126,7 +127,7 @@ public final class FlowableReduceTest {
     public void testCompletesThirdLevelWithOneLeftOver() {
         check(5, 2);
     }
-    
+
     @Test
     public void testCompletesFourLevels() {
         check(8, 2);
@@ -136,13 +137,13 @@ public final class FlowableReduceTest {
     // @Ignore
     public void testMany() {
         check(5, 2);
-//        for (int n = 5; n <= 100; n++) {
-//            int m = (int) Math.round(Math.floor(Math.log(n) / Math.log(2))) - 1;
-//            for (int maxChained = Math.max(3, m); maxChained < 6; maxChained++) {
-//                System.out.println("maxChained=" + maxChained + ",n=" + n);
-//                check(n, maxChained);
-//            }
-//        }
+        // for (int n = 5; n <= 100; n++) {
+        // int m = (int) Math.round(Math.floor(Math.log(n) / Math.log(2))) - 1;
+        // for (int maxChained = Math.max(3, m); maxChained < 6; maxChained++) {
+        // System.out.println("maxChained=" + maxChained + ",n=" + n);
+        // check(n, maxChained);
+        // }
+        // }
     }
 
     @Test(timeout = 1000)
@@ -215,8 +216,14 @@ public final class FlowableReduceTest {
 
     @Test
     public void testMaxIterationsOne() {
+        Function<Observable<Integer>, Observable<?>> tester = new Function<Observable<Integer>, Observable<?>>() {
+            @Override
+            public Observable<?> apply(Observable<Integer> o) throws Exception {
+                return o.concatWith(Observable.<Integer>never());
+            }
+        };
         Flowable.just(1, 5) //
-                .to(Transformers.reduce(plusOne, 3, 1)) //
+                .to(Transformers.repeat(plusOne, 3, 1, tester)) //
                 .test() //
                 .assertValues(2, 6) //
                 .assertComplete();
@@ -241,7 +248,7 @@ public final class FlowableReduceTest {
                 .assertValues(4, 5) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testDematerialize() {
         Flowable.just(Notification.createOnNext(1)).dematerialize().count().blockingGet();

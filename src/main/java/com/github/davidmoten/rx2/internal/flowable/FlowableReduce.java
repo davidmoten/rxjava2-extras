@@ -108,8 +108,11 @@ public final class FlowableReduce<T> extends Flowable<T> {
         }
 
         public void initialize(ChainedReplaySubject<T> subject) {
-            queue.offer(new Event<T>(EventType.INITIAL, subject));
-            drain();
+            finalSubscriber = subject;
+            if (maxIterations == 1) {
+                finalSubscriber.subscribe(destination);
+                destinationAttached = true;
+            }
         }
 
         void tryAddSubscriber(ChainedReplaySubject<T> subject) {
@@ -171,7 +174,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         }
 
         private void handleAdd(Event<T> v) {
-            System.out.println("ADD "+ v.subject);
+            System.out.println("ADD " + v.subject);
             if (v.subject == finalSubscriber && length < maxChained) {
                 if (iteration <= maxIterations - 1) {
                     // ok to add another subject to the
@@ -197,7 +200,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         }
 
         private void handleCompleteOrCancel(Event<T> v) {
-            System.out.println("COMPLETE/CANCEL "+ v.subject);
+            System.out.println("COMPLETE/CANCEL " + v.subject);
             if (v.subject == finalSubscriber) {
                 // TODO what to do here?
                 // cancelWholeChain();
@@ -420,7 +423,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onNext(Object t) {
-            System.out.println(subject + "TestObserver emits add " + t);
+            System.out.println(subject + " TestObserver emits add " + t);
             chain.tryAddSubscriber(subject);
         }
 
@@ -502,8 +505,10 @@ public final class FlowableReduce<T> extends Flowable<T> {
         public void onSubscribe(Subscription parent) {
             if (SubscriptionHelper.setOnce(this.parent, parent)) {
                 unreconciledRequests.getAndIncrement();
+                System.out.println(this + " requesting of parent " + 1);
                 parent.request(1);
             }
+            drain();
         }
 
         @Override
@@ -514,10 +519,12 @@ public final class FlowableReduce<T> extends Flowable<T> {
                 throw new RuntimeException(this + " cannot subscribe twice");
             }
             child.onSubscribe(this);
+            drain();
         }
 
         @Override
         public void request(long n) {
+            System.out.println(this + " request " + n);
             if (SubscriptionHelper.validate(n)) {
                 BackpressureHelper.add(requested, n);
                 Subscription par = parent.get();
@@ -529,6 +536,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                             long p2 = p - (n - r);
                             if (unreconciledRequests.compareAndSet(p, p2)) {
                                 if (r > 0) {
+                                    System.out.println("requesting of parent " + r);
                                     par.request(r);
                                 }
                                 break;
