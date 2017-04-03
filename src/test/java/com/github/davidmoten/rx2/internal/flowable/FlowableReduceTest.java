@@ -224,6 +224,7 @@ public final class FlowableReduceTest {
         };
         Flowable.just(1, 5) //
                 .to(Transformers.repeat(plusOne, 3, 1, tester)) //
+                .doOnNext(Consumers.println()) //
                 .test() //
                 .assertValues(2, 6) //
                 .assertComplete();
@@ -252,6 +253,7 @@ public final class FlowableReduceTest {
     @Test
     public void testDematerialize() {
         Flowable.just(Notification.createOnNext(1)).dematerialize().count().blockingGet();
+        Flowable.empty().dematerialize().count().blockingGet();
     }
 
     private static void check(int n, int maxChained) {

@@ -275,13 +275,17 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         protected void subscribeActual(Subscriber<? super T> child) {
+            System.out.println(this + " subscribed to by " + child);
             child.onSubscribe(new MultiSubscription(this, chain.get()));
+            // don't need to drain because destination is always subscribed to
+            // this before this is subscribed to parent
         }
 
         @Override
         public void onSubscribe(Subscription parent) {
             long r = requested.get();
             if (r != 0L) {
+                System.out.println(this + " requesting of parent " + r);
                 parent.request(r);
             }
             drain();
@@ -289,10 +293,12 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void request(long n) {
+            System.out.println(this + " request " + n);
             if (SubscriptionHelper.validate(n)) {
                 BackpressureHelper.add(requested, n);
                 Subscription p = parent.get();
                 if (p != null) {
+                    System.out.println(this + " requesting from parent " + n);
                     p.request(n);
                 }
                 drain();
@@ -308,6 +314,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         @Override
         public void onNext(T t) {
             queue.offer(t);
+            parent.get().request(1);
             drain();
         }
 
@@ -470,6 +477,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private volatile boolean cancelled;
         private boolean childExists;
         private final Function<Observable<T>, ? extends Observable<?>> test;
+        private volatile boolean childSubscribed;
 
         static <T> ChainedReplaySubject<T> create(FinalReplaySubject<T> destination, Chain<T> chain,
                 Function<Observable<T>, ? extends Observable<?>> test) {
@@ -519,6 +527,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                 throw new RuntimeException(this + " cannot subscribe twice");
             }
             child.onSubscribe(this);
+            childSubscribed = true;
             drain();
         }
 
@@ -558,7 +567,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
             }
             queue.offer(t);
             tester.onNext(t);
-            if (childExists()) {
+            if (childSubscribed()) {
                 drain();
             } else {
                 // make minimal request to keep upstream producing
@@ -580,7 +589,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
             cancelParent();
             System.out.println(this + " emits complete to tester");
             tester.onComplete();
-            if (childExists()) {
+            if (childSubscribed()) {
                 drain();
             }
         }
@@ -593,7 +602,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
             }
             error = t;
             done = true;
-            if (childExists()) {
+            if (childSubscribed()) {
                 drain();
             } else {
                 cancelWholeChain();
@@ -605,19 +614,8 @@ public final class FlowableReduce<T> extends Flowable<T> {
             chain.cancel();
         }
 
-        private boolean childExists() {
-            // do a little dance to avoid volatile reads of child
-            // TODO establish if worth it via jmh benchmark
-            if (childExists) {
-                return true;
-            } else {
-                if (child.get() != null) {
-                    childExists = true;
-                    return true;
-                } else {
-                    return false;
-                }
-            }
+        private boolean childSubscribed() {
+            return childSubscribed;
         }
 
         private void drain() {
@@ -652,7 +650,8 @@ public final class FlowableReduce<T> extends Flowable<T> {
                                 break;
                             }
                         } else {
-                            System.out.println(this + " emitting " + t + " to " + child.get());
+                            System.out.println(this + " emitting " + t + " to " + child.get() + ":"
+                                    + child.get().getClass().getSimpleName());
                             child.get().onNext(t);
                             e++;
                         }
