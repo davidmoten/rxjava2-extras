@@ -122,6 +122,11 @@ public final class FlowableReduceTest {
     }
 
     @Test
+    public void testCompletesThirdLevelWithOneLeftOver() {
+        check(5, 2);
+    }
+    
+    @Test
     public void testCompletesFourLevels() {
         check(8, 2);
     }
@@ -129,13 +134,14 @@ public final class FlowableReduceTest {
     @Test
     // @Ignore
     public void testMany() {
-        for (int n = 5; n <= 100; n++) {
-            int m = (int) Math.round(Math.floor(Math.log(n) / Math.log(2))) - 1;
-            for (int maxChained = Math.max(3, m); maxChained < 6; maxChained++) {
-                System.out.println("maxChained=" + maxChained + "," + n);
-                check(n, maxChained);
-            }
-        }
+        check(5, 2);
+//        for (int n = 5; n <= 100; n++) {
+//            int m = (int) Math.round(Math.floor(Math.log(n) / Math.log(2))) - 1;
+//            for (int maxChained = Math.max(3, m); maxChained < 6; maxChained++) {
+//                System.out.println("maxChained=" + maxChained + ",n=" + n);
+//                check(n, maxChained);
+//            }
+//        }
     }
 
     @Test(timeout = 1000)
@@ -143,7 +149,7 @@ public final class FlowableReduceTest {
         for (int n = 5; n <= 10; n++) {
             int m = (int) Math.round(Math.floor(Math.log(n) / Math.log(2))) - 1;
             for (int maxChained = Math.max(3, m); maxChained < 6; maxChained++) {
-                System.out.println("maxChained=" + maxChained + "," + n);
+                System.out.println("maxChained=" + maxChained + ",n=" + n);
                 checkAsync(n, maxChained);
             }
         }
@@ -211,7 +217,7 @@ public final class FlowableReduceTest {
         Flowable.just(1, 5) //
                 .to(Transformers.reduce(plusOne, 3, 1)) //
                 .test() //
-                .assertValues(3, 7) //
+                .assertValues(2, 6) //
                 .assertComplete();
     }
 
@@ -221,7 +227,7 @@ public final class FlowableReduceTest {
         Flowable.just(1, 5) //
                 .to(Transformers.reduce(plusOne, 3, 2)) //
                 .test() //
-                .assertValues(4, 8) //
+                .assertValues(3, 7) //
                 .assertComplete();
     }
 
@@ -231,7 +237,7 @@ public final class FlowableReduceTest {
         Flowable.range(1, 2) //
                 .to(Transformers.reduce(plusOne, 2, 3)) //
                 .test() //
-                .assertValues(5, 6) //
+                .assertValues(4, 5) //
                 .assertComplete();
     }
 

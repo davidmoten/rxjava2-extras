@@ -32,8 +32,9 @@ public final class FlowableReduce<T> extends Flowable<T> {
     private final Function<Observable<T>, ? extends Observable<?>> test;
 
     public FlowableReduce(Flowable<T> source, Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
-            int maxChained, int maxIterations, Function<Observable<T>, Observable<?>> test) {
+            int maxChained, long maxIterations, Function<Observable<T>, Observable<?>> test) {
         Preconditions.checkArgument(maxChained > 0, "maxChained must be 1 or greater");
+        Preconditions.checkArgument(maxIterations > 0, "maxIterations must be 1 or greater");
         this.source = source;
         this.reducer = reducer;
         this.maxChained = maxChained;
@@ -90,12 +91,11 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private final Function<Observable<T>, ? extends Observable<?>> test;
 
         // state
-        private int iteration;
+        private int iteration = 1;
         private int length;
         private ChainedReplaySubject<T> finalSubscriber;
         private boolean destinationAttached;
         private volatile boolean cancelled;
-        private volatile boolean finished;
 
         Chain(Function<? super Flowable<T>, ? extends Flowable<T>> reducer, FinalReplaySubject<T> destination,
                 long maxIterations, int maxChained, Function<Observable<T>, ? extends Observable<?>> test) {
@@ -112,13 +112,12 @@ public final class FlowableReduce<T> extends Flowable<T> {
             drain();
         }
 
-        void testEmitsAdd(ChainedReplaySubject<T> subject) {
+        void tryAddSubscriber(ChainedReplaySubject<T> subject) {
             queue.offer(new Event<T>(EventType.ADD, subject));
             drain();
         }
 
-        void testEmitsDone(ChainedReplaySubject<T> subject) {
-            subject.finished = true;
+        void done(ChainedReplaySubject<T> subject) {
             queue.offer(new Event<T>(EventType.DONE, subject));
             drain();
         }
@@ -155,49 +154,11 @@ public final class FlowableReduce<T> extends Flowable<T> {
                         } else if (v.eventType == EventType.INITIAL) {
                             finalSubscriber = v.subject;
                         } else if (v.eventType == EventType.ADD) {
-                            if (v.subject == finalSubscriber && length < maxChained - 1) {
-                                if (maxIterations == 0 || iteration < maxIterations - 1) {
-                                    if (!finalSubscriber.finished) {
-                                        // ok to add another subject to the
-                                        // chain
-                                        ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, this,
-                                                test);
-                                        addToChain(sub);
-                                        finalSubscriber = sub;
-                                        iteration++;
-                                        length += 1;
-                                    }
-                                    // otherwise ignore event
-                                } else if (iteration == maxIterations - 1) {
-                                    // we are at max iterations - 1 so finish up
-                                    // by adding the destination (which adds
-                                    // another iteration)
-                                    addToChain(destination);
-                                    destinationAttached = true;
-                                    length += 1;
-                                    iteration += 1;
-                                }
-                            }
-                            // else ignore event
-                        } else if (v.eventType == EventType.DONE && v.subject == finalSubscriber) {
-                            addToChain(destination);
-                            destinationAttached = true;
-                            length++;
-                            iteration++;
+                            handleAdd(v);
+                        } else if (v.eventType == EventType.DONE) {
+                            handleDone();
                         } else {
-                            // completeOrCancel
-                            if (v.subject == finalSubscriber) {
-                                cancelWholeChain();
-                            } else if (!finalSubscriber.finished
-                                    && (maxIterations == 0 || iteration < maxIterations - 1)) {
-                                ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, this, test);
-                                addToChain(sub);
-                                finalSubscriber = sub;
-                                iteration++;
-                            } else {
-                                length--;
-                            }
-                            // length unchanged
+                            handleCompleteOrCancel(v);
                         }
                     }
                     missed = addAndGet(-missed);
@@ -205,6 +166,50 @@ public final class FlowableReduce<T> extends Flowable<T> {
                         break;
                     }
                 }
+            }
+        }
+
+        private void handleAdd(Event<T> v) {
+            if (v.subject == finalSubscriber && length < maxChained) {
+                if (iteration <= maxIterations - 1) {
+                    // ok to add another subject to the
+                    // chain
+                    ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, this, test);
+                    addToChain(sub);
+                    if (iteration == maxIterations - 1) {
+                        sub.subscribe(destination);
+                        destinationAttached = true;
+                    }
+                    finalSubscriber = sub;
+                    iteration++;
+                    length += 1;
+                }
+            }
+        }
+
+        private void handleDone() {
+            destinationAttached = true;
+            finalSubscriber.subscribe(destination);
+        }
+
+        private void handleCompleteOrCancel(Event<T> v) {
+            if (v.subject == finalSubscriber) {
+                // TODO what to do here?
+                // cancelWholeChain();
+            } else if (iteration < maxIterations - 1) {
+                ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, this, test);
+                addToChain(sub);
+                finalSubscriber = sub;
+                iteration++;
+            } else if (iteration == maxIterations - 1) {
+                ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, this, test);
+                addToChain(sub);
+                destinationAttached = true;
+                sub.subscribe(destination);
+                finalSubscriber = sub;
+                iteration++;
+            } else {
+                length--;
             }
         }
 
@@ -219,6 +224,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                 return;
             }
             f.onTerminateDetach().subscribe(sub);
+            System.out.println(finalSubscriber + " subscribed to by " + sub);
         }
 
         private void cancelWholeChain() {
@@ -409,7 +415,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         @Override
         public void onNext(Object t) {
             System.out.println(subject + "TestObserver emits add " + t);
-            chain.testEmitsAdd(subject);
+            chain.tryAddSubscriber(subject);
         }
 
         @Override
@@ -421,7 +427,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         @Override
         public void onComplete() {
             System.out.println(subject + " TestObserver emits done");
-            chain.testEmitsDone(subject);
+            chain.done(subject);
         }
     }
 
@@ -455,7 +461,6 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private volatile boolean cancelled;
         private boolean childExists;
         private final Function<Observable<T>, ? extends Observable<?>> test;
-        volatile boolean finished; // tester finished
 
         static <T> ChainedReplaySubject<T> create(FinalReplaySubject<T> destination, Chain<T> chain,
                 Function<Observable<T>, ? extends Observable<?>> test) {
