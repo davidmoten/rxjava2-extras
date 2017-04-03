@@ -25,6 +25,7 @@ import com.github.davidmoten.rx2.internal.flowable.FlowableReverse;
 import com.github.davidmoten.rx2.internal.flowable.FlowableWindowMinMax;
 import com.github.davidmoten.rx2.internal.flowable.FlowableWindowMinMax.Metric;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStateMachine;
+import com.github.davidmoten.rx2.internal.observable.ObservableDematerialize;
 import com.github.davidmoten.rx2.util.Pair;
 
 import io.reactivex.BackpressureStrategy;
@@ -33,6 +34,8 @@ import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableTransformer;
 import io.reactivex.Notification;
 import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
+import io.reactivex.ObservableTransformer;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.BiPredicate;
@@ -346,7 +349,7 @@ public final class Transformers {
         public Observable<?> apply(final Observable<Object> o) throws Exception {
             return Observable.defer(new Callable<Observable<Object>>() {
 
-                final int[] count = new int[1];
+                final long[] count = new long[1];
 
                 @Override
                 public Observable<Object> call() throws Exception {
@@ -377,7 +380,12 @@ public final class Transformers {
                             }
                         }
                     }) //
-                            .dematerialize();
+                            .compose(new ObservableTransformer<Notification<Object>, Object>() {
+                                @Override
+                                public ObservableSource<Object> apply(Observable<Notification<Object>> o) {
+                                    return new ObservableDematerialize<Object>(o);
+                                }
+                            });
                 }
             });
         }

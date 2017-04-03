@@ -18,6 +18,7 @@ import com.github.davidmoten.rx2.exceptions.ThrowingException;
 import com.github.davidmoten.rx2.flowable.Transformers;
 
 import io.reactivex.Flowable;
+import io.reactivex.Notification;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
@@ -239,6 +240,11 @@ public final class FlowableReduceTest {
                 .test() //
                 .assertValues(4, 5) //
                 .assertComplete();
+    }
+    
+    @Test
+    public void testDematerialize() {
+        Flowable.just(Notification.createOnNext(1)).dematerialize().count().blockingGet();
     }
 
     private static void check(int n, int maxChained) {

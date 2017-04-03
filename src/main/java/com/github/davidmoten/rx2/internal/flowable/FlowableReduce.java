@@ -149,6 +149,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                         if (v == null) {
                             break;
                         } else if (destinationAttached) {
+                            System.out.println("clearing queue");
                             queue.clear();
                             break;
                         } else if (v.eventType == EventType.INITIAL) {
@@ -170,16 +171,18 @@ public final class FlowableReduce<T> extends Flowable<T> {
         }
 
         private void handleAdd(Event<T> v) {
+            System.out.println("ADD "+ v.subject);
             if (v.subject == finalSubscriber && length < maxChained) {
                 if (iteration <= maxIterations - 1) {
                     // ok to add another subject to the
                     // chain
                     ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, this, test);
-                    addToChain(sub);
                     if (iteration == maxIterations - 1) {
                         sub.subscribe(destination);
+                        System.out.println(sub + "subscribed to by destination");
                         destinationAttached = true;
                     }
+                    addToChain(sub);
                     finalSubscriber = sub;
                     iteration++;
                     length += 1;
@@ -188,11 +191,13 @@ public final class FlowableReduce<T> extends Flowable<T> {
         }
 
         private void handleDone() {
+            System.out.println("DONE");
             destinationAttached = true;
             finalSubscriber.subscribe(destination);
         }
 
         private void handleCompleteOrCancel(Event<T> v) {
+            System.out.println("COMPLETE/CANCEL "+ v.subject);
             if (v.subject == finalSubscriber) {
                 // TODO what to do here?
                 // cancelWholeChain();
@@ -203,9 +208,10 @@ public final class FlowableReduce<T> extends Flowable<T> {
                 iteration++;
             } else if (iteration == maxIterations - 1) {
                 ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, this, test);
-                addToChain(sub);
                 destinationAttached = true;
                 sub.subscribe(destination);
+                addToChain(sub);
+                System.out.println(sub + "subscribed to by destination");
                 finalSubscriber = sub;
                 iteration++;
             } else {
