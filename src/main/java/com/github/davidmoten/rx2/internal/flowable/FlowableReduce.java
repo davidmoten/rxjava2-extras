@@ -267,8 +267,9 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private Throwable error;
         private volatile boolean done;
         private volatile boolean cancelled;
+        private final AtomicLong deferredRequests = new AtomicLong();
 
-        public FinalReplaySubject(Subscriber<? super T> child, AtomicReference<Chain<T>> chain) {
+        FinalReplaySubject(Subscriber<? super T> child, AtomicReference<Chain<T>> chain) {
             this.child = child;
             this.chain = chain;
         }
@@ -282,11 +283,12 @@ public final class FlowableReduce<T> extends Flowable<T> {
         }
 
         @Override
-        public void onSubscribe(Subscription parent) {
-            long r = requested.get();
-            if (r != 0L) {
+        public void onSubscribe(Subscription pr) {
+            parent.set(pr);
+            long r = deferredRequests.getAndSet(-1);
+            if (r > 0L) {
                 System.out.println(this + " requesting of parent " + r);
-                parent.request(r);
+                pr.request(r);
             }
             drain();
         }
@@ -296,10 +298,21 @@ public final class FlowableReduce<T> extends Flowable<T> {
             System.out.println(this + " request " + n);
             if (SubscriptionHelper.validate(n)) {
                 BackpressureHelper.add(requested, n);
-                Subscription p = parent.get();
-                if (p != null) {
-                    System.out.println(this + " requesting from parent " + n);
-                    p.request(n);
+                while (true) {
+                    Subscription p = parent.get();
+                    long d = deferredRequests.get();
+                    if (d == -1) {
+                        System.out.println(this + " requesting from parent " + n);
+                        p.request(n);
+                    } else {
+                        long d2 = d + n;
+                        if (d2 < 0) {
+                            d2 = Long.MAX_VALUE;
+                        }
+                        if (deferredRequests.compareAndSet(d, d2)) {
+                            break;
+                        }
+                    }
                 }
                 drain();
             }
@@ -475,7 +488,6 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private volatile boolean done;
         private Throwable error;
         private volatile boolean cancelled;
-        private boolean childExists;
         private final Function<Observable<T>, ? extends Observable<?>> test;
         private volatile boolean childSubscribed;
 
