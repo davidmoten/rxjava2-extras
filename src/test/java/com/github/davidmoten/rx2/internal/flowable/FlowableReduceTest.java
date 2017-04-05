@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
@@ -24,7 +23,6 @@ import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-// @Ignore
 public final class FlowableReduceTest {
 
     private static final Function<List<Integer>, Integer> sum = (new Function<List<Integer>, Integer>() {
@@ -134,16 +132,14 @@ public final class FlowableReduceTest {
     }
 
     @Test
-    // @Ignore
     public void testMany() {
-        check(5, 2);
-        // for (int n = 5; n <= 100; n++) {
-        // int m = (int) Math.round(Math.floor(Math.log(n) / Math.log(2))) - 1;
-        // for (int maxChained = Math.max(3, m); maxChained < 6; maxChained++) {
-        // System.out.println("maxChained=" + maxChained + ",n=" + n);
-        // check(n, maxChained);
-        // }
-        // }
+        for (int n = 5; n <= 100; n++) {
+            int m = (int) Math.round(Math.floor(Math.log(n) / Math.log(2))) - 1;
+            for (int maxChained = Math.max(3, m); maxChained < 6; maxChained++) {
+                System.out.println("maxChained=" + maxChained + ",n=" + n);
+                check(n, maxChained);
+            }
+        }
     }
 
     @Test(timeout = 1000)
@@ -191,7 +187,7 @@ public final class FlowableReduceTest {
     }
 
     @Test
-    @Ignore
+//    @Ignore
     public void testErrorPreChaining() {
         AtomicBoolean cancelled = new AtomicBoolean();
         Flowable.<Integer>error(new ThrowingException()) //
@@ -204,7 +200,6 @@ public final class FlowableReduceTest {
     }
 
     @Test
-    @Ignore
     public void testErrorPostChaining() {
         Flowable.range(1, 100) //
                 .concatWith(Flowable.<Integer>error(new ThrowingException())) //
@@ -230,8 +225,7 @@ public final class FlowableReduceTest {
                 .assertComplete();
     }
 
-    @Test(timeout = 2000000)
-    // @Ignore
+    @Test(timeout = 20000)
     public void testMaxIterationsTwoMaxChainedThree() {
         Flowable.just(1, 5) //
                 .to(Transformers.reduce(plusOne, 3, 2)) //
@@ -240,8 +234,7 @@ public final class FlowableReduceTest {
                 .assertComplete();
     }
 
-    @Test(timeout = 200000000)
-    // @Ignore
+    @Test(timeout = 20000)
     public void testMaxIterations() {
         Flowable.range(1, 2) //
                 .to(Transformers.reduce(plusOne, 2, 3)) //
