@@ -187,7 +187,7 @@ public final class FlowableReduceTest {
     }
 
     @Test
-//    @Ignore
+    // @Ignore
     public void testErrorPreChaining() {
         AtomicBoolean cancelled = new AtomicBoolean();
         Flowable.<Integer>error(new ThrowingException()) //

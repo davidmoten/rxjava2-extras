@@ -669,10 +669,11 @@ public final class FlowableReduce<T> extends Flowable<T> {
                 Requests<T> r2 = new Requests<T>(r.parent, r.unreconciled, r.deferred, r.child);
                 if (requests.compareAndSet(r, r2)) {
                     if (r.child != null) {
+                        r.child.onError(t);
                         drain();
                     } else {
-                        cancelWholeChain();
                         destination.onError(t);
+                        cancelWholeChain();
                     }
                     break;
                 }
