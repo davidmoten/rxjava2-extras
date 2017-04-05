@@ -153,7 +153,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                         if (v == null) {
                             break;
                         } else if (destinationAttached) {
-                            System.out.println("clearing queue");
+                            debug("clearing queue");
                             queue.clear();
                             break;
                         } else if (v.eventType == EventType.INITIAL) {
@@ -175,7 +175,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         }
 
         private void handleAdd(Event<T> v) {
-            System.out.println("ADD " + v.subject);
+            debug("ADD " + v.subject);
             if (v.subject == finalSubscriber && length < maxChained) {
                 if (iteration <= maxIterations - 1) {
                     // ok to add another subject to the
@@ -183,7 +183,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                     ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, this, test);
                     if (iteration == maxIterations - 1) {
                         sub.subscribe(destination);
-                        System.out.println(sub + "subscribed to by destination");
+                        debug(sub + "subscribed to by destination");
                         destinationAttached = true;
                     }
                     addToChain(sub);
@@ -195,13 +195,13 @@ public final class FlowableReduce<T> extends Flowable<T> {
         }
 
         private void handleDone() {
-            System.out.println("DONE");
+            debug("DONE");
             destinationAttached = true;
             finalSubscriber.subscribe(destination);
         }
 
         private void handleCompleteOrCancel(Event<T> v) {
-            System.out.println("COMPLETE/CANCEL " + v.subject);
+            debug("COMPLETE/CANCEL " + v.subject);
             if (v.subject == finalSubscriber) {
                 // TODO what to do here?
                 // cancelWholeChain();
@@ -215,7 +215,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                 destinationAttached = true;
                 sub.subscribe(destination);
                 addToChain(sub);
-                System.out.println(sub + "subscribed to by destination");
+                debug(sub + "subscribed to by destination");
                 finalSubscriber = sub;
                 iteration++;
             } else {
@@ -234,7 +234,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                 return;
             }
             f.onTerminateDetach().subscribe(sub);
-            System.out.println(finalSubscriber + " subscribed to by " + sub);
+            debug(finalSubscriber + " subscribed to by " + sub);
         }
 
         private void cancelWholeChain() {
@@ -277,7 +277,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         protected void subscribeActual(Subscriber<? super T> child) {
-            System.out.println(this + " subscribed to by " + child);
+            debug(this + " subscribed to by " + child);
             child.onSubscribe(new MultiSubscription(this, chain.get()));
             // don't need to drain because destination is always subscribed to
             // this before this is subscribed to parent
@@ -288,7 +288,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
             parent.set(pr);
             long r = deferredRequests.getAndSet(-1);
             if (r > 0L) {
-                System.out.println(this + " requesting of parent " + r);
+                debug(this + " requesting of parent " + r);
                 pr.request(r);
             }
             drain();
@@ -296,14 +296,14 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void request(long n) {
-            System.out.println(this + " request " + n);
+            debug(this + " request " + n);
             if (SubscriptionHelper.validate(n)) {
                 BackpressureHelper.add(requested, n);
                 while (true) {
                     Subscription p = parent.get();
                     long d = deferredRequests.get();
                     if (d == -1) {
-                        System.out.println(this + " requesting from parent " + n);
+                        debug(this + " requesting from parent " + n);
                         p.request(n);
                     } else {
                         long d2 = d + n;
@@ -323,6 +323,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         public void cancel() {
             cancelled = true;
             SubscriptionHelper.cancel(this.parent);
+            chain.get().cancel();
         }
 
         @Override
@@ -340,7 +341,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onComplete() {
-            System.out.println("final complete");
+            debug("final complete");
             done = true;
             drain();
         }
@@ -443,7 +444,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onNext(Object t) {
-            System.out.println(subject + " TestObserver emits add " + t);
+            debug(subject + " TestObserver emits add " + t);
             chain.tryAddSubscriber(subject);
         }
 
@@ -455,7 +456,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onComplete() {
-            System.out.println(subject + " TestObserver emits done");
+            debug(subject + " TestObserver emits done");
             chain.done(subject);
         }
     }
@@ -557,7 +558,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         protected void subscribeActual(Subscriber<? super T> child) {
-            System.out.println(this + " subscribed with " + child);
+            debug(this + " subscribed with " + child);
             // only one subscriber expected
             while (true) {
                 Requests<T> r = requests.get();
@@ -575,7 +576,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void request(long n) {
-            System.out.println(this + " request " + n);
+            debug(this + " request " + n);
             if (SubscriptionHelper.validate(n)) {
                 BackpressureHelper.add(requested, n);
                 while (true) {
@@ -608,7 +609,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onNext(T t) {
-            System.out.println(this + " arrived " + t);
+            debug(this + " arrived " + t);
             if (done) {
                 return;
             }
@@ -636,13 +637,13 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onComplete() {
-            System.out.println(this + " complete");
+            debug(this + " complete");
             if (done) {
                 return;
             }
             done = true;
             cancelParent();
-            System.out.println(this + " emits complete to tester");
+            debug(this + " emits complete to tester");
             tester.onComplete();
             while (true) {
                 Requests<T> r = requests.get();
@@ -669,7 +670,6 @@ public final class FlowableReduce<T> extends Flowable<T> {
                 Requests<T> r2 = new Requests<T>(r.parent, r.unreconciled, r.deferred, r.child);
                 if (requests.compareAndSet(r, r2)) {
                     if (r.child != null) {
-                        r.child.onError(t);
                         drain();
                     } else {
                         destination.onError(t);
@@ -728,7 +728,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                                 break;
                             }
                         } else {
-                            System.out.println(this + " emitting " + t + " to " + requests.get().child + ":"
+                            debug(this + " emitting " + t + " to " + requests.get().child + ":"
                                     + requests.get().child.getClass().getSimpleName());
                             requests.get().child.onNext(t);
                             e++;
@@ -788,6 +788,10 @@ public final class FlowableReduce<T> extends Flowable<T> {
             secondary.cancel();
         }
 
+    }
+
+    static void debug(String message) {
+//        System.out.println(message);
     }
 
 }

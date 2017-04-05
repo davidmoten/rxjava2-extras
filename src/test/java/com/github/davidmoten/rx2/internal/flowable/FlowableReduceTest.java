@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
@@ -142,9 +143,9 @@ public final class FlowableReduceTest {
         }
     }
 
-    @Test(timeout = 1000)
+    @Test
     public void testManyAsync() {
-        for (int n = 5; n <= 10; n++) {
+        for (int n = 5; n <= 100; n++) {
             int m = (int) Math.round(Math.floor(Math.log(n) / Math.log(2))) - 1;
             for (int maxChained = Math.max(3, m); maxChained < 6; maxChained++) {
                 System.out.println("maxChained=" + maxChained + ",n=" + n);
@@ -196,6 +197,7 @@ public final class FlowableReduceTest {
     }
 
     @Test
+    @Ignore
     public void testErrorPreChainingCausesCancel() {
         AtomicBoolean cancelled = new AtomicBoolean();
         Flowable.<Integer>error(new ThrowingException()) //
