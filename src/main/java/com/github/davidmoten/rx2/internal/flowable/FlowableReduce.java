@@ -478,10 +478,9 @@ public final class FlowableReduce<T> extends Flowable<T> {
         // assigned here
         private final SimplePlainQueue<T> queue = new SpscLinkedArrayQueue<T>(16);
         private final AtomicLong requested = new AtomicLong();
-        private final AtomicLong unreconciledRequests = new AtomicLong();
+        private final AtomicReference<Requests<T>> requests = new AtomicReference<Requests<T>>(
+                new Requests<T>(null, 0, 0, null));
         private final AtomicInteger wip = new AtomicInteger();
-        private final AtomicReference<Subscriber<? super T>> child = new AtomicReference<Subscriber<? super T>>();
-        private final AtomicReference<Subscription> parent = new AtomicReference<Subscription>();
         private final Tester<T> tester;
 
         // mutable
@@ -489,7 +488,6 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private Throwable error;
         private volatile boolean cancelled;
         private final Function<Observable<T>, ? extends Observable<?>> test;
-        private volatile boolean childSubscribed;
 
         static <T> ChainedReplaySubject<T> create(FinalReplaySubject<T> destination, Chain<T> chain,
                 Function<Observable<T>, ? extends Observable<?>> test) {
@@ -504,6 +502,20 @@ public final class FlowableReduce<T> extends Flowable<T> {
             this.chain = chain;
             this.test = test;
             this.tester = new Tester<T>();
+        }
+
+        private static final class Requests<T> {
+            final Subscription parent;
+            final long unreconciled;
+            final long deferred;
+            final Subscriber<? super T> child;
+
+            Requests(Subscription parent, long unreconciled, long deferred, Subscriber<? super T> child) {
+                this.parent = parent;
+                this.unreconciled = unreconciled;
+                this.deferred = deferred;
+                this.child = child;
+            }
         }
 
         private void init() {
@@ -523,10 +535,22 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onSubscribe(Subscription parent) {
-            if (SubscriptionHelper.setOnce(this.parent, parent)) {
-                unreconciledRequests.getAndIncrement();
-                System.out.println(this + " requesting of parent " + 1);
-                parent.request(1);
+            while (true) {
+                Requests<T> r = requests.get();
+                Requests<T> r2;
+                if (r.deferred == 0) {
+                    r2 = new Requests<T>(parent, r.unreconciled + 1, 0, r.child);
+                    if (requests.compareAndSet(r, r2)) {
+                        parent.request(1);
+                        break;
+                    }
+                } else {
+                    r2 = new Requests<T>(parent, r.unreconciled, 0, r.child);
+                    if (requests.compareAndSet(r, r2)) {
+                        parent.request(r.deferred);
+                        break;
+                    }
+                }
             }
             drain();
         }
@@ -535,11 +559,17 @@ public final class FlowableReduce<T> extends Flowable<T> {
         protected void subscribeActual(Subscriber<? super T> child) {
             System.out.println(this + " subscribed with " + child);
             // only one subscriber expected
-            if (!this.child.compareAndSet(null, child)) {
-                throw new RuntimeException(this + " cannot subscribe twice");
+            while (true) {
+                Requests<T> r = requests.get();
+                if (r.child != null) {
+                    throw new RuntimeException("unexpected");
+                }
+                Requests<T> r2 = new Requests<T>(r.parent, r.unreconciled, r.deferred, child);
+                if (requests.compareAndSet(r, r2)) {
+                    break;
+                }
             }
             child.onSubscribe(this);
-            childSubscribed = true;
             drain();
         }
 
@@ -548,23 +578,28 @@ public final class FlowableReduce<T> extends Flowable<T> {
             System.out.println(this + " request " + n);
             if (SubscriptionHelper.validate(n)) {
                 BackpressureHelper.add(requested, n);
-                Subscription par = parent.get();
-                if (par != null) {
-                    if (n < Long.MAX_VALUE) {
-                        while (true) {
-                            long p = unreconciledRequests.get();
-                            long r = Math.max(0, n - p);
-                            long p2 = p - (n - r);
-                            if (unreconciledRequests.compareAndSet(p, p2)) {
-                                if (r > 0) {
-                                    System.out.println("requesting of parent " + r);
-                                    par.request(r);
-                                }
-                                break;
-                            }
+                while (true) {
+                    Requests<T> r = requests.get();
+                    Requests<T> r2;
+                    if (r.parent == null) {
+                        long d = r.deferred + n;
+                        if (d < 0) {
+                            d = Long.MAX_VALUE;
+                        }
+                        r2 = new Requests<T>(r.parent, r.unreconciled, d, r.child);
+                        if (requests.compareAndSet(r, r2)) {
+                            break;
                         }
                     } else {
-                        par.request(Long.MAX_VALUE);
+                        long x = n + r.deferred - r.unreconciled;
+                        long u = Math.max(0, -x);
+                        r2 = new Requests<T>(r.parent, u, 0, r.child);
+                        if (requests.compareAndSet(r, r2)) {
+                            if (x > 0) {
+                                r.parent.request(x);
+                            }
+                            break;
+                        }
                     }
                 }
                 drain();
@@ -579,16 +614,24 @@ public final class FlowableReduce<T> extends Flowable<T> {
             }
             queue.offer(t);
             tester.onNext(t);
-            if (childSubscribed()) {
-                drain();
-            } else {
-                // make minimal request to keep upstream producing
-                unreconciledRequests.incrementAndGet();
-                Subscription par = parent.get();
-                if (par != null) {
-                    par.request(1);
+            while (true) {
+                Requests<T> r = requests.get();
+                Requests<T> r2;
+                if (r.child == null) {
+                    r2 = new Requests<T>(r.parent, r.unreconciled + 1, r.deferred, r.child);
+                    if (requests.compareAndSet(r, r2)) {
+                        // make minimal request to keep upstream producing
+                        r.parent.request(1);
+                        break;
+                    }
+                } else {
+                    r2 = new Requests<T>(r.parent, r.unreconciled, 0, r.child);
+                    if (requests.compareAndSet(r, r2)) {
+                        break;
+                    }
                 }
             }
+            drain();
         }
 
         @Override
@@ -601,8 +644,15 @@ public final class FlowableReduce<T> extends Flowable<T> {
             cancelParent();
             System.out.println(this + " emits complete to tester");
             tester.onComplete();
-            if (childSubscribed()) {
-                drain();
+            while (true) {
+                Requests<T> r = requests.get();
+                Requests<T> r2 = new Requests<T>(r.parent, r.unreconciled, r.deferred, r.child);
+                if (requests.compareAndSet(r, r2)) {
+                    if (r.child != null) {
+                        drain();
+                    }
+                    break;
+                }
             }
         }
 
@@ -614,20 +664,23 @@ public final class FlowableReduce<T> extends Flowable<T> {
             }
             error = t;
             done = true;
-            if (childSubscribed()) {
-                drain();
-            } else {
-                cancelWholeChain();
-                destination.onError(t);
+            while (true) {
+                Requests<T> r = requests.get();
+                Requests<T> r2 = new Requests<T>(r.parent, r.unreconciled, r.deferred, r.child);
+                if (requests.compareAndSet(r, r2)) {
+                    if (r.child != null) {
+                        drain();
+                    } else {
+                        cancelWholeChain();
+                        destination.onError(t);
+                    }
+                    break;
+                }
             }
         }
 
         private void cancelWholeChain() {
             chain.cancel();
-        }
-
-        private boolean childSubscribed() {
-            return childSubscribed;
         }
 
         private void drain() {
@@ -639,6 +692,18 @@ public final class FlowableReduce<T> extends Flowable<T> {
                     long r = requested.get();
                     long e = 0;
                     while (e != r) {
+                        boolean childPresent;
+                        while (true) {
+                            Requests<T> req = requests.get();
+                            Requests<T> req2 = new Requests<T>(req.parent,req.unreconciled, req.deferred, req.child);
+                            if (requests.compareAndSet(req, req2)) {
+                                childPresent = req.child != null;
+                                break;
+                            }
+                        }
+                        if (!childPresent) {
+                            break;
+                        }
                         if (cancelled) {
                             queue.clear();
                             return;
@@ -649,22 +714,22 @@ public final class FlowableReduce<T> extends Flowable<T> {
                             queue.clear();
                             error = null;
                             cancel();
-                            child.get().onError(err);
+                            requests.get().child.onError(err);
                             return;
                         }
                         T t = queue.poll();
                         if (t == null) {
                             if (d) {
                                 cancel();
-                                child.get().onComplete();
+                                requests.get().child.onComplete();
                                 return;
                             } else {
                                 break;
                             }
                         } else {
-                            System.out.println(this + " emitting " + t + " to " + child.get() + ":"
-                                    + child.get().getClass().getSimpleName());
-                            child.get().onNext(t);
+                            System.out.println(this + " emitting " + t + " to " + requests.get().child + ":"
+                                    + requests.get().child.getClass().getSimpleName());
+                            requests.get().child.onNext(t);
                             e++;
                         }
                     }
@@ -693,13 +758,9 @@ public final class FlowableReduce<T> extends Flowable<T> {
         }
 
         private void cancelParent() {
-            Subscription par = parent.get();
+            Subscription par = requests.get().parent;
             if (par != null) {
                 par.cancel();
-                // set parent to null so can be GC'd (to avoid
-                // GC nepotism use Flowable.onTerminateDetach()
-                // upstream)
-                parent.set(null);
             }
         }
 
