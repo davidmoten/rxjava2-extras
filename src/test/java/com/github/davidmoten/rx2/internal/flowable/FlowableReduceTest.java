@@ -187,8 +187,16 @@ public final class FlowableReduceTest {
     }
 
     @Test
-    // @Ignore
     public void testErrorPreChaining() {
+        Flowable.<Integer>error(new ThrowingException()) //
+                .to(Transformers.reduce(reducer, 2)) //
+                .test() //
+                .assertNoValues() //
+                .assertError(ThrowingException.class);
+    }
+
+    @Test
+    public void testErrorPreChainingCausesCancel() {
         AtomicBoolean cancelled = new AtomicBoolean();
         Flowable.<Integer>error(new ThrowingException()) //
                 .doOnCancel(Actions.setToTrue(cancelled)) //
@@ -199,6 +207,7 @@ public final class FlowableReduceTest {
         assertTrue(cancelled.get());
     }
 
+    
     @Test
     public void testErrorPostChaining() {
         Flowable.range(1, 100) //
