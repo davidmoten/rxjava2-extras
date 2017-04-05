@@ -55,7 +55,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
             return;
         }
         AtomicReference<Chain<T>> chainRef = new AtomicReference<Chain<T>>();
-        FinalReplaySubject<T> destination = new FinalReplaySubject<T>(child, chainRef);
+        DestinationSubject<T> destination = new DestinationSubject<T>(child, chainRef);
         Chain<T> chain = new Chain<T>(reducer, destination, maxIterations, maxChained, test);
         chainRef.set(chain);
         destination.subscribe(child);
@@ -85,7 +85,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
         private final SimplePlainQueue<Event<T>> queue;
-        private final FinalReplaySubject<T> destination;
+        private final DestinationSubject<T> destination;
         private final long maxIterations;
         private final int maxChained;
         private final Function<Observable<T>, ? extends Observable<?>> test;
@@ -97,7 +97,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private boolean destinationAttached;
         private volatile boolean cancelled;
 
-        Chain(Function<? super Flowable<T>, ? extends Flowable<T>> reducer, FinalReplaySubject<T> destination,
+        Chain(Function<? super Flowable<T>, ? extends Flowable<T>> reducer, DestinationSubject<T> destination,
                 long maxIterations, int maxChained, Function<Observable<T>, ? extends Observable<?>> test) {
             this.reducer = reducer;
             this.destination = destination;
@@ -134,6 +134,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
             if (getAndIncrement() == 0) {
                 if (cancelled) {
                     if (destinationAttached) {
+                        finalSubscriber.cancel();
                         destination.cancel();
                     } else {
                         finalSubscriber.cancel();
@@ -254,7 +255,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
     }
 
-    private static class FinalReplaySubject<T> extends Flowable<T> implements Subscriber<T>, Subscription {
+    private static class DestinationSubject<T> extends Flowable<T> implements FlowableSubscriber<T>, Subscription {
 
         private final Subscriber<? super T> child;
         private final AtomicReference<Chain<T>> chain;
@@ -269,7 +270,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private volatile boolean cancelled;
         private final AtomicLong deferredRequests = new AtomicLong();
 
-        FinalReplaySubject(Subscriber<? super T> child, AtomicReference<Chain<T>> chain) {
+        DestinationSubject(Subscriber<? super T> child, AtomicReference<Chain<T>> chain) {
             this.child = child;
             this.chain = chain;
         }
@@ -327,7 +328,6 @@ public final class FlowableReduce<T> extends Flowable<T> {
         @Override
         public void onNext(T t) {
             queue.offer(t);
-            parent.get().request(1);
             drain();
         }
 
@@ -472,7 +472,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
             implements FlowableSubscriber<T>, Subscription {
 
         // assigned in constructor
-        private final FinalReplaySubject<T> destination;
+        private final DestinationSubject<T> destination;
         private final Chain<T> chain;
 
         // assigned here
@@ -489,14 +489,14 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private volatile boolean cancelled;
         private final Function<Observable<T>, ? extends Observable<?>> test;
 
-        static <T> ChainedReplaySubject<T> create(FinalReplaySubject<T> destination, Chain<T> chain,
+        static <T> ChainedReplaySubject<T> create(DestinationSubject<T> destination, Chain<T> chain,
                 Function<Observable<T>, ? extends Observable<?>> test) {
             ChainedReplaySubject<T> c = new ChainedReplaySubject<T>(destination, chain, test);
             c.init();
             return c;
         }
 
-        private ChainedReplaySubject(FinalReplaySubject<T> destination, Chain<T> chain,
+        private ChainedReplaySubject(DestinationSubject<T> destination, Chain<T> chain,
                 Function<Observable<T>, ? extends Observable<?>> test) {
             this.destination = destination;
             this.chain = chain;
@@ -529,7 +529,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
             o.subscribe(new TesterObserver<T>(chain, this));
         }
 
-        FinalReplaySubject<T> destination() {
+        DestinationSubject<T> destination() {
             return destination;
         }
 
@@ -696,7 +696,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                         boolean childPresent;
                         while (true) {
                             Requests<T> req = requests.get();
-                            Requests<T> req2 = new Requests<T>(req.parent,req.unreconciled, req.deferred, req.child);
+                            Requests<T> req2 = new Requests<T>(req.parent, req.unreconciled, req.deferred, req.child);
                             if (requests.compareAndSet(req, req2)) {
                                 childPresent = req.child != null;
                                 break;
