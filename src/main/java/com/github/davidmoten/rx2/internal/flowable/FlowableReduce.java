@@ -66,7 +66,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
     }
 
     private static enum EventType {
-        INITIAL, ADD, DONE, COMPLETE_OR_CANCEL;
+        ADD, DONE, COMPLETE_OR_CANCEL;
     }
 
     private static final class Event<T> {
@@ -156,8 +156,6 @@ public final class FlowableReduce<T> extends Flowable<T> {
                             debug("clearing queue");
                             queue.clear();
                             break;
-                        } else if (v.eventType == EventType.INITIAL) {
-                            finalSubscriber = v.subject;
                         } else if (v.eventType == EventType.ADD) {
                             handleAdd(v);
                         } else if (v.eventType == EventType.DONE) {
