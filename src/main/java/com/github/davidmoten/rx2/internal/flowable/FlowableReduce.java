@@ -55,7 +55,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
             return;
         }
         AtomicReference<Chain<T>> chainRef = new AtomicReference<Chain<T>>();
-        DestinationSubject<T> destination = new DestinationSubject<T>(child, chainRef);
+        DestinationSerializedSubject<T> destination = new DestinationSerializedSubject<T>(child, chainRef);
         Chain<T> chain = new Chain<T>(reducer, destination, maxIterations, maxChained, test);
         chainRef.set(chain);
         destination.subscribe(child);
@@ -85,7 +85,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
         private final SimplePlainQueue<Event<T>> queue;
-        private final DestinationSubject<T> destination;
+        private final DestinationSerializedSubject<T> destination;
         private final long maxIterations;
         private final int maxChained;
         private final Function<Observable<T>, ? extends Observable<?>> test;
@@ -97,7 +97,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private boolean destinationAttached;
         private volatile boolean cancelled;
 
-        Chain(Function<? super Flowable<T>, ? extends Flowable<T>> reducer, DestinationSubject<T> destination,
+        Chain(Function<? super Flowable<T>, ? extends Flowable<T>> reducer, DestinationSerializedSubject<T> destination,
                 long maxIterations, int maxChained, Function<Observable<T>, ? extends Observable<?>> test) {
             this.reducer = reducer;
             this.destination = destination;
@@ -255,7 +255,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
     }
 
-    private static class DestinationSubject<T> extends Flowable<T> implements FlowableSubscriber<T>, Subscription {
+    private static class DestinationSerializedSubject<T> extends Flowable<T> implements FlowableSubscriber<T>, Subscription {
 
         private final Subscriber<? super T> child;
         private final AtomicReference<Chain<T>> chain;
@@ -270,7 +270,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private volatile boolean cancelled;
         private final AtomicLong deferredRequests = new AtomicLong();
 
-        DestinationSubject(Subscriber<? super T> child, AtomicReference<Chain<T>> chain) {
+        DestinationSerializedSubject(Subscriber<? super T> child, AtomicReference<Chain<T>> chain) {
             this.child = child;
             this.chain = chain;
         }
@@ -473,7 +473,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
             implements FlowableSubscriber<T>, Subscription {
 
         // assigned in constructor
-        private final DestinationSubject<T> destination;
+        private final DestinationSerializedSubject<T> destination;
         private final Chain<T> chain;
 
         // assigned here
@@ -490,14 +490,14 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private volatile boolean cancelled;
         private final Function<Observable<T>, ? extends Observable<?>> test;
 
-        static <T> ChainedReplaySubject<T> create(DestinationSubject<T> destination, Chain<T> chain,
+        static <T> ChainedReplaySubject<T> create(DestinationSerializedSubject<T> destination, Chain<T> chain,
                 Function<Observable<T>, ? extends Observable<?>> test) {
             ChainedReplaySubject<T> c = new ChainedReplaySubject<T>(destination, chain, test);
             c.init();
             return c;
         }
 
-        private ChainedReplaySubject(DestinationSubject<T> destination, Chain<T> chain,
+        private ChainedReplaySubject(DestinationSerializedSubject<T> destination, Chain<T> chain,
                 Function<Observable<T>, ? extends Observable<?>> test) {
             this.destination = destination;
             this.chain = chain;
@@ -530,7 +530,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
             o.subscribe(new TesterObserver<T>(chain, this));
         }
 
-        DestinationSubject<T> destination() {
+        DestinationSerializedSubject<T> destination() {
             return destination;
         }
 
