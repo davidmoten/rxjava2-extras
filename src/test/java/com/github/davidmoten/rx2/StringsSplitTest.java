@@ -11,6 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import io.reactivex.Flowable;
@@ -206,6 +207,7 @@ public class StringsSplitTest {
     }
 
     @Test
+    @Ignore
     public void testSplitSimpleNormalCancelledAtBegginning() {
         try {
             List<Throwable> list = new CopyOnWriteArrayList<Throwable>();
