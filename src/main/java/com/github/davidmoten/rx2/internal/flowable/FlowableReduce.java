@@ -670,6 +670,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                 while (true) {
                     long r = requested.get();
                     long e = 0;
+                    boolean d = done;
                     while (e != r) {
                         Subscriber<? super T> child;
                         while (true) {
@@ -680,7 +681,6 @@ public final class FlowableReduce<T> extends Flowable<T> {
                                 break;
                             }
                         }
-                        boolean d = done;
                         Throwable err = error;
                         if (child == null) {
                             if (err != null) {
@@ -717,6 +717,11 @@ public final class FlowableReduce<T> extends Flowable<T> {
                             child.onNext(t);
                             e++;
                         }
+                        d = done;
+                    }
+                    if (d && queue.isEmpty()) {
+                        terminate();
+                        return;
                     }
                     if (e != 0 && r != Long.MAX_VALUE) {
                         r = requested.addAndGet(-e);
@@ -725,6 +730,26 @@ public final class FlowableReduce<T> extends Flowable<T> {
                     if (missed == 0) {
                         return;
                     }
+                }
+            }
+        }
+
+        private void terminate() {
+            cancel();
+            Throwable err = error;
+            Subscriber<? super T> child = requests.get().child;
+            if (err != null) {
+                error = null;
+                if (child != null) {
+                    child.onError(err);
+                } else {
+                    // TODO document that any error in chain results in
+                    // destination receiving error
+                    destination.onError(err);
+                }
+            } else {
+                if (child != null) {
+                    child.onComplete();
                 }
             }
         }
