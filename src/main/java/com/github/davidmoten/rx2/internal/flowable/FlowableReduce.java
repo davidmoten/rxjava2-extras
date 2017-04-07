@@ -253,7 +253,8 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
     }
 
-    private static class DestinationSerializedSubject<T> extends Flowable<T> implements FlowableSubscriber<T>, Subscription {
+    private static class DestinationSerializedSubject<T> extends Flowable<T>
+            implements FlowableSubscriber<T>, Subscription {
 
         private final Subscriber<? super T> child;
         private final AtomicReference<Chain<T>> chain;
@@ -643,16 +644,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
             cancelParent();
             debug(this + " emits complete to tester");
             tester.onComplete();
-            while (true) {
-                Requests<T> r = requests.get();
-                Requests<T> r2 = new Requests<T>(r.parent, r.unreconciled, r.deferred, r.child);
-                if (requests.compareAndSet(r, r2)) {
-                    if (r.child != null) {
-                        drain();
-                    }
-                    break;
-                }
-            }
+            drain();
         }
 
         @Override
@@ -663,19 +655,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
             }
             error = t;
             done = true;
-            while (true) {
-                Requests<T> r = requests.get();
-                Requests<T> r2 = new Requests<T>(r.parent, r.unreconciled, r.deferred, r.child);
-                if (requests.compareAndSet(r, r2)) {
-                    if (r.child != null) {
-                        drain();
-                    } else {
-                        destination.onError(t);
-                        cancelWholeChain();
-                    }
-                    break;
-                }
-            }
+            drain();
         }
 
         private void cancelWholeChain() {
@@ -691,36 +671,42 @@ public final class FlowableReduce<T> extends Flowable<T> {
                     long r = requested.get();
                     long e = 0;
                     while (e != r) {
-                        boolean childPresent;
+                        Subscriber<? super T> child;
                         while (true) {
                             Requests<T> req = requests.get();
                             Requests<T> req2 = new Requests<T>(req.parent, req.unreconciled, req.deferred, req.child);
                             if (requests.compareAndSet(req, req2)) {
-                                childPresent = req.child != null;
+                                child = req.child;
                                 break;
                             }
                         }
-                        if (!childPresent) {
+                        boolean d = done;
+                        Throwable err = error;
+                        if (child == null) {
+                            if (err != null) {
+                                queue.clear();
+                                error = null;
+                                cancel();
+                                destination.onError(err);
+                            }
                             break;
                         }
                         if (cancelled) {
                             queue.clear();
                             return;
                         }
-                        boolean d = done;
-                        Throwable err = error;
                         if (err != null) {
                             queue.clear();
                             error = null;
                             cancel();
-                            requests.get().child.onError(err);
+                            child.onError(err);
                             return;
                         }
                         T t = queue.poll();
                         if (t == null) {
                             if (d) {
                                 cancel();
-                                requests.get().child.onComplete();
+                                child.onComplete();
                                 return;
                             } else {
                                 break;
@@ -728,7 +714,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                         } else {
                             debug(this + " emitting " + t + " to " + requests.get().child + ":"
                                     + requests.get().child.getClass().getSimpleName());
-                            requests.get().child.onNext(t);
+                            child.onNext(t);
                             e++;
                         }
                     }
@@ -789,7 +775,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
     }
 
     static void debug(String message) {
-//        System.out.println(message);
+        // System.out.println(message);
     }
 
 }
