@@ -24,7 +24,7 @@ import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public final class FlowableReduceTest {
+public final class FlowableRepeatingTransformTest {
 
     private static final Function<List<Integer>, Integer> sum = (new Function<List<Integer>, Integer>() {
         @Override
@@ -209,7 +209,6 @@ public final class FlowableReduceTest {
         assertTrue(cancelled.get());
     }
 
-    
     @Test
     public void testErrorPostChaining() {
         Flowable.range(1, 100) //
@@ -258,6 +257,21 @@ public final class FlowableReduceTest {
     public void testDematerialize() {
         Flowable.just(Notification.createOnNext(1)).dematerialize().count().blockingGet();
         Flowable.empty().dematerialize().count().blockingGet();
+    }
+
+    @Test
+    public void testBackpressure() {
+        Flowable.range(1, 4) //
+                .to(Transformers.reduce(plusOne, 2, 3)) //
+                .test(0) //
+                .assertNoValues() //
+                .requestMore(1) //
+                .assertValue(4) //
+                .requestMore(1) //
+                .assertValues(4, 5) //
+                .requestMore(3) //
+                .assertValues(4, 5, 6, 7) //
+                .assertComplete();
     }
 
     private static void check(int n, int maxChained) {

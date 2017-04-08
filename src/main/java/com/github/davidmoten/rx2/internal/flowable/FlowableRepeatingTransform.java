@@ -23,20 +23,21 @@ import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 import io.reactivex.plugins.RxJavaPlugins;
 
-public final class FlowableReduce<T> extends Flowable<T> {
+public final class FlowableRepeatingTransform<T> extends Flowable<T> {
 
     private final Flowable<T> source;
-    private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
+    private final Function<? super Flowable<T>, ? extends Flowable<T>> transform;
     private final int maxChained;
     private final long maxIterations;
     private final Function<Observable<T>, ? extends Observable<?>> test;
 
-    public FlowableReduce(Flowable<T> source, Function<? super Flowable<T>, ? extends Flowable<T>> reducer,
-            int maxChained, long maxIterations, Function<Observable<T>, Observable<?>> test) {
+    public FlowableRepeatingTransform(Flowable<T> source,
+            Function<? super Flowable<T>, ? extends Flowable<T>> transform, int maxChained, long maxIterations,
+            Function<Observable<T>, Observable<?>> test) {
         Preconditions.checkArgument(maxChained > 0, "maxChained must be 1 or greater");
         Preconditions.checkArgument(maxIterations > 0, "maxIterations must be 1 or greater");
         this.source = source;
-        this.reducer = reducer;
+        this.transform = transform;
         this.maxChained = maxChained;
         this.maxIterations = maxIterations;
         this.test = test;
@@ -47,7 +48,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         Flowable<T> f;
         try {
-            f = reducer.apply(source);
+            f = transform.apply(source);
         } catch (Exception e) {
             Exceptions.throwIfFatal(e);
             child.onSubscribe(SubscriptionHelper.CANCELLED);
@@ -56,7 +57,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         }
         AtomicReference<Chain<T>> chainRef = new AtomicReference<Chain<T>>();
         DestinationSerializedSubject<T> destination = new DestinationSerializedSubject<T>(child, chainRef);
-        Chain<T> chain = new Chain<T>(reducer, destination, maxIterations, maxChained, test);
+        Chain<T> chain = new Chain<T>(transform, destination, maxIterations, maxChained, test);
         chainRef.set(chain);
         destination.subscribe(child);
         ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, chain, test);
@@ -83,7 +84,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
     @SuppressWarnings("serial")
     private static final class Chain<T> extends AtomicInteger implements Subscription {
 
-        private final Function<? super Flowable<T>, ? extends Flowable<T>> reducer;
+        private final Function<? super Flowable<T>, ? extends Flowable<T>> transform;
         private final SimplePlainQueue<Event<T>> queue;
         private final DestinationSerializedSubject<T> destination;
         private final long maxIterations;
@@ -97,9 +98,10 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private boolean destinationAttached;
         private volatile boolean cancelled;
 
-        Chain(Function<? super Flowable<T>, ? extends Flowable<T>> reducer, DestinationSerializedSubject<T> destination,
-                long maxIterations, int maxChained, Function<Observable<T>, ? extends Observable<?>> test) {
-            this.reducer = reducer;
+        Chain(Function<? super Flowable<T>, ? extends Flowable<T>> transform,
+                DestinationSerializedSubject<T> destination, long maxIterations, int maxChained,
+                Function<Observable<T>, ? extends Observable<?>> test) {
+            this.transform = transform;
             this.destination = destination;
             this.maxIterations = maxIterations;
             this.maxChained = maxChained;
@@ -133,11 +135,9 @@ public final class FlowableReduce<T> extends Flowable<T> {
         void drain() {
             if (getAndIncrement() == 0) {
                 if (cancelled) {
+                    finalSubscriber.cancel();
                     if (destinationAttached) {
-                        finalSubscriber.cancel();
                         destination.cancel();
-                    } else {
-                        finalSubscriber.cancel();
                     }
                     queue.clear();
                     return;
@@ -223,7 +223,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private void addToChain(Subscriber<T> sub) {
             Flowable<T> f;
             try {
-                f = reducer.apply(finalSubscriber);
+                f = transform.apply(finalSubscriber);
             } catch (Exception e) {
                 Exceptions.throwIfFatal(e);
                 cancelWholeChain();
@@ -303,6 +303,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
                     if (d == -1) {
                         debug(this + " requesting from parent " + n);
                         p.request(n);
+                        break;
                     } else {
                         long d2 = d + n;
                         if (d2 < 0) {
@@ -559,10 +560,6 @@ public final class FlowableReduce<T> extends Flowable<T> {
             debug(this + " subscribed with " + child);
             while (true) {
                 Requests<T> r = requests.get();
-                // only one subscriber expected
-                if (r.child != null) {
-                    throw new RuntimeException("unexpected");
-                }
                 Requests<T> r2 = new Requests<T>(r.parent, r.unreconciled, r.deferred, child);
                 if (requests.compareAndSet(r, r2)) {
                     break;
