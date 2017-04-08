@@ -269,7 +269,7 @@ public final class FlowableRepeatingTransformTest {
                 .assertValue(4) //
                 .requestMore(1) //
                 .assertValues(4, 5) //
-                .requestMore(3) //
+                .requestMore(2) //
                 .assertValues(4, 5, 6, 7) //
                 .assertComplete();
     }

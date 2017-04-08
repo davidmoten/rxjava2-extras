@@ -353,19 +353,25 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                 while (true) {
                     long r = requested.get();
                     long e = 0;
+                    boolean d = done;
                     while (e != r) {
                         if (cancelled) {
                             queue.clear();
                             return;
                         }
-                        boolean d = done;
                         Throwable err = error;
-                        if (err != null) {
-                            queue.clear();
-                            error = null;
-                            cancel();
-                            child.onError(err);
-                            return;
+                        if (d) {
+                            if (err != null) {
+                                queue.clear();
+                                error = null;
+                                cancel();
+                                child.onError(err);
+                                return;
+                            } else if (queue.isEmpty()) {
+                                cancel();
+                                child.onComplete();
+                                return;
+                            }
                         }
                         T t = queue.poll();
                         if (t == null) {
@@ -379,6 +385,21 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                         } else {
                             child.onNext(t);
                             e++;
+                        }
+                        d = done;
+                    }
+                    if (d) {
+                        Throwable err = error;
+                        if (err != null) {
+                            queue.clear();
+                            error = null;
+                            cancel();
+                            child.onError(err);
+                            return;
+                        } else if (queue.isEmpty()) {
+                            cancel();
+                            child.onComplete();
+                            return;
                         }
                     }
                     if (e != 0 && r != Long.MAX_VALUE) {
