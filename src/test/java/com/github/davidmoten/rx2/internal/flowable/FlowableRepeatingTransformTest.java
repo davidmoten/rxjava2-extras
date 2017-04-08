@@ -273,6 +273,15 @@ public final class FlowableRepeatingTransformTest {
                 .assertValues(4, 5, 6, 7) //
                 .assertComplete();
     }
+    
+    @Test
+    public void testBackpressureOnErrorNoRequests() {
+        Flowable.<Integer>error(new ThrowingException())//
+                .to(Transformers.reduce(plusOne, 2, 3)) //
+                .test(0) //
+                .assertNoValues() //
+                .assertError(ThrowingException.class);
+    }
 
     private static void check(int n, int maxChained) {
         int result = Flowable.range(1, n) //
