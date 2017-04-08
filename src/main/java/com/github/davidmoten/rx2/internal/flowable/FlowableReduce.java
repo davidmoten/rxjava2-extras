@@ -448,7 +448,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onError(Throwable e) {
-            subject.cancelWholeChain();
+            chain.cancel();
             subject.destination().onError(e);
         }
 
@@ -656,10 +656,6 @@ public final class FlowableReduce<T> extends Flowable<T> {
             error = t;
             done = true;
             drain();
-        }
-
-        private void cancelWholeChain() {
-            chain.cancel();
         }
 
         private void drain() {
