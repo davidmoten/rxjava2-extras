@@ -557,9 +557,9 @@ public final class FlowableReduce<T> extends Flowable<T> {
         @Override
         protected void subscribeActual(Subscriber<? super T> child) {
             debug(this + " subscribed with " + child);
-            // only one subscriber expected
             while (true) {
                 Requests<T> r = requests.get();
+                // only one subscriber expected
                 if (r.child != null) {
                     throw new RuntimeException("unexpected");
                 }
@@ -723,17 +723,13 @@ public final class FlowableReduce<T> extends Flowable<T> {
         private void terminate() {
             cancel();
             Throwable err = error;
-            Subscriber<? super T> child = requests.get().child;
             if (err != null) {
                 error = null;
-                if (child != null) {
-                    child.onError(err);
-                } else {
-                    // TODO document that any error in chain results in
-                    // destination receiving error
-                    destination.onError(err);
-                }
+                // TODO document that any error in chain results in
+                // destination receiving error
+                destination.onError(err);
             } else {
+                Subscriber<? super T> child = requests.get().child;
                 if (child != null) {
                     child.onComplete();
                 }
@@ -786,7 +782,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
     }
 
     static void debug(String message) {
-        //        System.out.println(message);
+        // System.out.println(message);
     }
 
 }
