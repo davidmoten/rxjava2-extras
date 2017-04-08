@@ -176,8 +176,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
             debug("ADD " + v.subject);
             if (v.subject == finalSubscriber && length < maxChained) {
                 if (iteration <= maxIterations - 1) {
-                    // ok to add another subject to the
-                    // chain
+                    // ok to add another subject to the chain
                     ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, this, test);
                     if (iteration == maxIterations - 1) {
                         sub.subscribe(destination);
@@ -649,6 +648,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
 
         @Override
         public void onError(Throwable t) {
+            debug(this + " error " + t);
             if (done) {
                 RxJavaPlugins.onError(t);
                 return;
@@ -672,35 +672,21 @@ public final class FlowableReduce<T> extends Flowable<T> {
                     long e = 0;
                     boolean d = done;
                     while (e != r) {
-                        Subscriber<? super T> child;
-                        while (true) {
-                            Requests<T> req = requests.get();
-                            Requests<T> req2 = new Requests<T>(req.parent, req.unreconciled, req.deferred, req.child);
-                            if (requests.compareAndSet(req, req2)) {
-                                child = req.child;
-                                break;
-                            }
-                        }
-                        Throwable err = error;
-                        if (child == null) {
-                            if (err != null) {
-                                queue.clear();
-                                error = null;
-                                cancel();
-                                destination.onError(err);
-                            }
-                            break;
-                        }
                         if (cancelled) {
                             queue.clear();
                             return;
                         }
+                        Throwable err = error;
                         if (err != null) {
                             queue.clear();
                             error = null;
                             cancel();
-                            child.onError(err);
+                            destination.onError(err);
                             return;
+                        }
+                        Subscriber<? super T> child = requests.get().child;
+                        if (child == null) {
+                            break;
                         }
                         T t = queue.poll();
                         if (t == null) {
@@ -800,7 +786,7 @@ public final class FlowableReduce<T> extends Flowable<T> {
     }
 
     static void debug(String message) {
-        // System.out.println(message);
+        //        System.out.println(message);
     }
 
 }
