@@ -314,12 +314,12 @@ public final class Transformers {
     }
 
     public static <T> Function<Flowable<T>, Flowable<T>> repeat(
-            final Function<? super Flowable<T>, ? extends Flowable<T>> reducer, final int maxChained,
+            final Function<? super Flowable<T>, ? extends Flowable<T>> transform, final int maxChained,
             final long maxIterations, final Function<Observable<T>, Observable<?>> tester) {
         return new Function<Flowable<T>, Flowable<T>>() {
             @Override
             public Flowable<T> apply(Flowable<T> source) {
-                return new FlowableRepeatingTransform<T>(source, reducer, maxChained, maxIterations, tester);
+                return new FlowableRepeatingTransform<T>(source, transform, maxChained, maxIterations, tester);
             }
         };
     }
