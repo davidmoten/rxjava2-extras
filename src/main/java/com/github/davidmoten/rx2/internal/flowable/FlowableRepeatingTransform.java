@@ -140,9 +140,9 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
             if (getAndIncrement() == 0) {
                 if (cancelled) {
                     finalSubscriber.cancel();
-                    if (destinationAttached) {
-                        destination.cancel();
-                    }
+                    // if (destinationAttached) {
+                    // destination.cancel();
+                    // }
                     queue.clear();
                     return;
                 }
@@ -266,11 +266,11 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
         private final AtomicReference<Subscription> parent = new AtomicReference<Subscription>();
         private final AtomicLong requested = new AtomicLong();
         private final SimplePlainQueue<T> queue = new SpscLinkedArrayQueue<T>(16);
+        private final AtomicLong deferredRequests = new AtomicLong();
 
         private Throwable error;
         private volatile boolean done;
         private volatile boolean cancelled;
-        private final AtomicLong deferredRequests = new AtomicLong();
 
         DestinationSerializedSubject(Subscriber<? super T> child, AtomicReference<Chain<T>> chain) {
             this.child = child;
@@ -305,6 +305,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                     Subscription p = parent.get();
                     long d = deferredRequests.get();
                     if (d == -1) {
+                        // parent exists so can request of it
                         debug(this + " requesting from parent " + n);
                         p.request(n);
                         break;
@@ -396,7 +397,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
         }
 
         private boolean terminate() {
-            //done is true at this point
+            // done is true at this point
             Throwable err = error;
             if (err != null) {
                 queue.clear();
@@ -735,9 +736,10 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
         }
 
         private void terminate() {
-            cancel();
             Throwable err = error;
             if (err != null) {
+                cancel();
+                queue.clear();
                 error = null;
                 // TODO document that any error in chain results in
                 // destination receiving error
@@ -745,6 +747,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
             } else {
                 Subscriber<? super T> child = requests.get().child;
                 if (child != null) {
+                    cancel();
                     child.onComplete();
                 }
             }
