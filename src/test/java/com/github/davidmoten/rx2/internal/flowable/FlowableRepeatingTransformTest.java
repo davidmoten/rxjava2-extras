@@ -15,15 +15,17 @@ import org.mockito.Mockito;
 
 import com.github.davidmoten.rx2.Actions;
 import com.github.davidmoten.rx2.Consumers;
-import com.github.davidmoten.rx2.Functions;
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
 import com.github.davidmoten.rx2.flowable.Transformers;
 
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Notification;
 import io.reactivex.Observable;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subscribers.TestSubscriber;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public final class FlowableRepeatingTransformTest {
@@ -256,6 +258,20 @@ public final class FlowableRepeatingTransformTest {
     }
 
     @Test
+    public void testRequestOverflow() {
+        PublishSubject<Integer> subject = PublishSubject.create();
+        
+        TestSubscriber<Integer> sub = subject.toFlowable(BackpressureStrategy.BUFFER) //
+                .to(Transformers.reduce(reducer, 2, 5)) //
+                .test(Long.MAX_VALUE - 2) //
+                .requestMore(Long.MAX_VALUE - 2);
+        subject.onNext(1);
+        subject.onNext(2);
+        subject.onComplete();
+        sub.assertValues(3);
+    }
+
+    @Test
     public void testDematerialize() {
         Flowable.just(Notification.createOnNext(1)).dematerialize().count().blockingGet();
         Flowable.empty().dematerialize().count().blockingGet();
@@ -285,7 +301,7 @@ public final class FlowableRepeatingTransformTest {
                 .assertError(ThrowingException.class);
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testMaxIterationsZeroThrowsIAE() {
         @SuppressWarnings("unchecked")
         Function<Observable<Integer>, Observable<?>> tester = Mockito.mock(Function.class);
