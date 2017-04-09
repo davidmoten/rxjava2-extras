@@ -29,20 +29,20 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
     private final Function<? super Flowable<T>, ? extends Flowable<T>> transform;
     private final int maxChained;
     private final long maxIterations;
-    private final Function<Observable<T>, ? extends Observable<?>> test;
+    private final Function<Observable<T>, ? extends Observable<?>> tester;
 
     public FlowableRepeatingTransform(Flowable<T> source,
             Function<? super Flowable<T>, ? extends Flowable<T>> transform, int maxChained, long maxIterations,
-            Function<Observable<T>, Observable<?>> test) {
+            Function<Observable<T>, Observable<?>> tester) {
         Preconditions.checkArgument(maxChained > 0, "maxChained must be > 0");
         Preconditions.checkArgument(maxIterations > 0, "maxIterations must be > 0");
         Preconditions.checkNotNull(transform, "transform must not be null");
-        Preconditions.checkNotNull(test, "tester must not be null");
+        Preconditions.checkNotNull(tester, "tester must not be null");
         this.source = source;
         this.transform = transform;
         this.maxChained = maxChained;
         this.maxIterations = maxIterations;
-        this.test = test;
+        this.tester = tester;
     }
 
     @Override
@@ -59,10 +59,12 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
         }
         AtomicReference<Chain<T>> chainRef = new AtomicReference<Chain<T>>();
         DestinationSerializedSubject<T> destination = new DestinationSerializedSubject<T>(child, chainRef);
-        Chain<T> chain = new Chain<T>(transform, destination, maxIterations, maxChained, test);
+        Chain<T> chain = new Chain<T>(transform, destination, maxIterations, maxChained, tester);
         chainRef.set(chain);
+        // destination is not initially subscribed to the chain but will be when
+        // tester function result completes
         destination.subscribe(child);
-        ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, chain, test);
+        ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, chain, tester);
         chain.initialize(sub);
         f.onTerminateDetach() //
                 .subscribe(sub);
@@ -111,7 +113,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
             this.queue = new SpscLinkedArrayQueue<Event<T>>(16);
         }
 
-        public void initialize(ChainedReplaySubject<T> subject) {
+        void initialize(ChainedReplaySubject<T> subject) {
             finalSubscriber = subject;
             if (maxIterations == 1) {
                 finalSubscriber.subscribe(destination);
@@ -361,19 +363,8 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                             queue.clear();
                             return;
                         }
-                        Throwable err = error;
-                        if (d) {
-                            if (err != null) {
-                                queue.clear();
-                                error = null;
-                                cancel();
-                                child.onError(err);
-                                return;
-                            } else if (queue.isEmpty()) {
-                                cancel();
-                                child.onComplete();
-                                return;
-                            }
+                        if (d && terminate()) {
+                            return;
                         }
                         T t = queue.poll();
                         if (t == null) {
@@ -390,19 +381,8 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                         }
                         d = done;
                     }
-                    if (d) {
-                        Throwable err = error;
-                        if (err != null) {
-                            queue.clear();
-                            error = null;
-                            cancel();
-                            child.onError(err);
-                            return;
-                        } else if (queue.isEmpty()) {
-                            cancel();
-                            child.onComplete();
-                            return;
-                        }
+                    if (d && terminate()) {
+                        return;
                     }
                     if (e != 0 && r != Long.MAX_VALUE) {
                         r = requested.addAndGet(-e);
@@ -412,6 +392,24 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                         return;
                     }
                 }
+            }
+        }
+
+        private boolean terminate() {
+            //done is true at this point
+            Throwable err = error;
+            if (err != null) {
+                queue.clear();
+                error = null;
+                cancel();
+                child.onError(err);
+                return true;
+            } else if (queue.isEmpty()) {
+                cancel();
+                child.onComplete();
+                return true;
+            } else {
+                return false;
             }
         }
 
