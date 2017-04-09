@@ -34,8 +34,10 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
     public FlowableRepeatingTransform(Flowable<T> source,
             Function<? super Flowable<T>, ? extends Flowable<T>> transform, int maxChained, long maxIterations,
             Function<Observable<T>, Observable<?>> test) {
-        Preconditions.checkArgument(maxChained > 0, "maxChained must be 1 or greater");
-        Preconditions.checkArgument(maxIterations > 0, "maxIterations must be 1 or greater");
+        Preconditions.checkArgument(maxChained > 0, "maxChained must be > 0");
+        Preconditions.checkArgument(maxIterations > 0, "maxIterations must be > 0");
+        Preconditions.checkNotNull(transform, "transform must not be null");
+        Preconditions.checkNotNull(test, "tester must not be null");
         this.source = source;
         this.transform = transform;
         this.maxChained = maxChained;

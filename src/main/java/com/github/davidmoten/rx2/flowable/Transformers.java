@@ -316,6 +316,10 @@ public final class Transformers {
     public static <T> Function<Flowable<T>, Flowable<T>> repeat(
             final Function<? super Flowable<T>, ? extends Flowable<T>> transform, final int maxChained,
             final long maxIterations, final Function<Observable<T>, Observable<?>> tester) {
+        Preconditions.checkArgument(maxChained > 0, "maxChained must be > 0");
+        Preconditions.checkArgument(maxIterations > 0, "maxIterations must be > 0");
+        Preconditions.checkNotNull(transform, "transform must not be null");
+        Preconditions.checkNotNull(tester, "tester must not be null");
         return new Function<Flowable<T>, Flowable<T>>() {
             @Override
             public Flowable<T> apply(Flowable<T> source) {

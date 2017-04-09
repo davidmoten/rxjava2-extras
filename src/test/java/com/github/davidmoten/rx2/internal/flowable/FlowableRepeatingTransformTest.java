@@ -11,9 +11,11 @@ import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
+import org.mockito.Mockito;
 
 import com.github.davidmoten.rx2.Actions;
 import com.github.davidmoten.rx2.Consumers;
+import com.github.davidmoten.rx2.Functions;
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
 import com.github.davidmoten.rx2.flowable.Transformers;
 
@@ -273,7 +275,7 @@ public final class FlowableRepeatingTransformTest {
                 .assertValues(4, 5, 6, 7) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testBackpressureOnErrorNoRequests() {
         Flowable.<Integer>error(new ThrowingException())//
@@ -281,6 +283,13 @@ public final class FlowableRepeatingTransformTest {
                 .test(0) //
                 .assertNoValues() //
                 .assertError(ThrowingException.class);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testMaxIterationsZeroThrowsIAE() {
+        @SuppressWarnings("unchecked")
+        Function<Observable<Integer>, Observable<?>> tester = Mockito.mock(Function.class);
+        Transformers.<Integer>repeat(plusOne, 2, 0, tester);
     }
 
     private static void check(int n, int maxChained) {
