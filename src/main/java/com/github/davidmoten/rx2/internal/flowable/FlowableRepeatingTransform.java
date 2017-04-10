@@ -693,6 +693,9 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                             return;
                         }
                         Subscriber<? super T> child = requests.get().child;
+                        if (child == null) {
+                            break;
+                        }
                         Throwable err = error;
                         if (err != null) {
                             queue.clear();
@@ -701,9 +704,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                             child.onError(err);
                             return;
                         }
-                        if (child == null) {
-                            break;
-                        }
+                        
                         T t = queue.poll();
                         if (t == null) {
                             if (d) {
@@ -740,9 +741,9 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
             if (child != null) {
                 Throwable err = error;
                 if (err != null) {
-                    cancel();
                     queue.clear();
                     error = null;
+                    cancel();
                     child.onError(err);
                     return true;
                 } else {
