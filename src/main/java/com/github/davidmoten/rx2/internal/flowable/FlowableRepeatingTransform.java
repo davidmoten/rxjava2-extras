@@ -674,6 +674,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
             }
             error = t;
             done = true;
+            tester.onError(t);
             drain();
         }
 
@@ -691,15 +692,15 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                             queue.clear();
                             return;
                         }
+                        Subscriber<? super T> child = requests.get().child;
                         Throwable err = error;
                         if (err != null) {
                             queue.clear();
                             error = null;
                             cancel();
-                            destination.onError(err);
+                            child.onError(err);
                             return;
                         }
-                        Subscriber<? super T> child = requests.get().child;
                         if (child == null) {
                             break;
                         }
@@ -720,8 +721,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                         }
                         d = done;
                     }
-                    if (d && queue.isEmpty()) {
-                        terminate();
+                    if (d && queue.isEmpty() && terminate()) {
                         return;
                     }
                     if (e != 0 && r != Long.MAX_VALUE) {
@@ -735,22 +735,23 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
             }
         }
 
-        private void terminate() {
-            Throwable err = error;
-            if (err != null) {
-                cancel();
-                queue.clear();
-                error = null;
-                // TODO document that any error in chain results in
-                // destination receiving error
-                destination.onError(err);
-            } else {
-                Subscriber<? super T> child = requests.get().child;
-                if (child != null) {
+        private boolean terminate() {
+            Subscriber<? super T> child = requests.get().child;
+            if (child != null) {
+                Throwable err = error;
+                if (err != null) {
+                    cancel();
+                    queue.clear();
+                    error = null;
+                    child.onError(err);
+                    return true;
+                } else {
                     cancel();
                     child.onComplete();
+                    return true;
                 }
             }
+            return false;
         }
 
         @Override
