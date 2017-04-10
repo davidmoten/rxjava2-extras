@@ -507,6 +507,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
 
         // mutable
         private volatile boolean done;
+        // visibility controlled by `done`
         private Throwable error;
         private volatile boolean cancelled;
         private final Function<Observable<T>, ? extends Observable<?>> test;
