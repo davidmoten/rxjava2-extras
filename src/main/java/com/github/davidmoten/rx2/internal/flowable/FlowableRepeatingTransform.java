@@ -13,6 +13,7 @@ import io.reactivex.Flowable;
 import io.reactivex.FlowableSubscriber;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
+import io.reactivex.Scheduler.Worker;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import io.reactivex.exceptions.Exceptions;
@@ -22,6 +23,7 @@ import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 import io.reactivex.plugins.RxJavaPlugins;
+import io.reactivex.schedulers.Schedulers;
 
 public final class FlowableRepeatingTransform<T> extends Flowable<T> {
 
@@ -101,6 +103,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
         private ChainedReplaySubject<T> finalSubscriber;
         private boolean destinationAttached;
         private volatile boolean cancelled;
+        private final Worker worker = Schedulers.trampoline().createWorker();
 
         Chain(Function<? super Flowable<T>, ? extends Flowable<T>> transform,
                 DestinationSerializedSubject<T> destination, long maxIterations, int maxChained,
@@ -224,18 +227,23 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
             }
         }
 
-        private void addToChain(Subscriber<T> sub) {
-            Flowable<T> f;
-            try {
-                f = transform.apply(finalSubscriber);
-            } catch (Exception e) {
-                Exceptions.throwIfFatal(e);
-                cancelWholeChain();
-                destination.onError(e);
-                return;
-            }
-            f.onTerminateDetach().subscribe(sub);
-            debug(finalSubscriber + " subscribed to by " + sub);
+        private void addToChain(final Subscriber<T> sub) {
+            worker.schedule(new Runnable() {
+                @Override
+                public void run() {
+                Flowable<T> f;
+                try {
+                    f = transform.apply(finalSubscriber);
+                } catch (Exception e) {
+                    Exceptions.throwIfFatal(e);
+                    cancelWholeChain();
+                    destination.onError(e);
+                    return;
+                }
+                f.onTerminateDetach().subscribe(sub);
+                debug(finalSubscriber + " subscribed to by " + sub);
+                }
+            });
         }
 
         private void cancelWholeChain() {
@@ -429,7 +437,6 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
         @Override
         public void onSubscribe(Disposable d) {
             throw new RuntimeException("unexpected");
-
         }
 
         @Override
@@ -460,7 +467,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
 
         @Override
         public void onSubscribe(Disposable d) {
-            // ignore
+            //ignore
         }
 
         @Override
@@ -710,6 +717,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                         if (t == null) {
                             if (d) {
                                 cancel();
+                                
                                 child.onComplete();
                                 return;
                             } else {
@@ -802,7 +810,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
     }
 
     static void debug(String message) {
-        // System.out.println(message);
+         System.out.println(message);
     }
 
 }

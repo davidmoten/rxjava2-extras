@@ -260,7 +260,7 @@ public final class FlowableRepeatingTransformTest {
     @Test
     public void testRequestOverflow() {
         PublishSubject<Integer> subject = PublishSubject.create();
-        
+
         TestSubscriber<Integer> sub = subject.toFlowable(BackpressureStrategy.BUFFER) //
                 .to(Transformers.reduce(reducer, 2, 5)) //
                 .test(Long.MAX_VALUE - 2) //
@@ -331,6 +331,12 @@ public final class FlowableRepeatingTransformTest {
             sum += i;
         }
         return sum;
+    }
+
+    public static void main(String[] args) {
+        Flowable.just(1, 2, 3) //
+                .to(Transformers.reduce(plusOne, 2, Long.MAX_VALUE)) //
+                .test();
     }
 
 }
