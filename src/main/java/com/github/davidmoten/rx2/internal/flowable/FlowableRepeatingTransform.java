@@ -34,8 +34,8 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
     private final Function<Observable<T>, ? extends Observable<?>> tester;
 
     public FlowableRepeatingTransform(Flowable<T> source,
-            Function<? super Flowable<T>, ? extends Flowable<T>> transform, int maxChained, long maxIterations,
-            Function<Observable<T>, Observable<?>> tester) {
+            Function<? super Flowable<T>, ? extends Flowable<T>> transform, int maxChained,
+            long maxIterations, Function<Observable<T>, Observable<?>> tester) {
         Preconditions.checkArgument(maxChained > 0, "maxChained must be > 0");
         Preconditions.checkArgument(maxIterations > 0, "maxIterations must be > 0");
         Preconditions.checkNotNull(transform, "transform must not be null");
@@ -60,7 +60,8 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
             return;
         }
         AtomicReference<Chain<T>> chainRef = new AtomicReference<Chain<T>>();
-        DestinationSerializedSubject<T> destination = new DestinationSerializedSubject<T>(child, chainRef);
+        DestinationSerializedSubject<T> destination = new DestinationSerializedSubject<T>(child,
+                chainRef);
         Chain<T> chain = new Chain<T>(transform, destination, maxIterations, maxChained, tester);
         chainRef.set(chain);
         // destination is not initially subscribed to the chain but will be when
@@ -184,7 +185,8 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
             if (v.subject == finalSubscriber && length < maxChained) {
                 if (iteration <= maxIterations - 1) {
                     // ok to add another subject to the chain
-                    ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, this, test);
+                    ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, this,
+                            test);
                     if (iteration == maxIterations - 1) {
                         sub.subscribe(destination);
                         debug(sub + "subscribed to by destination");
@@ -228,22 +230,17 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
         }
 
         private void addToChain(final Subscriber<T> sub) {
-            worker.schedule(new Runnable() {
-                @Override
-                public void run() {
-                Flowable<T> f;
-                try {
-                    f = transform.apply(finalSubscriber);
-                } catch (Exception e) {
-                    Exceptions.throwIfFatal(e);
-                    cancelWholeChain();
-                    destination.onError(e);
-                    return;
-                }
-                f.onTerminateDetach().subscribe(sub);
-                debug(finalSubscriber + " subscribed to by " + sub);
-                }
-            });
+            Flowable<T> f;
+            try {
+                f = transform.apply(finalSubscriber);
+            } catch (Exception e) {
+                Exceptions.throwIfFatal(e);
+                cancelWholeChain();
+                destination.onError(e);
+                return;
+            }
+            f.onTerminateDetach().subscribe(sub);
+            debug(finalSubscriber + " subscribed to by " + sub);
         }
 
         private void cancelWholeChain() {
@@ -467,7 +464,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
 
         @Override
         public void onSubscribe(Disposable d) {
-            //ignore
+            // ignore
         }
 
         @Override
@@ -519,8 +516,8 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
         private volatile boolean cancelled;
         private final Function<Observable<T>, ? extends Observable<?>> test;
 
-        static <T> ChainedReplaySubject<T> create(DestinationSerializedSubject<T> destination, Chain<T> chain,
-                Function<Observable<T>, ? extends Observable<?>> test) {
+        static <T> ChainedReplaySubject<T> create(DestinationSerializedSubject<T> destination,
+                Chain<T> chain, Function<Observable<T>, ? extends Observable<?>> test) {
             ChainedReplaySubject<T> c = new ChainedReplaySubject<T>(destination, chain, test);
             c.init();
             return c;
@@ -540,7 +537,8 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
             final long deferred;
             final Subscriber<? super T> child;
 
-            Requests(Subscription parent, long unreconciled, long deferred, Subscriber<? super T> child) {
+            Requests(Subscription parent, long unreconciled, long deferred,
+                    Subscriber<? super T> child) {
                 this.parent = parent;
                 this.unreconciled = unreconciled;
                 this.deferred = deferred;
@@ -712,12 +710,12 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                             child.onError(err);
                             return;
                         }
-                        
+
                         T t = queue.poll();
                         if (t == null) {
                             if (d) {
                                 cancel();
-                                
+
                                 child.onComplete();
                                 return;
                             } else {
@@ -810,7 +808,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
     }
 
     static void debug(String message) {
-         System.out.println(message);
+//        System.out.println(message);
     }
 
 }
