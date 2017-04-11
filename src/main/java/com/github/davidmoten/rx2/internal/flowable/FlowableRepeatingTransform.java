@@ -13,7 +13,6 @@ import io.reactivex.Flowable;
 import io.reactivex.FlowableSubscriber;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
-import io.reactivex.Scheduler.Worker;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import io.reactivex.exceptions.Exceptions;
@@ -23,7 +22,6 @@ import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 import io.reactivex.plugins.RxJavaPlugins;
-import io.reactivex.schedulers.Schedulers;
 
 public final class FlowableRepeatingTransform<T> extends Flowable<T> {
 
@@ -74,17 +72,24 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
     }
 
     private static enum EventType {
-        ADD, DONE, COMPLETE_OR_CANCEL;
+        TESTER_ADD, TESTER_DONE, TESTER_COMPLETE_OR_CANCEL, NEXT, ERROR, COMPLETE;
     }
 
     private static final class Event<T> {
 
         final EventType eventType;
         final ChainedReplaySubject<T> subject;
+        final Subscriber<? super T> subscriber;
+        final T t;
+        final Throwable error;
 
-        Event(EventType eventType, ChainedReplaySubject<T> subject) {
+        Event(EventType eventType, ChainedReplaySubject<T> subject,
+                Subscriber<? super T> subscriber, T t, Throwable error) {
             this.eventType = eventType;
             this.subject = subject;
+            this.subscriber = subscriber;
+            this.t = t;
+            this.error = error;
         }
     }
 
@@ -104,7 +109,6 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
         private ChainedReplaySubject<T> finalSubscriber;
         private boolean destinationAttached;
         private volatile boolean cancelled;
-        private final Worker worker = Schedulers.trampoline().createWorker();
 
         Chain(Function<? super Flowable<T>, ? extends Flowable<T>> transform,
                 DestinationSerializedSubject<T> destination, long maxIterations, int maxChained,
@@ -126,17 +130,35 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
         }
 
         void tryAddSubscriber(ChainedReplaySubject<T> subject) {
-            queue.offer(new Event<T>(EventType.ADD, subject));
+            queue.offer(new Event<T>(EventType.TESTER_ADD, subject, null, null, null));
             drain();
         }
 
         void done(ChainedReplaySubject<T> subject) {
-            queue.offer(new Event<T>(EventType.DONE, subject));
+            queue.offer(new Event<T>(EventType.TESTER_DONE, subject, null, null, null));
             drain();
         }
 
         void completeOrCancel(ChainedReplaySubject<T> subject) {
-            queue.offer(new Event<T>(EventType.COMPLETE_OR_CANCEL, subject));
+            queue.offer(
+                    new Event<T>(EventType.TESTER_COMPLETE_OR_CANCEL, subject, null, null, null));
+            drain();
+        }
+
+        public void onError(Subscriber<? super T> child, Throwable err) {
+            queue.offer(new Event<T>(EventType.ERROR, null, child, null, err));
+            drain();
+
+        }
+
+        public void onCompleted(Subscriber<? super T> child) {
+            queue.offer(new Event<T>(EventType.COMPLETE, null, child, null, null));
+            drain();
+
+        }
+
+        public void onNext(Subscriber<? super T> child, T t) {
+            queue.offer(new Event<T>(EventType.NEXT, null, child, t, null));
             drain();
         }
 
@@ -144,13 +166,6 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
             if (getAndIncrement() == 0) {
                 if (cancelled) {
                     finalSubscriber.cancel();
-                    // if (destinationAttached) {
-                    // destination.cancel();
-                    // }
-                    queue.clear();
-                    return;
-                }
-                if (destinationAttached) {
                     queue.clear();
                     return;
                 }
@@ -160,14 +175,16 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                         Event<T> v = queue.poll();
                         if (v == null) {
                             break;
-                        } else if (destinationAttached) {
-                            debug("clearing queue");
-                            queue.clear();
-                            break;
-                        } else if (v.eventType == EventType.ADD) {
+                        } else if (v.eventType == EventType.TESTER_ADD) {
                             handleAdd(v);
-                        } else if (v.eventType == EventType.DONE) {
+                        } else if (v.eventType == EventType.TESTER_DONE) {
                             handleDone();
+                        } else if (v.eventType == EventType.NEXT) {
+                            v.subscriber.onNext(v.t);
+                        } else if (v.eventType == EventType.COMPLETE) {
+                            v.subscriber.onComplete();
+                        } else if (v.eventType == EventType.ERROR) {
+                            v.subscriber.onError(v.error);
                         } else {
                             handleCompleteOrCancel(v);
                         }
@@ -182,7 +199,8 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
 
         private void handleAdd(Event<T> v) {
             debug("ADD " + v.subject);
-            if (v.subject == finalSubscriber && length < maxChained) {
+            if (!destinationAttached && v.subject == finalSubscriber && length < maxChained
+                    && !destinationAttached) {
                 if (iteration <= maxIterations - 1) {
                     // ok to add another subject to the chain
                     ChainedReplaySubject<T> sub = ChainedReplaySubject.create(destination, this,
@@ -202,12 +220,17 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
 
         private void handleDone() {
             debug("DONE");
-            destinationAttached = true;
-            finalSubscriber.subscribe(destination);
+            if (!destinationAttached) {
+                destinationAttached = true;
+                finalSubscriber.subscribe(destination);
+            }
         }
 
         private void handleCompleteOrCancel(Event<T> v) {
             debug("COMPLETE/CANCEL " + v.subject);
+            if (destinationAttached) {
+                return;
+            }
             if (v.subject == finalSubscriber) {
                 // TODO what to do here?
                 // cancelWholeChain();
@@ -239,6 +262,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                 destination.onError(e);
                 return;
             }
+            log("adding subscriber to " + finalSubscriber);
             f.onTerminateDetach().subscribe(sub);
             debug(finalSubscriber + " subscribed to by " + sub);
         }
@@ -707,7 +731,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                             queue.clear();
                             error = null;
                             cancel();
-                            child.onError(err);
+                            chain.onError(child, err);
                             return;
                         }
 
@@ -715,8 +739,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                         if (t == null) {
                             if (d) {
                                 cancel();
-
-                                child.onComplete();
+                                chain.onCompleted(child);
                                 return;
                             } else {
                                 break;
@@ -724,7 +747,7 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                         } else {
                             debug(this + " emitting " + t + " to " + requests.get().child + ":"
                                     + requests.get().child.getClass().getSimpleName());
-                            child.onNext(t);
+                            chain.onNext(child, t);
                             e++;
                         }
                         d = done;
@@ -751,11 +774,11 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
                     queue.clear();
                     error = null;
                     cancel();
-                    child.onError(err);
+                    chain.onError(child, err);
                     return true;
                 } else {
                     cancel();
-                    child.onComplete();
+                    chain.onCompleted(child);
                     return true;
                 }
             }
@@ -808,7 +831,11 @@ public final class FlowableRepeatingTransform<T> extends Flowable<T> {
     }
 
     static void debug(String message) {
-//        System.out.println(message);
+        // System.out.println(message);
+    }
+
+    static void log(String message) {
+        // System.out.println(message);
     }
 
 }

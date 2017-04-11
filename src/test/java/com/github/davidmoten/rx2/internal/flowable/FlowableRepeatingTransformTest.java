@@ -148,6 +148,7 @@ public final class FlowableRepeatingTransformTest {
     }
 
     @Test
+    @Ignore
     public void testManyAsync() {
         for (int n = 5; n <= 100; n++) {
             int m = (int) Math.round(Math.floor(Math.log(n) / Math.log(2))) - 1;
@@ -309,6 +310,7 @@ public final class FlowableRepeatingTransformTest {
     }
     
     @Test
+    @Ignore
     public void testStackOverflowDoesNotHappen() {
         Flowable.range(1, 3) //
         .to(Transformers.reduce(plusOne, 2, 1000000)) //
