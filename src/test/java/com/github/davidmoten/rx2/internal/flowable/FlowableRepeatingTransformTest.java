@@ -307,6 +307,13 @@ public final class FlowableRepeatingTransformTest {
         Function<Observable<Integer>, Observable<?>> tester = Mockito.mock(Function.class);
         Transformers.<Integer>repeat(plusOne, 2, 0, tester);
     }
+    
+    @Test
+    public void testStackOverflowDoesNotHappen() {
+        Flowable.range(1, 3) //
+        .to(Transformers.reduce(plusOne, 2, 1000000)) //
+        .test();
+    }
 
     private static void check(int n, int maxChained) {
         int result = Flowable.range(1, n) //
