@@ -310,10 +310,9 @@ public final class FlowableRepeatingTransformTest {
     }
     
     @Test
-    @Ignore
     public void testStackOverflowDoesNotHappen() {
         Flowable.range(1, 3) //
-        .to(Transformers.reduce(plusOne, 2, 1000000)) //
+        .to(Transformers.reduce(plusOne, 2, 10000)) //
         .test();
     }
 
