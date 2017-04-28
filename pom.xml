@@ -148,6 +148,7 @@
 			<groupId>io.reactivex</groupId>
 			<artifactId>rxjava</artifactId>
 			<version>1.2.7</version>
+            <scope>test</scope>
 		</dependency>
 		
 		<dependency>
