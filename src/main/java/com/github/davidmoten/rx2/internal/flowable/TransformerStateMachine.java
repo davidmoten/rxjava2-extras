@@ -16,6 +16,7 @@ import io.reactivex.functions.Cancellable;
 import io.reactivex.functions.Function;
 import io.reactivex.functions.Function3;
 import io.reactivex.functions.Predicate;
+import io.reactivex.plugins.RxJavaPlugins;
 
 public final class TransformerStateMachine<State, In, Out> implements FlowableTransformer<In, Out> {
 
@@ -154,7 +155,9 @@ public final class TransformerStateMachine<State, In, Out> implements FlowableTr
 
         @Override
         public void onError(Throwable e) {
-            emitter.onNext(Notification.<Out>createOnError(e));
+            if (!tryOnError(e)) {
+                RxJavaPlugins.onError(e);
+            }
         }
 
         @Override
@@ -186,6 +189,16 @@ public final class TransformerStateMachine<State, In, Out> implements FlowableTr
         @Override
         public FlowableEmitter<Out> serialize() {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean tryOnError(Throwable e) {
+            if (emitter.isCancelled()) {
+                return false;
+            } else {
+                emitter.onNext(Notification.<Out>createOnError(e));
+                return true;
+            }
         }
 
     }
