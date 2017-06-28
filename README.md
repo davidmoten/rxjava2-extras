@@ -567,7 +567,7 @@ Smaller messages mean more contention but still on my laptop I am seeing 6 milli
 To do long-running perf tests (haven't set up jmh for this one yet) do this:
 
 ```bash
-mvn CachedObservableDemo -Dn=500000000
+mvn test -Dn=500000000
 ```
 
 rebatchRequests
