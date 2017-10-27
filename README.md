@@ -5,8 +5,6 @@
 
 Utilities for use with RxJava 2
 
-Bit by bit, features from [rxjava-extras](https://github.com/davidmoten/rxjava-extras) will be migrated to use RxJava2 (and of course new features will be added here too).
-
 Features
 ----------
 * [`Strings`](#strings) - create/manipulate streams of `String`, conversions to and from
