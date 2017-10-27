@@ -25,7 +25,7 @@ public class FlowableRefCountNonBlocking<T> extends Flowable<T> {
         queue.offer(child);
         drain();
     }
-
+    
     private void drain() {
         if (wip.getAndIncrement() == 0) {
             while (true) {
@@ -39,4 +39,5 @@ public class FlowableRefCountNonBlocking<T> extends Flowable<T> {
             }
         }
     }
+    
 }
