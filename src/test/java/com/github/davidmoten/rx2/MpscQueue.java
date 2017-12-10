@@ -7,6 +7,10 @@ public final class MpscQueue<T> {
     private final AtomicReference<Node<T>> head = new AtomicReference<Node<T>>();
     private final AtomicReference<Boolean> tailSet = new AtomicReference<Boolean>(false);
 
+    public MpscQueue() {
+        // constructor
+    }
+
     // mutable
     private Node<T> tail;
 
@@ -22,7 +26,7 @@ public final class MpscQueue<T> {
         }
     }
 
-    public void push(T value) {
+    public void offer(T value) {
         // performs one volatile read and two CAS operations per call to this method
         // (under contention can be higher)
 
@@ -30,13 +34,17 @@ public final class MpscQueue<T> {
         while (true) {
             Node<T> h = head.get();
             if (head.compareAndSet(h, node)) {
-                h.next = node;
-                if (tailSet.weakCompareAndSet(false, true)) {
-                    // don't mind that this is not instantly visible to poll() because
-                    // in reactive operators the push is always followed by a drain that
-                    // forces a poll which will be ordered after this assignment (so this
-                    // assignment will be visible)
-                    tail = h;
+                if (h != null) {
+                    h.next = node;
+                    if (tailSet.weakCompareAndSet(false, true)) {
+                        // don't mind that this is not instantly visible to poll() because
+                        // in reactive operators the push is always followed by a drain that
+                        // forces a poll which will be ordered after this assignment (so this
+                        // assignment will be visible)
+                        tail = h;
+                    }
+                } else if (tailSet.weakCompareAndSet(false, true)) {
+                    tail = node;
                 }
                 break;
             }
