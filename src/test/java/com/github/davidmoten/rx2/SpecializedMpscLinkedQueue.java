@@ -2,13 +2,23 @@ package com.github.davidmoten.rx2;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public final class MpscQueue<T> {
+/**
+ * A multi-producer single consumer queue that is thread-safe and performant
+ * under a standard drain scenario encountered in an RxJava operator.
+ *
+ * @param <T>
+ */
+public final class SpecializedMpscLinkedQueue<T> {
 
     private final AtomicReference<Node<T>> head = new AtomicReference<Node<T>>();
     private final AtomicReference<Boolean> tailSet = new AtomicReference<Boolean>(false);
 
-    public MpscQueue() {
+    private SpecializedMpscLinkedQueue() {
         // constructor
+    }
+
+    public static <T> SpecializedMpscLinkedQueue<T> create() {
+        return new SpecializedMpscLinkedQueue<T>();
     }
 
     // mutable
@@ -27,8 +37,8 @@ public final class MpscQueue<T> {
     }
 
     public void offer(T value) {
-        // performs one volatile read and two CAS operations per call to this method
-        // (under contention can be higher)
+        // performs one volatile read, one CAS operation and one weak CAS operation per
+        // call to this method (under contention can be higher)
 
         Node<T> node = new Node<T>(value);
         while (true) {
@@ -59,11 +69,9 @@ public final class MpscQueue<T> {
         } else {
             Node<T> temp = tail;
             Node<T> next = temp.next;
+            tail = next;
             if (next == null) {
-                tail = null;
                 tailSet.lazySet(false);
-            } else {
-                tail = next;
             }
             T v = temp.value;
             // help gc including prevent nepotism
