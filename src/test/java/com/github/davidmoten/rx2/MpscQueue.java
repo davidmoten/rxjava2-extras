@@ -2,8 +2,6 @@ package com.github.davidmoten.rx2;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.github.davidmoten.guavamini.Preconditions;
-
 public final class MpscQueue<T> {
 
     private final AtomicReference<Node<T>> head = new AtomicReference<Node<T>>();
@@ -28,13 +26,12 @@ public final class MpscQueue<T> {
         // performs one volatile read and two CAS operations per call to this method
         // (under contention can be higher)
 
-        Preconditions.checkNotNull(value, "cannot push a null value");
         Node<T> node = new Node<T>(value);
         while (true) {
             Node<T> h = head.get();
             if (head.compareAndSet(h, node)) {
                 h.next = node;
-                if (tailSet.compareAndSet(false, true)) {
+                if (tailSet.weakCompareAndSet(false, true)) {
                     // don't mind that this is not instantly visible to poll() because
                     // in reactive operators the push is always followed by a drain that
                     // forces a poll which will be ordered after this assignment (so this
@@ -47,7 +44,7 @@ public final class MpscQueue<T> {
     }
 
     public T poll() {
-        // performs one volatile write only when reading the end of the queue
+        // performs one lazy set only when reading the end of the queue
 
         if (tail == null) {
             return null;
@@ -56,13 +53,14 @@ public final class MpscQueue<T> {
             Node<T> next = temp.next;
             if (next == null) {
                 tail = null;
-                tailSet.set(false);
+                tailSet.lazySet(false);
             } else {
                 tail = next;
             }
             T v = temp.value;
             // help gc including prevent nepotism
             temp.value = null;
+            temp.next = null;
             return v;
         }
     }
