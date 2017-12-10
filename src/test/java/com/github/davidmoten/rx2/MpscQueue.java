@@ -42,12 +42,12 @@ public class MpscQueue<T> {
             Node<T> tempTail = tail;
             Node<T> next = tempTail.next;
             if (next == null) {
+                tail = null;
                 tailSet.set(false);
             }
             T v = tempTail.value;
             // help gc including prevent nepotism
             tempTail.value = null;
-            tail = next;
             return v;
         }
     }
