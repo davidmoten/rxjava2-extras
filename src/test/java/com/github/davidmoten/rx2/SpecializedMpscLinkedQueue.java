@@ -10,8 +10,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public final class SpecializedMpscLinkedQueue<T> {
 
-    private final AtomicReference<Node<T>> head = new AtomicReference<Node<T>>();
-    private final AtomicReference<Boolean> tailSet = new AtomicReference<Boolean>(false);
+    private final AtomicReference<Node<T>> tail = new AtomicReference<Node<T>>();
+    private final AtomicReference<Boolean> headSet = new AtomicReference<Boolean>(false);
 
     private SpecializedMpscLinkedQueue() {
         // constructor
@@ -22,7 +22,7 @@ public final class SpecializedMpscLinkedQueue<T> {
     }
 
     // mutable
-    private Node<T> tail;
+    private Node<T> head;
 
     private static final class Node<T> {
 
@@ -42,19 +42,19 @@ public final class SpecializedMpscLinkedQueue<T> {
 
         Node<T> node = new Node<T>(value);
         while (true) {
-            Node<T> h = head.get();
-            if (head.compareAndSet(h, node)) {
+            Node<T> h = tail.get();
+            if (tail.compareAndSet(h, node)) {
                 if (h != null) {
                     h.next = node;
-                    if (tailSet.weakCompareAndSet(false, true)) {
+                    if (headSet.weakCompareAndSet(false, true)) {
                         // don't mind that this is not instantly visible to poll() because
                         // in reactive operators the push is always followed by a drain that
                         // forces a poll which will be ordered after this assignment (so this
                         // assignment will be visible)
-                        tail = h;
+                        head = h;
                     }
-                } else if (tailSet.weakCompareAndSet(false, true)) {
-                    tail = node;
+                } else if (headSet.weakCompareAndSet(false, true)) {
+                    head = node;
                 }
                 break;
             }
@@ -64,14 +64,14 @@ public final class SpecializedMpscLinkedQueue<T> {
     public T poll() {
         // performs one lazy set only when reading the end of the queue
 
-        if (tail == null) {
+        if (head == null) {
             return null;
         } else {
-            Node<T> temp = tail;
+            Node<T> temp = head;
             Node<T> next = temp.next;
-            tail = next;
+            head = next;
             if (next == null) {
-                tailSet.lazySet(false);
+                headSet.lazySet(false);
             }
             T v = temp.value;
             // help gc including prevent nepotism
