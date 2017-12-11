@@ -66,9 +66,7 @@ public final class SpecializedMpscLinkedQueue<T> {
                     // ?
                     throw new RuntimeException("unexpected");
                 }
-            } else {
-
-            }
+            } 
         }
 
     }
