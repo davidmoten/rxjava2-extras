@@ -2,6 +2,8 @@ package com.github.davidmoten.rx2;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.reactivex.internal.queue.MpscLinkedQueue;
+
 /**
  * A multi-producer single consumer queue that is thread-safe and performant
  * under a standard drain scenario encountered in an RxJava operator.
@@ -10,8 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public final class SpecializedMpscLinkedQueue<T> {
 
-    private final AtomicReference<Node<T>> tail = new AtomicReference<Node<T>>();
-    private final AtomicReference<Boolean> headSet = new AtomicReference<Boolean>(false);
+    private final AtomicReference<HeadTail<T>> headTail = new AtomicReference<HeadTail<T>>();
 
     private SpecializedMpscLinkedQueue() {
         // constructor
@@ -24,15 +25,29 @@ public final class SpecializedMpscLinkedQueue<T> {
     // mutable
     private Node<T> head;
 
-    private static final class Node<T> {
+    @SuppressWarnings("serial")
+    private static final class Node<T> extends AtomicReference<Node<T>> {
+        // this.get is next
 
         // mutable
-
         T value;
-        Node<T> next;
 
         Node(T value) {
             this.value = value;
+        }
+
+        Node<T> next() {
+            return get();
+        }
+    }
+
+    private static final class HeadTail<T> {
+        final Node<T> head;
+        final Node<T> tail;
+
+        HeadTail(Node<T> head, Node<T> tail) {
+            this.head = head;
+            this.tail = tail;
         }
     }
 
@@ -42,43 +57,26 @@ public final class SpecializedMpscLinkedQueue<T> {
 
         Node<T> node = new Node<T>(value);
         while (true) {
-            Node<T> h = tail.get();
-            if (tail.compareAndSet(h, node)) {
-                if (h != null) {
-                    h.next = node;
-                    if (headSet.weakCompareAndSet(false, true)) {
-                        // don't mind that this is not instantly visible to poll() because
-                        // in reactive operators the push is always followed by a drain that
-                        // forces a poll which will be ordered after this assignment (so this
-                        // assignment will be visible)
-                        head = h;
-                    }
-                } else if (headSet.weakCompareAndSet(false, true)) {
-                    head = node;
+            HeadTail<T> ht = headTail.get();
+            final HeadTail<T> ht2;
+            if (ht.head == null) {
+                if (ht.tail == null) {
+                    ht2 = new HeadTail<T>(node, node);
+                } else {
+                    // ?
+                    throw new RuntimeException("unexpected");
                 }
-                break;
+            } else {
+
             }
         }
+
     }
 
     public T poll() {
-        // performs one lazy set only when reading the end of the queue
-
-        if (head == null) {
-            return null;
-        } else {
-            Node<T> temp = head;
-            Node<T> next = temp.next;
-            head = next;
-            if (next == null) {
-                headSet.lazySet(false);
-            }
-            T v = temp.value;
-            // help gc including prevent nepotism
-            temp.value = null;
-            temp.next = null;
-            return v;
-        }
+        return null;
     }
+
+    MpscLinkedQueue<T> q;
 
 }

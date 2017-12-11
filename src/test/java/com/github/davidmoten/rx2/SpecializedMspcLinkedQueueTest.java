@@ -3,8 +3,10 @@ package com.github.davidmoten.rx2;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class SpecializedMspcLinkedQueueTest {
 
     @Test
