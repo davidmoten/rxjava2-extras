@@ -391,7 +391,7 @@ public final class Strings {
      *     the given publisher using the UTF-8 character set
      */
     public static InputStream toInputStream(Publisher<String> f) {
-        return FlowableStringInputStream.createInputStream(f, Charset.forName("UTF-8"));
+        return toInputStream(f, Charset.forName("UTF-8"));
     }
 
 }

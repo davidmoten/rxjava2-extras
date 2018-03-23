@@ -14,8 +14,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
+import com.github.davidmoten.junit.Asserts;
 import com.github.davidmoten.rx2.Actions;
 import com.github.davidmoten.rx2.Functions;
+import com.github.davidmoten.rx2.Strings;
 import com.google.common.base.Charsets;
 
 import io.reactivex.Flowable;
@@ -28,8 +30,8 @@ public class FlowableStringInputStreamTest {
     @Test
     public void simple() throws Exception {
 
-        InputStream is = FlowableStringInputStream.createInputStream(Flowable.just("abc", "def", "ghi", "jkl", "mno"),
-                utf8);
+        //defaults to utf-8
+        InputStream is = Strings.toInputStream(Flowable.just("abc", "def", "ghi", "jkl", "mno"));
         byte[] buf = new byte[4];
 
         assertEquals(3, is.available());
@@ -74,7 +76,7 @@ public class FlowableStringInputStreamTest {
     public void error() throws IOException {
         Flowable<String> f = Flowable.error(new IllegalArgumentException());
 
-        InputStream is = FlowableStringInputStream.createInputStream(f, utf8);
+        InputStream is = Strings.toInputStream(f, utf8);
 
         try {
             is.read();
@@ -101,7 +103,7 @@ public class FlowableStringInputStreamTest {
     public void error2() throws IOException {
         Flowable<String> f = Flowable.error(new IOException("expect"));
 
-        InputStream is = FlowableStringInputStream.createInputStream(f, utf8);
+        InputStream is = Strings.toInputStream(f, utf8);
 
         try {
             is.read();
@@ -129,7 +131,7 @@ public class FlowableStringInputStreamTest {
                 .delay(10, TimeUnit.MILLISECONDS);
         InputStream is = null;
         try {
-            is = FlowableStringInputStream.createInputStream(f, utf8);
+            is = Strings.toInputStream(f, utf8);
             assertEquals('1', is.read());
             assertEquals('0', is.read());
             assertEquals('0', is.read());
@@ -149,7 +151,7 @@ public class FlowableStringInputStreamTest {
 
     @Test(timeout = 10000)
     public void asyncCancel() throws Exception {
-        final InputStream is = FlowableStringInputStream.createInputStream(Flowable.<String>never(), utf8);
+        final InputStream is = Strings.toInputStream(Flowable.<String>never(), utf8);
 
         Schedulers.single().scheduleDirect(new Runnable() {
             @Override
@@ -167,7 +169,7 @@ public class FlowableStringInputStreamTest {
 
     @Test
     public void interruptAsync() {
-        InputStream is = FlowableStringInputStream.createInputStream(Flowable.<String>never(), utf8);
+        InputStream is = Strings.toInputStream(Flowable.<String>never(), utf8);
 
         final Thread t = Thread.currentThread();
         try {
@@ -192,7 +194,7 @@ public class FlowableStringInputStreamTest {
 
     @Test
     public void indexVerify() throws IOException {
-        InputStream is = FlowableStringInputStream.createInputStream(Flowable.just("abc"), utf8);
+        InputStream is = Strings.toInputStream(Flowable.just("abc"), utf8);
 
         is.read(new byte[2], 0, 0);
 
@@ -219,5 +221,10 @@ public class FlowableStringInputStreamTest {
             fail("Should have thrown");
         } catch (IndexOutOfBoundsException expected) {
         }
+    }
+    
+    @Test
+    public void assertIsUtilityClass() {
+        Asserts.assertIsUtilityClass(FlowableStringInputStream.class);
     }
 }
