@@ -1,6 +1,7 @@
 package com.github.davidmoten.rx2;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.reactivex.functions.Action;
 
@@ -41,6 +42,17 @@ public final class Actions {
             @Override
             public void run() throws Exception {
                 // do nothing!
+            }
+        };
+    }
+
+    public static Action increment(final AtomicInteger x) {
+        //TODO make holder
+        return new Action() {
+
+            @Override
+            public void run() throws Exception {
+                x.incrementAndGet();
             }
         };
     }

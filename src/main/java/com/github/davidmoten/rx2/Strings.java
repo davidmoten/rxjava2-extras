@@ -20,6 +20,7 @@ import org.reactivestreams.Publisher;
 
 import com.github.davidmoten.guavamini.Preconditions;
 import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
+import com.github.davidmoten.rx2.internal.flowable.FlowableStringInputStream;
 import com.github.davidmoten.rx2.internal.flowable.FlowableStringSplitSimple;
 import com.github.davidmoten.rx2.internal.flowable.TransformerDecode;
 import com.github.davidmoten.rx2.internal.flowable.TransformerStringSplit;
@@ -334,9 +335,8 @@ public final class Strings {
     /**
      * Splits on a string delimiter, not a pattern. Is slower than RxJavaString
      * 1.1.1 implementation on benchmarks below but requests minimally from
-     * upstream and is potentially much faster when the stream is significantly
-     * truncated (for example by downstream
-     * {@code .take(), .takeUntil(), elementAt()}.
+     * upstream and is potentially much faster when the stream is significantly truncated
+     * (for example by downstream {@code .take(), .takeUntil(), elementAt()}.
      * 
      * <pre>
      * Benchmark                                  Mode  Cnt       Score       Error  Units
@@ -366,6 +366,32 @@ public final class Strings {
                 return new FlowableStringSplitSimple(source, delimiter);
             }
         };
+    }
+
+    /**
+     * Returns an {@link InputStream} that offers the concatenated String data 
+     * emitted by a subscription to the given publisher using the given character set.
+     *  
+     * @param publisher the source of the String data
+     * @param charset the character set of the bytes to be read in the InputStream 
+     * @return offers the concatenated String data emitted by a subscription to 
+     *     the given publisher using the given character set
+     */
+    public static InputStream toInputStream(Publisher<String> publisher, Charset charset) {
+        return FlowableStringInputStream.createInputStream(publisher, charset);
+    }
+
+    /**
+     * Returns an {@link InputStream} that offers the concatenated String data 
+     * emitted by a subscription to the given publisher using the  character set
+     * UTF-8 for the bytes read through the InputStream.
+     *  
+     * @param publisher the source of the String data
+     * @return offers the concatenated String data emitted by a subscription to 
+     *     the given publisher using the UTF-8 character set
+     */
+    public static InputStream toInputStream(Publisher<String> f) {
+        return FlowableStringInputStream.createInputStream(f, Charset.forName("UTF-8"));
     }
 
 }

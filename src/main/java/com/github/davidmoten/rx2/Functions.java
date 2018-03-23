@@ -45,5 +45,16 @@ public final class Functions {
             }
         };
     }
+    
+    public static <T> Function<T, String> toStringFunction() {
+        // TODO make holder
+        return new Function<T,String> () {
+
+            @Override
+            public String apply(T t) throws Exception {
+                return String.valueOf(t);
+            }
+        };
+    }
 
 }

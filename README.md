@@ -78,6 +78,8 @@ Strings
 
 `splitSimple(String)`
 
+`toInputStream`
+
 `trim`
 
 `strings`
