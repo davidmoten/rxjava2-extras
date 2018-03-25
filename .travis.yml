@@ -7,6 +7,7 @@ language: java
 #- osx
 
 Jdk:
+- oraclejdk9
 - oraclejdk8
 - oraclejdk7
 - openjdk7
