@@ -390,8 +390,8 @@ public final class Strings {
      * @return offers the concatenated String data emitted by a subscription to 
      *     the given publisher using the UTF-8 character set
      */
-    public static InputStream toInputStream(Publisher<String> f) {
-        return toInputStream(f, Charset.forName("UTF-8"));
+    public static InputStream toInputStream(Publisher<String> publisher) {
+        return toInputStream(publisher, Charset.forName("UTF-8"));
     }
 
 }
