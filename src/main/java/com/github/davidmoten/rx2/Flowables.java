@@ -41,6 +41,72 @@ public final class Flowables {
         return new FlowableRepeat<T>(t, count);
     }
 
+    /**
+     * <p>Creates a Flowable that is aimed at supporting calls to a service that provides data in pages where the page sizes are determined by requests from downstream (requests are a part of the backpressure machinery of RxJava).
+     * 
+     * <p><img src="https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/fetchPagesByRequest.png"/>
+     * 
+     * <p>Here's an example.
+     * 
+     * <p>Suppose you have a stateless web service, say a rest service that returns JSON/XML and supplies you with
+     * 
+     * <ul><li>the most popular movies of the last 24 hours sorted by descending popularity</li></ul>
+     * 
+     * <p>The service supports paging in that you can pass it a start number and a page size and it will return just that slice from the list.
+     * 
+     * <p>Now I want to give a library with a Flowable definition of this service to my colleagues that they can call in their applications whatever they may be. For example,
+     * 
+     * <ul><li>Fred may just want to know the most popular movie each day,</li>
+     * <li>Greta wants to get the top 20 and then have the ability to keep scrolling down the list in her UI.</li>
+     * </ul>
+     * 
+     * <p>Let's see how we can efficiently support those use cases. I'm going to assume that the movie data returned by the service are mapped conveniently to objects by whatever framework I'm using (JAXB, Jersey, etc.). The fetch method looks like this:
+     * <pre>{@code
+     * // note that start is 0-based
+     * List<Movie> mostPopularMovies(int start, int size);
+     * Now I'm going to wrap this synchronous call as a Flowable to give to my colleagues:
+     * 
+     * Flowable<Movie> mostPopularMovies(int start) {
+     *     return Flowables.fetchPagesByRequest(
+     *           (position, n) -> Flowable.fromIterable(mostPopular(position, n)),
+     *           start)
+     *         // rebatch requests so that they are always between 
+     *         // 5 and 100 except for the first request
+     *       .compose(Transformers.rebatchRequests(5, 100, false));
+     * }
+     * 
+     * Flowable<Movie> mostPopularMovies() {
+     *     return mostPopularMovies(0);
+     * }
+     * }</pre>
+     * <p>Note particularly that the method above uses a variant of rebatchRequests to limit both minimum and maximum requests. We particularly don't want to allow a single call requesting the top 100,000 popular movies because of the memory and network pressures that arise from that call.
+     * 
+     * <p>Righto, Fred now uses the new API like this:
+     * <pre>{@code
+     * Movie top = mostPopularMovies()
+     *     .compose(Transformers.maxRequest(1))
+     *     .first()
+     *     .blockingFirst();
+     * }</pre>
+     * <p>The use of maxRequest above may seem unnecessary but strangely enough the first operator requests Long.MAX_VALUE of upstream and cancels as soon as one arrives. The take, elemnentAt and firstXXX operators all have this counter-intuitive characteristic.
+     * 
+     * <p>Greta uses the new API like this:
+     * 
+     * <pre>{@code
+     * mostPopularMovies()
+     *     .rebatchRequests(20)
+     *     .doOnNext(movie -> addToUI(movie))
+     *     .subscribe(subscriber);
+     * }</pre>
+     * <p>A bit more detail about fetchPagesByRequest:
+     * 
+     * <p>If the fetch function returns a Flowable that delivers fewer than the requested number of items then the overall stream completes.
+     * 
+     * @param fetcha function that takes a position index and a length and returns a Flowable
+     * @param start the start index
+     * @param maxConcurrent how many pages to request concurrently
+     * @return Flowable that fetches pages based on request amounts
+     */
     public static <T> Flowable<T> fetchPagesByRequest(final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch,
             long start, int maxConcurrent) {
         return FlowableFetchPagesByRequest.create(fetch, start, maxConcurrent);
