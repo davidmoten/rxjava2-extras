@@ -61,6 +61,15 @@ public final class Transformers {
         return StateMachine2.builder();
     }
 
+    /**
+     * Returns a transformer that when a stream is empty runs the given {@link Action}.
+     * 
+     * <p><img src="https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/doOnEmpty.png"/>
+     * 
+     * @param action to be called when the stream is determined to be empty.
+     * 
+     * @return a transformer that when a stream is empty runs the given action.
+     */
     public static <T> FlowableTransformer<T, T> doOnEmpty(final Action action) {
         return new FlowableTransformer<T, T>() {
 
