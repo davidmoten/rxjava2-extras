@@ -64,9 +64,10 @@ public final class Transformers {
     /**
      * Returns a transformer that when a stream is empty runs the given {@link Action}.
      * 
-     * <p><img src="https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/doOnEmpty.png"/>
+     * <p><img src="https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/doOnEmpty.png" alt="image">
      * 
      * @param action to be called when the stream is determined to be empty.
+     * @param <T> item type
      * 
      * @return a transformer that when a stream is empty runs the given action.
      */
@@ -139,8 +140,9 @@ public final class Transformers {
     /**
      * <p>Converts a stream of {@code Number} to a stream of {@link Statistics} about those numbers.
      * 
-     * <p><img src="https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/collectStats.png"/>
+     * <p><img src="https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/collectStats.png" alt="image">
      * 
+     * @param <T> item type
      * @return transformer that converts a stream of Number to a stream of Statistics
      */
     @SuppressWarnings("unchecked")
@@ -179,12 +181,14 @@ public final class Transformers {
      * Returns a transformer that emits collections of items with the collection
      * boundaries determined by the given {@link BiPredicate}.
      * 
-     * <p><img src="https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/collectWhile.png"/>
+     * <p><img src="https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/collectWhile.png" alt="image">
      * 
      * @param collectionFactory factory to create a new collection
      * @param add method to add an item to a collection
      * @param condition while true will continue to add to the current collection
      * @param emitRemainder whether to emit the remainder as a collection
+     * @param <T> item type
+     * @param <R> collection type
      * @return transform that collects while some conditions is returned then starts a new collection
      */
     public static <T, R> FlowableTransformer<T, R> collectWhile(final Callable<R> collectionFactory,

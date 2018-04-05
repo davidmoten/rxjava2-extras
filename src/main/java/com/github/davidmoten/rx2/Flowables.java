@@ -44,7 +44,7 @@ public final class Flowables {
     /**
      * <p>Creates a Flowable that is aimed at supporting calls to a service that provides data in pages where the page sizes are determined by requests from downstream (requests are a part of the backpressure machinery of RxJava).
      * 
-     * <p><img src="https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/fetchPagesByRequest.png"/>
+     * <p><img src="https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/fetchPagesByRequest.png" alt="image">
      * 
      * <p>Here's an example.
      * 
@@ -64,8 +64,10 @@ public final class Flowables {
      * <pre>{@code
      * // note that start is 0-based
      * List<Movie> mostPopularMovies(int start, int size);
-     * Now I'm going to wrap this synchronous call as a Flowable to give to my colleagues:
+     * }</pre>
      * 
+     * <p>Now I'm going to wrap this synchronous call as a Flowable to give to my colleagues:
+     * <pre>{@code
      * Flowable<Movie> mostPopularMovies(int start) {
      *     return Flowables.fetchPagesByRequest(
      *           (position, n) -> Flowable.fromIterable(mostPopular(position, n)),
@@ -105,6 +107,7 @@ public final class Flowables {
      * @param fetch a function that takes a position index and a length and returns a Flowable
      * @param start the start index
      * @param maxConcurrent how many pages to request concurrently
+     * @param <T> item type
      * @return Flowable that fetches pages based on request amounts
      */
     public static <T> Flowable<T> fetchPagesByRequest(final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch,
