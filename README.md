@@ -64,7 +64,7 @@ Maybe<String> o = Flowable
   .to(Strings.join()); 
 ```
 
-Strings
+[Strings](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/Strings.html)
 ----------
 `concat`, `join`
 
