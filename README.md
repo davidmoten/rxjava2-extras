@@ -20,7 +20,7 @@ Features
 
 Status: *released to Maven Central*
 
-Maven site reports are [here](http://davidmoten.github.io/rxjava2-extras/index.html) including [javadoc](http://davidmoten.github.io/rxjava2-extras/apidocs/index.html).
+Maven site reports are [here](https://davidmoten.github.io/rxjava2-extras/index.html) including [javadoc](https://davidmoten.github.io/rxjava2-extras/apidocs/index.html).
 
 Getting started
 -----------------
