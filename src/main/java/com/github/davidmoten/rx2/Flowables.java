@@ -102,7 +102,7 @@ public final class Flowables {
      * 
      * <p>If the fetch function returns a Flowable that delivers fewer than the requested number of items then the overall stream completes.
      * 
-     * @param fetcha function that takes a position index and a length and returns a Flowable
+     * @param fetch a function that takes a position index and a length and returns a Flowable
      * @param start the start index
      * @param maxConcurrent how many pages to request concurrently
      * @return Flowable that fetches pages based on request amounts
