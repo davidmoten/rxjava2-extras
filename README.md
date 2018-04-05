@@ -86,7 +86,7 @@ Maybe<String> o = Flowable
 
 `splitLinesSkipComments`
 
-Bytes
+[Bytes](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/Bytes.html)
 --------------
 `collect`
 
@@ -94,15 +94,15 @@ Bytes
 
 `unzip(File)`, `unzip(InputStream)`
 
-RetryWhen
+[RetryWhen](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/RetryWhen.html)
 ------------
 [Builder](#retrywhen) for `.retryWhen()`
 
-IO
+[IO](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/IO.html)
 -------------
 `serverSocket(port)` 
 
-Flowables
+[Flowables](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/Flowables.html)
 ---------------
 [`fetchPagesByRequest`](#fetchpagesbyrequest)
 
@@ -110,7 +110,7 @@ Flowables
 
 `repeat`
 
-Transformers (Flowable)
+[Transformers (Flowable)](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/flowable/Transformers.html)
 ---------------------------
 [`collectStats`](#collectstats)
 
@@ -141,7 +141,7 @@ Transformers (Flowable)
 [`windowMax`](#windowminmax)
 
 
-Transformers (Observable)
+[Transformers (Observable)](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/observable/Transformers.html)
 ---------------------------
 [`onBackpressureBufferToFile`](#onbackpressurebuffertofile)
 
@@ -153,33 +153,33 @@ SchedulerHelper
 
 `withThreadIdFromCallSite`
 
-Maybes
+[Maybes](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/Maybes.html)
 -------------
 `fromNullable`
 
-Actions
+[Actions](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/Actions.html)
 --------------------
 `doNothing`
 `setToTrue`
 `throwing`
 
-BiFunctions 
+[BiFunctions](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/BiFunctions.html)
 -------------
 `constant`
 `throwing`
 
-BiPredicates
+[BiPredicates](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/BiPredicates.html)
 ----------------
 `alwaysTrue`
 `alwaysFalse`
 `throwing`
 
-Callables
+[Callables](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/Callables.html)
 ---------------
 `constant`
 `throwing`
 
-Consumers
+[Consumers](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/Consumers.html)
 --------------
 `addLongTo`
 `addTo`
@@ -193,18 +193,18 @@ Consumers
 `set`
 `setToTrue`
 
-Functions
+[Functions](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/Functions.html)
 ------------
 `constant`
 `identity`
 `throwing`
 
-Predicates
+[Predicates](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/Predicates.html)
 -------------
 `alwaysFalse`
 `alwaysTrue`
 
-Serialized
+[Serialized](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/Serialized.html)
 ---------------
 [`read`](#serialized)
 
