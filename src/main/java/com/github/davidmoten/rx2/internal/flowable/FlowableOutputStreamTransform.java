@@ -46,8 +46,8 @@ public final class FlowableOutputStreamTransform extends Flowable<byte[]> {
             child.onError(e);
             return;
         }
-        child.onSubscribe(subscriber);
         source.subscribe(subscriber);
+        child.onSubscribe(subscriber);
     }
 
     private static final class PipeOutSubscriber extends OutputStream
@@ -70,7 +70,7 @@ public final class FlowableOutputStreamTransform extends Flowable<byte[]> {
         public PipeOutSubscriber(Function<OutputStream, OutputStream> transform, int bufferSize,
                 int batchSize, Subscriber<? super byte[]> child) throws Exception {
             this.batchSize = batchSize;
-            this.count = batchSize;
+            this.count = batchSize - 1;
             this.child = child;
             if (bufferSize == 0) {
                 this.out = transform.apply(this);
@@ -85,6 +85,14 @@ public final class FlowableOutputStreamTransform extends Flowable<byte[]> {
         }
 
         @Override
+        public void request(long n) {
+            if (SubscriptionHelper.validate(n)) {
+                BackpressureHelper.add(requested, n);
+                drain();
+            }
+        }
+
+        @Override
         public void onNext(byte[] b) {
             if (done) {
                 return;
@@ -96,6 +104,40 @@ public final class FlowableOutputStreamTransform extends Flowable<byte[]> {
                 child.onError(ex);
                 return;
             }
+            drain();
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            if (done) {
+                RxJavaPlugins.onError(e);
+                return;
+            }
+            try {
+                out.close();
+            } catch (IOException ex) {
+                // TODO build a composite exception
+                RxJavaPlugins.onError(ex);
+            }
+            done = true;
+            error = e;
+            finished = true;
+
+            drain();
+        }
+
+        @Override
+        public void onComplete() {
+            if (done) {
+                return;
+            }
+            try {
+                out.close();
+            } catch (IOException e) {
+                onError(e);
+                return;
+            }
+            done = true;
             drain();
         }
 
@@ -141,42 +183,6 @@ public final class FlowableOutputStreamTransform extends Flowable<byte[]> {
                         return;
                     }
                 }
-            }
-        }
-
-        @Override
-        public void onError(Throwable e) {
-            if (done) {
-                RxJavaPlugins.onError(e);
-                return;
-            }
-            done = true;
-            error = e;
-            finished = true;
-            drain();
-        }
-
-        @Override
-        public void onComplete() {
-            if (done) {
-                return;
-            }
-            try {
-                out.close();
-            } catch (IOException e) {
-                onError(e);
-                return;
-            }
-            done = true;
-            finished = true;
-            drain();
-        }
-
-        @Override
-        public void request(long n) {
-            if (SubscriptionHelper.validate(n)) {
-                BackpressureHelper.add(requested, n);
-                drain();
             }
         }
 
