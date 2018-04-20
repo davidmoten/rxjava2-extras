@@ -140,19 +140,7 @@ public final class Bytes {
 
     }
 
-    public static FlowableTransformer<byte[], byte[]> pipeOut(final int bufferSize,
-            Function<OutputStream, OutputStream> transform) {
-        return new FlowableTransformer<byte[], byte[]>() {
-
-            @Override
-            public Publisher<byte[]> apply(final Flowable<byte[]> f) {
-                return new FlowablePipeOut(f, bufferSize, transform);
-            }
-
-        };
-
-    }
-    
+        
     public static Single<byte[]> collect(Flowable<byte[]> source) {
         return source.collect(BosCreatorHolder.INSTANCE, BosCollectorHolder.INSTANCE).map(BosToArrayHolder.INSTANCE);
     }
