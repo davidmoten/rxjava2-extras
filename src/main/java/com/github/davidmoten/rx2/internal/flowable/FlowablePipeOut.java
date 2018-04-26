@@ -24,8 +24,7 @@ public class FlowablePipeOut extends Flowable<byte[]> {
     private final Function<OutputStream, OutputStream> transform;
     private final int bufferSize;
 
-    public FlowablePipeOut(Flowable<byte[]> source, Function<OutputStream, OutputStream> transform,
-            int bufferSize) {
+    public FlowablePipeOut(Flowable<byte[]> source, Function<OutputStream, OutputStream> transform, int bufferSize) {
         this.source = source;
         this.transform = transform;
         this.bufferSize = bufferSize;
@@ -44,12 +43,11 @@ public class FlowablePipeOut extends Flowable<byte[]> {
         s.onSubscribe(subscriber);
     }
 
-    private static final class PipeOutSubscriber extends OutputStream
-            implements Subscriber<byte[]>, Subscription {
+    private static final class PipeOutSubscriber extends OutputStream implements Subscriber<byte[]>, Subscription {
 
         private final Flowable<byte[]> source;
         private final Function<OutputStream, OutputStream> transform;
-        private Subscription parent;
+        private Subscription s;
         private SimplePlainQueue<ByteBuffer> queue = new SpscLinkedArrayQueue<ByteBuffer>(16);
         private final AtomicInteger wip = new AtomicInteger();
         private final AtomicLong requested = new AtomicLong();
@@ -58,14 +56,11 @@ public class FlowablePipeOut extends Flowable<byte[]> {
         private final Subscriber<? super byte[]> child;
         private boolean done;
         private final int batchSize = 16;
-        private volatile boolean cancelled;
         private int count;
-        private Throwable error;
-        private volatile boolean finished;
+        private volatile boolean cancelled;
 
-        public PipeOutSubscriber(Flowable<byte[]> source,
-                Function<OutputStream, OutputStream> transform, int bufferSize,
-                Subscriber<? super byte[]> child) throws Exception {
+        public PipeOutSubscriber(Flowable<byte[]> source, Function<OutputStream, OutputStream> transform,
+                int bufferSize, Subscriber<? super byte[]> child) throws Exception {
             this.source = source;
             this.transform = transform;
             this.child = child;
@@ -78,23 +73,22 @@ public class FlowablePipeOut extends Flowable<byte[]> {
 
         @Override
         public void onSubscribe(Subscription s) {
-            this.parent = s;
+            this.s = s;
             s.request(batchSize);
         }
 
         @Override
         public void onNext(byte[] b) {
+            count++;
             if (done) {
                 return;
             }
-            count++;
             try {
                 out.write(b);
-            } catch (IOException ex) {
-                child.onError(ex);
-                return;
+                drain();
+            } catch (IOException e) {
+                onError(e);
             }
-            drain();
         }
 
         private void drain() {
@@ -108,23 +102,8 @@ public class FlowablePipeOut extends Flowable<byte[]> {
                             queue.clear();
                             return;
                         }
-                        boolean d = finished;
-                        ByteBuffer b = queue.poll();
-                        if (b == null) {
-                            if (d) {
-                                child.onComplete();
-                                return;
-                            } else if (count == batchSize) {
-                                count = 0;
-                                parent.request(batchSize);
-                            }
-                            break;
-                        } else {
-                            byte[] a = new byte[b.remaining()];
-                            b.get(a);
-                            child.onNext(a);
-                            e++;
-                        }
+                        
+                        
                     }
                     emitted = e;
                     missed = wip.addAndGet(-missed);
@@ -136,15 +115,12 @@ public class FlowablePipeOut extends Flowable<byte[]> {
         }
 
         @Override
-        public void onError(Throwable e) {
+        public void onError(Throwable t) {
             if (done) {
                 RxJavaPlugins.onError(t);
                 return;
             }
             done = true;
-            error = e;
-            finished = true;
-            drain();
         }
 
         @Override
@@ -153,11 +129,6 @@ public class FlowablePipeOut extends Flowable<byte[]> {
                 return;
             }
             done = true;
-            try {
-                out.close();
-            } catch (IOException e) {
-                RxJavaPlugins.onError(e);
-            }
         }
 
         @Override
@@ -169,15 +140,9 @@ public class FlowablePipeOut extends Flowable<byte[]> {
         }
 
         @Override
-        public void close() throws IOException {
-            finished = true;
-            drain();
-        }
-
-        @Override
         public void cancel() {
-            cancelled = true;
-            parent.cancel();
+            // TODO Auto-generated method stub
+
         }
 
         @Override
