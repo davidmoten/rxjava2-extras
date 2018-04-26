@@ -7,19 +7,15 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.reactivestreams.Publisher;
-
 import com.github.davidmoten.rx2.util.ZippedEntry;
 
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
-import io.reactivex.FlowableTransformer;
 import io.reactivex.Single;
 import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
@@ -34,8 +30,8 @@ public final class Bytes {
     }
 
     /**
-     * Returns a Flowable stream of byte arrays from the given {@link InputStream}
-     * between 1 and {@code bufferSize} bytes.
+     * Returns a Flowable stream of byte arrays from the given
+     * {@link InputStream} between 1 and {@code bufferSize} bytes.
      * 
      * @param is
      *            input stream of bytes
@@ -93,9 +89,9 @@ public final class Bytes {
     }
 
     /**
-     * Returns a Flowable stream of byte arrays from the given {@link InputStream}
-     * of {@code 8192} bytes. The final byte array may be less than {@code 8192}
-     * bytes.
+     * Returns a Flowable stream of byte arrays from the given
+     * {@link InputStream} of {@code 8192} bytes. The final byte array may be
+     * less than {@code 8192} bytes.
      * 
      * @param is
      *            input stream of bytes
@@ -140,19 +136,6 @@ public final class Bytes {
 
     }
 
-    public static FlowableTransformer<byte[], byte[]> pipeOut(final int bufferSize,
-            Function<OutputStream, OutputStream> transform) {
-        return new FlowableTransformer<byte[], byte[]>() {
-
-            @Override
-            public Publisher<byte[]> apply(final Flowable<byte[]> f) {
-                return new FlowablePipeOut(f, bufferSize, transform);
-            }
-
-        };
-
-    }
-    
     public static Single<byte[]> collect(Flowable<byte[]> source) {
         return source.collect(BosCreatorHolder.INSTANCE, BosCollectorHolder.INSTANCE).map(BosToArrayHolder.INSTANCE);
     }
