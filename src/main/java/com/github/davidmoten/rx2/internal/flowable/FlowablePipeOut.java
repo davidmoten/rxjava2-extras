@@ -11,22 +11,20 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
 import io.reactivex.Flowable;
-import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Function;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
-import io.reactivex.internal.util.EmptyComponent;
 import io.reactivex.plugins.RxJavaPlugins;
 
-public final class FlowableOutputStreamTransform extends Flowable<byte[]> {
+public class FlowablePipeOut extends Flowable<byte[]> {
 
     private final Flowable<byte[]> source;
     private final Function<OutputStream, OutputStream> transform;
     private final int bufferSize;
 
-    public FlowableOutputStreamTransform(Flowable<byte[]> source, Function<OutputStream, OutputStream> transform,
+    public FlowablePipeOut(Flowable<byte[]> source, Function<OutputStream, OutputStream> transform,
             int bufferSize) {
         this.source = source;
         this.transform = transform;
@@ -34,23 +32,23 @@ public final class FlowableOutputStreamTransform extends Flowable<byte[]> {
     }
 
     @Override
-    protected void subscribeActual(Subscriber<? super byte[]> child) {
+    protected void subscribeActual(Subscriber<? super byte[]> s) {
         PipeOutSubscriber subscriber;
         try {
-            subscriber = new PipeOutSubscriber(transform, bufferSize, child);
+            subscriber = new PipeOutSubscriber(source, transform, bufferSize, s);
         } catch (Exception e) {
-            Exceptions.throwIfFatal(e);
-            child.onSubscribe(EmptyComponent.INSTANCE);
-            child.onError(e);
+            s.onError(e);
             return;
         }
-        child.onSubscribe(subscriber);
         source.subscribe(subscriber);
+        s.onSubscribe(subscriber);
     }
 
     private static final class PipeOutSubscriber extends OutputStream
             implements Subscriber<byte[]>, Subscription {
 
+        private final Flowable<byte[]> source;
+        private final Function<OutputStream, OutputStream> transform;
         private Subscription parent;
         private SimplePlainQueue<ByteBuffer> queue = new SpscLinkedArrayQueue<ByteBuffer>(16);
         private final AtomicInteger wip = new AtomicInteger();
@@ -61,12 +59,15 @@ public final class FlowableOutputStreamTransform extends Flowable<byte[]> {
         private boolean done;
         private final int batchSize = 16;
         private volatile boolean cancelled;
-        private int count = batchSize;
+        private int count;
         private Throwable error;
         private volatile boolean finished;
 
-        public PipeOutSubscriber(Function<OutputStream, OutputStream> transform, int bufferSize,
+        public PipeOutSubscriber(Flowable<byte[]> source,
+                Function<OutputStream, OutputStream> transform, int bufferSize,
                 Subscriber<? super byte[]> child) throws Exception {
+            this.source = source;
+            this.transform = transform;
             this.child = child;
             if (bufferSize == 0) {
                 this.out = transform.apply(this);
@@ -78,6 +79,7 @@ public final class FlowableOutputStreamTransform extends Flowable<byte[]> {
         @Override
         public void onSubscribe(Subscription s) {
             this.parent = s;
+            s.request(batchSize);
         }
 
         @Override
@@ -110,23 +112,16 @@ public final class FlowableOutputStreamTransform extends Flowable<byte[]> {
                         ByteBuffer b = queue.poll();
                         if (b == null) {
                             if (d) {
-                                // TODO support shortcutting errors
-                                if (error != null) {
-                                    child.onError(error);
-                                } else {
-                                    child.onComplete();
-                                }
+                                child.onComplete();
                                 return;
-                            } else {
-                                count++;
-                                if (count == batchSize) {
-                                    count = 0;
-                                    parent.request(batchSize);
-                                }
+                            } else if (count == batchSize) {
+                                count = 0;
+                                parent.request(batchSize);
                             }
                             break;
                         } else {
-                            byte[] a = toArray(b);
+                            byte[] a = new byte[b.remaining()];
+                            b.get(a);
                             child.onNext(a);
                             e++;
                         }
@@ -143,7 +138,7 @@ public final class FlowableOutputStreamTransform extends Flowable<byte[]> {
         @Override
         public void onError(Throwable e) {
             if (done) {
-                RxJavaPlugins.onError(e);
+                RxJavaPlugins.onError(t);
                 return;
             }
             done = true;
@@ -157,15 +152,12 @@ public final class FlowableOutputStreamTransform extends Flowable<byte[]> {
             if (done) {
                 return;
             }
+            done = true;
             try {
                 out.close();
             } catch (IOException e) {
-                onError(e);
-                return;
+                RxJavaPlugins.onError(e);
             }
-            done = true;
-            finished = true;
-            drain();
         }
 
         @Override
@@ -206,15 +198,5 @@ public final class FlowableOutputStreamTransform extends Flowable<byte[]> {
             drain();
         }
 
-    }
-
-    private static byte[] toArray(ByteBuffer b) {
-        if (b.hasArray() && b.remaining() == b.array().length) {
-            return b.array();
-        } else {
-            byte[] a = new byte[b.remaining()];
-            b.get(a);
-            return a;
-        }
     }
 }
