@@ -24,7 +24,7 @@ import io.reactivex.functions.Function;
 public class FlowableOutputStreamTransformTest {
 
     @Test
-    public void testGzip() throws IOException {
+    public void test() throws IOException {
         final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         Flowable.just("hi there".getBytes())
                 .compose(Transformers.outputStream(new Function<OutputStream, OutputStream>() {

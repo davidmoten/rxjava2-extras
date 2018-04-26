@@ -468,10 +468,7 @@ public final class Transformers {
             }
 
         };
+
     }
 
-    public static FlowableTransformer<byte[], byte[]> outputStream(
-            final Function<OutputStream, OutputStream> transform) {
-        return outputStream(transform, 8192, 16);
-    }
 }
