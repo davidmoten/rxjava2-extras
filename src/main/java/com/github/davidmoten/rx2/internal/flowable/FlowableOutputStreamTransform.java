@@ -25,21 +25,19 @@ public final class FlowableOutputStreamTransform extends Flowable<byte[]> {
     private final Flowable<byte[]> source;
     private final Function<OutputStream, OutputStream> transform;
     private final int bufferSize;
-    private final int batchSize;
 
-    public FlowableOutputStreamTransform(Flowable<byte[]> source,
-            Function<OutputStream, OutputStream> transform, int bufferSize, int batchSize) {
+    public FlowableOutputStreamTransform(Flowable<byte[]> source, Function<OutputStream, OutputStream> transform,
+            int bufferSize) {
         this.source = source;
         this.transform = transform;
         this.bufferSize = bufferSize;
-        this.batchSize = batchSize;
     }
 
     @Override
     protected void subscribeActual(Subscriber<? super byte[]> child) {
         PipeOutSubscriber subscriber;
         try {
-            subscriber = new PipeOutSubscriber(transform, bufferSize, batchSize, child);
+            subscriber = new PipeOutSubscriber(transform, bufferSize, child);
         } catch (Exception e) {
             Exceptions.throwIfFatal(e);
             child.onSubscribe(EmptyComponent.INSTANCE);
@@ -61,16 +59,14 @@ public final class FlowableOutputStreamTransform extends Flowable<byte[]> {
         private final OutputStream out;
         private final Subscriber<? super byte[]> child;
         private boolean done;
-        private final int batchSize;
+        private final int batchSize = 16;
         private volatile boolean cancelled;
-        private int count;
+        private int count = batchSize;
         private Throwable error;
         private volatile boolean finished;
 
         public PipeOutSubscriber(Function<OutputStream, OutputStream> transform, int bufferSize,
-                int batchSize, Subscriber<? super byte[]> child) throws Exception {
-            this.batchSize = batchSize;
-            this.count = batchSize;
+                Subscriber<? super byte[]> child) throws Exception {
             this.child = child;
             if (bufferSize == 0) {
                 this.out = transform.apply(this);

@@ -458,13 +458,12 @@ public final class Transformers {
     }
 
     public static FlowableTransformer<byte[], byte[]> outputStream(
-            final Function<OutputStream, OutputStream> transform, final int bufferSize,
-            final int batchSize) {
+            final Function<OutputStream, OutputStream> transform, final int bufferSize) {
         return new FlowableTransformer<byte[], byte[]>() {
 
             @Override
             public Publisher<byte[]> apply(final Flowable<byte[]> f) {
-                return new FlowableOutputStreamTransform(f, transform, bufferSize, batchSize);
+                return new FlowableOutputStreamTransform(f, transform, bufferSize);
             }
 
         };
