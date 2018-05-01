@@ -1,10 +1,8 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,7 +24,8 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
     private final Flowable<Flowable<T>> sources;
     private final int batchSize;
 
-    public FlowableMergeInterleave(Flowable<Flowable<T>> sources, int maxConcurrent, int batchSize) {
+    public FlowableMergeInterleave(Flowable<Flowable<T>> sources, int maxConcurrent,
+            int batchSize) {
         this.sources = sources;
         this.maxConcurrent = maxConcurrent;
         this.batchSize = batchSize;
@@ -34,12 +33,13 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
 
     @Override
     protected void subscribeActual(Subscriber<? super T> s) {
-        MergeInterleaveSubscription<T> subscription = new MergeInterleaveSubscription<T>(sources, maxConcurrent,
-                batchSize, s);
+        MergeInterleaveSubscription<T> subscription = new MergeInterleaveSubscription<T>(sources,
+                maxConcurrent, batchSize, s);
         s.onSubscribe(subscription);
     }
 
-    private static final class MergeInterleaveSubscription<T> implements Subscription, Subscriber<Flowable<T>> {
+    private static final class MergeInterleaveSubscription<T>
+            implements Subscription, Subscriber<Flowable<T>> {
 
         private static final Object SOURCES_COMPLETE = new Object();
         private final AtomicBoolean once = new AtomicBoolean();
@@ -54,6 +54,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         private final AtomicInteger wip = new AtomicInteger();
         private final Queue<T> emissions = new LinkedList<T>();
         private long emitted;
+        private final RingBuffer<BatchFinished> batchFinished;
 
         // objects on queue can be Flowable, Subscriber,
         private final SimplePlainQueue<Object> queue;
@@ -64,18 +65,19 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         private boolean allEmissionsComplete;
         private int sourcesCount;
 
-        public MergeInterleaveSubscription(Flowable<Flowable<T>> sources, int maxConcurrent, int batchSize,
-                Subscriber<? super T> subscriber) {
+        public MergeInterleaveSubscription(Flowable<Flowable<T>> sources, int maxConcurrent,
+                int batchSize, Subscriber<? super T> subscriber) {
             this.sources = sources;
             this.maxConcurrent = maxConcurrent;
             this.batchSize = batchSize;
             this.subscriber = subscriber;
             this.queue = new MpscLinkedQueue<Object>();
+            this.batchFinished = RingBuffer.create(maxConcurrent);
         }
 
         @Override
         public void request(long n) {
-            System.out.println("request("+ n+ ")");
+            System.out.println("request(" + n + ")");
             if (SubscriptionHelper.validate(n)) {
                 if (once.compareAndSet(false, true)) {
                     sources.subscribe(this);
@@ -205,10 +207,9 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
             }
         }
 
-        @SuppressWarnings("unchecked")
         private void handleBatchFinished(BatchFinished b) {
-            SourceSubscriber<T> sub = (SourceSubscriber<T>) b;
-            sub.requestMore();
+            batchFinished.offer(b);
+            batchFinished.poll().requestMore();
         }
 
         private void cleanup() {
@@ -220,6 +221,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         private void handleSourceArrived(SourceArrived<T> event) {
             SourceSubscriber<T> subscriber = new SourceSubscriber<T>(this);
             sourceSubscribers.add(subscriber);
+            batchFinished.offer(subscriber);
             event.flowable.subscribe(subscriber);
         }
 
@@ -256,9 +258,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
 
         @Override
         public void onSubscribe(Subscription s) {
-            if (SubscriptionHelper.setOnce(subscription, s)) {
-                requestMore();
-            }
+            SubscriptionHelper.setOnce(subscription, s);
         }
 
         @Override
@@ -287,11 +287,8 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
             parent.drain();
         }
 
-        boolean batchFinished() {
-            return batchFinished;
-        }
-
-        void requestMore() {
+        @Override
+        public void requestMore() {
             batchFinished = false;
             subscription.get().request(parent.batchSize);
         }
@@ -325,7 +322,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
     }
 
     private interface BatchFinished {
-
+        void requestMore();
     }
 
 }
