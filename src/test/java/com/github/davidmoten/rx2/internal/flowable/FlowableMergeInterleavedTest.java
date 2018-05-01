@@ -11,7 +11,7 @@ import io.reactivex.Flowable;
 public class FlowableMergeInterleavedTest {
 
     @Test
-//    @Ignore
+    @Ignore
     public void testInterleave() {
         Flowable<Integer> a = Flowable.just(1).repeat();
         Flowable<Integer> b = Flowable.just(2).repeat();
