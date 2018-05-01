@@ -42,32 +42,62 @@ public final class Flowables {
     }
 
     /**
-     * <p>Creates a Flowable that is aimed at supporting calls to a service that provides data in pages where the page sizes are determined by requests from downstream (requests are a part of the backpressure machinery of RxJava).
+     * <p>
+     * Creates a Flowable that is aimed at supporting calls to a service that
+     * provides data in pages where the page sizes are determined by requests from
+     * downstream (requests are a part of the backpressure machinery of RxJava).
      * 
-     * <p><img src="https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/fetchPagesByRequest.png" alt="image">
+     * <p>
+     * <img src=
+     * "https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/fetchPagesByRequest.png"
+     * alt="image">
      * 
-     * <p>Here's an example.
+     * <p>
+     * Here's an example.
      * 
-     * <p>Suppose you have a stateless web service, say a rest service that returns JSON/XML and supplies you with
+     * <p>
+     * Suppose you have a stateless web service, say a rest service that returns
+     * JSON/XML and supplies you with
      * 
-     * <ul><li>the most popular movies of the last 24 hours sorted by descending popularity</li></ul>
-     * 
-     * <p>The service supports paging in that you can pass it a start number and a page size and it will return just that slice from the list.
-     * 
-     * <p>Now I want to give a library with a Flowable definition of this service to my colleagues that they can call in their applications whatever they may be. For example,
-     * 
-     * <ul><li>Fred may just want to know the most popular movie each day,</li>
-     * <li>Greta wants to get the top 20 and then have the ability to keep scrolling down the list in her UI.</li>
+     * <ul>
+     * <li>the most popular movies of the last 24 hours sorted by descending
+     * popularity</li>
      * </ul>
      * 
-     * <p>Let's see how we can efficiently support those use cases. I'm going to assume that the movie data returned by the service are mapped conveniently to objects by whatever framework I'm using (JAXB, Jersey, etc.). The fetch method looks like this:
-     * <pre>{@code
+     * <p>
+     * The service supports paging in that you can pass it a start number and a page
+     * size and it will return just that slice from the list.
+     * 
+     * <p>
+     * Now I want to give a library with a Flowable definition of this service to my
+     * colleagues that they can call in their applications whatever they may be. For
+     * example,
+     * 
+     * <ul>
+     * <li>Fred may just want to know the most popular movie each day,</li>
+     * <li>Greta wants to get the top 20 and then have the ability to keep scrolling
+     * down the list in her UI.</li>
+     * </ul>
+     * 
+     * <p>
+     * Let's see how we can efficiently support those use cases. I'm going to assume
+     * that the movie data returned by the service are mapped conveniently to
+     * objects by whatever framework I'm using (JAXB, Jersey, etc.). The fetch
+     * method looks like this:
+     * 
+     * <pre>
+     * {@code
      * // note that start is 0-based
      * List<Movie> mostPopularMovies(int start, int size);
-     * }</pre>
+     * }
+     * </pre>
      * 
-     * <p>Now I'm going to wrap this synchronous call as a Flowable to give to my colleagues:
-     * <pre>{@code
+     * <p>
+     * Now I'm going to wrap this synchronous call as a Flowable to give to my
+     * colleagues:
+     * 
+     * <pre>
+     * {@code
      * Flowable<Movie> mostPopularMovies(int start) {
      *     return Flowables.fetchPagesByRequest(
      *           (position, n) -> Flowable.fromIterable(mostPopular(position, n)),
@@ -80,56 +110,76 @@ public final class Flowables {
      * Flowable<Movie> mostPopularMovies() {
      *     return mostPopularMovies(0);
      * }
-     * }</pre>
-     * <p>Note particularly that the method above uses a variant of rebatchRequests to limit both minimum and maximum requests. We particularly don't want to allow a single call requesting the top 100,000 popular movies because of the memory and network pressures that arise from that call.
+     * }
+     * </pre>
+     * <p>
+     * Note particularly that the method above uses a variant of rebatchRequests to
+     * limit both minimum and maximum requests. We particularly don't want to allow
+     * a single call requesting the top 100,000 popular movies because of the memory
+     * and network pressures that arise from that call.
      * 
-     * <p>Righto, Fred now uses the new API like this:
-     * <pre>{@code
-     * Movie top = mostPopularMovies()
-     *     .compose(Transformers.maxRequest(1))
-     *     .first()
-     *     .blockingFirst();
-     * }</pre>
-     * <p>The use of maxRequest above may seem unnecessary but strangely enough the first operator requests Long.MAX_VALUE of upstream and cancels as soon as one arrives. The take, elemnentAt and firstXXX operators all have this counter-intuitive characteristic.
+     * <p>
+     * Righto, Fred now uses the new API like this:
      * 
-     * <p>Greta uses the new API like this:
+     * <pre>
+     * {
+     *     &#64;code
+     *     Movie top = mostPopularMovies().compose(Transformers.maxRequest(1)).first().blockingFirst();
+     * }
+     * </pre>
+     * <p>
+     * The use of maxRequest above may seem unnecessary but strangely enough the
+     * first operator requests Long.MAX_VALUE of upstream and cancels as soon as one
+     * arrives. The take, elemnentAt and firstXXX operators all have this
+     * counter-intuitive characteristic.
      * 
-     * <pre>{@code
+     * <p>
+     * Greta uses the new API like this:
+     * 
+     * <pre>
+     * {@code
      * mostPopularMovies()
      *     .rebatchRequests(20)
      *     .doOnNext(movie -> addToUI(movie))
      *     .subscribe(subscriber);
-     * }</pre>
-     * <p>A bit more detail about fetchPagesByRequest:
+     * }
+     * </pre>
+     * <p>
+     * A bit more detail about fetchPagesByRequest:
      * 
-     * <p>If the fetch function returns a Flowable that delivers fewer than the requested number of items then the overall stream completes.
+     * <p>
+     * If the fetch function returns a Flowable that delivers fewer than the
+     * requested number of items then the overall stream completes.
      * 
-     * @param fetch a function that takes a position index and a length and returns a Flowable
-     * @param start the start index
-     * @param maxConcurrent how many pages to request concurrently
-     * @param <T> item type
+     * @param fetch
+     *            a function that takes a position index and a length and returns a
+     *            Flowable
+     * @param start
+     *            the start index
+     * @param maxConcurrent
+     *            how many pages to request concurrently
+     * @param <T>
+     *            item type
      * @return Flowable that fetches pages based on request amounts
      */
-    public static <T> Flowable<T> fetchPagesByRequest(final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch,
-            long start, int maxConcurrent) {
+    public static <T> Flowable<T> fetchPagesByRequest(
+            final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch, long start, int maxConcurrent) {
         return FlowableFetchPagesByRequest.create(fetch, start, maxConcurrent);
     }
 
-    public static <T> Flowable<T> fetchPagesByRequest(final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch,
-            long start) {
+    public static <T> Flowable<T> fetchPagesByRequest(
+            final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch, long start) {
         return fetchPagesByRequest(fetch, start, 2);
     }
 
-    public static <T> Flowable<T> fetchPagesByRequest(final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch) {
+    public static <T> Flowable<T> fetchPagesByRequest(
+            final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch) {
         return fetchPagesByRequest(fetch, 0, 2);
     }
 
-
-
     /**
-     * Returns a cached {@link Flowable} like {@link Flowable#cache()}
-     * except that the cache can be reset by calling
-     * {@link CachedFlowable#reset()}.
+     * Returns a cached {@link Flowable} like {@link Flowable#cache()} except that
+     * the cache can be reset by calling {@link CachedFlowable#reset()}.
      *
      * @param source
      *            the observable to be cached.
@@ -142,11 +192,11 @@ public final class Flowables {
     }
 
     /**
-     * Returns a cached {@link Flowable} like {@link Flowable#cache()}
-     * except that the cache can be reset by calling
-     * {@link CachedFlowable#reset()} and the cache will be automatically
-     * reset an interval after first subscription (or first subscription after
-     * reset). The interval is defined by {@code duration} and {@code unit} .
+     * Returns a cached {@link Flowable} like {@link Flowable#cache()} except that
+     * the cache can be reset by calling {@link CachedFlowable#reset()} and the
+     * cache will be automatically reset an interval after first subscription (or
+     * first subscription after reset). The interval is defined by {@code duration}
+     * and {@code unit} .
      *
      * @param source
      *            the source observable
@@ -155,14 +205,14 @@ public final class Flowables {
      * @param unit
      *            units corresponding to the duration
      * @param worker
-     *            worker to use for scheduling reset. Don't forget to
-     *            unsubscribe the worker when no longer required.
+     *            worker to use for scheduling reset. Don't forget to unsubscribe
+     *            the worker when no longer required.
      * @param <T>
      *            the generic type of the source
      * @return cached observable that resets regularly on a time interval
      */
-    public static <T> Flowable<T> cache(final Flowable<T> source, final long duration,
-                                        final TimeUnit unit, final Scheduler.Worker worker) {
+    public static <T> Flowable<T> cache(final Flowable<T> source, final long duration, final TimeUnit unit,
+            final Scheduler.Worker worker) {
         final AtomicReference<CachedFlowable<T>> cacheRef = new AtomicReference<CachedFlowable<T>>();
         CachedFlowable<T> cache = new CachedFlowable<T>(source);
         cacheRef.set(cache);
@@ -181,8 +231,8 @@ public final class Flowables {
     }
 
     /**
-     * Returns a cached {@link Flowable} like {@link Flowable#cache()}
-     * except that the cache may be reset by the user calling
+     * Returns a cached {@link Flowable} like {@link Flowable#cache()} except that
+     * the cache may be reset by the user calling
      * {@link CloseableFlowableWithReset#reset}.
      *
      * @param source
@@ -198,11 +248,11 @@ public final class Flowables {
      * @return {@link CloseableFlowableWithReset} that should be closed once
      *         finished to prevent worker memory leak.
      */
-    public static <T> CloseableFlowableWithReset<T> cache(final Flowable<T> source,
-                                                          final long duration, final TimeUnit unit, final Scheduler scheduler) {
+    public static <T> CloseableFlowableWithReset<T> cache(final Flowable<T> source, final long duration,
+            final TimeUnit unit, final Scheduler scheduler) {
         final AtomicReference<CachedFlowable<T>> cacheRef = new AtomicReference<CachedFlowable<T>>();
         final AtomicReference<Optional<Scheduler.Worker>> workerRef = new AtomicReference<Optional<Scheduler.Worker>>(
-                Optional.<Scheduler.Worker> absent());
+                Optional.<Scheduler.Worker>absent());
         CachedFlowable<T> cache = new CachedFlowable<T>(source);
         cacheRef.set(cache);
         Runnable closeAction = new Runnable() {
@@ -237,10 +287,9 @@ public final class Flowables {
         return new CloseableFlowableWithReset<T>(cache, closeAction, resetAction);
     }
 
-
     private static <T> void startScheduledResetAgain(final long duration, final TimeUnit unit,
-                                                     final Scheduler scheduler, final AtomicReference<CachedFlowable<T>> cacheRef,
-                                                     final AtomicReference<Optional<Scheduler.Worker>> workerRef) {
+            final Scheduler scheduler, final AtomicReference<CachedFlowable<T>> cacheRef,
+            final AtomicReference<Optional<Scheduler.Worker>> workerRef) {
 
         Runnable action = new Runnable() {
             @Override
@@ -263,5 +312,9 @@ public final class Flowables {
                 break;
             }
         }
+    }
+
+    public static <T> Flowable<T> mergeInterleaved(Flowable<Flowable<T>> flowables, int maxConcurrency, int batchSize) {
+        return new FlowableMergeInterleave<T>(flowables, maxConcurrency, batchSize);
     }
 }
