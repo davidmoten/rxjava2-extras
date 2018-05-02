@@ -81,14 +81,12 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
 
         @Override
         public void request(long n) {
-            System.out.println("request(" + n + ")");
             if (SubscriptionHelper.validate(n)) {
                 BackpressureHelper.add(requested, n);
                 if (once.compareAndSet(false, true)) {
                     sources.subscribe(this);
                     subscription.request(maxConcurrent);
                 }
-                System.out.println("requested = " + requested);
                 drain();
             }
         }
@@ -146,10 +144,6 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
                         if (tryCancelled()) {
                             return;
                         }
-                        // if flowable on queue then subscribe to it
-                        // if flowable finished then request another
-                        // if subscriber has data or terminates then emit it round-robin style
-                        // subscribers should only request batchSize at a time
                         long r = requested.get();
                         long e = emitted;
                         while (e != r) {
@@ -291,7 +285,6 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
 
         @Override
         public void onNext(T t) {
-            System.out.println(t);
             count++;
             boolean batchFinished = count == parent.batchSize;
             if (batchFinished) {
@@ -312,7 +305,6 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
 
         @Override
         public void requestMore() {
-            System.out.println("requesting more from " + this);
             subscription.get().request(parent.batchSize);
         }
 
