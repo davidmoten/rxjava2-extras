@@ -10,6 +10,8 @@ import io.reactivex.Scheduler;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
+import rx.internal.util.RxRingBuffer;
+
 import org.reactivestreams.Subscription;
 
 import java.util.concurrent.TimeUnit;
@@ -314,7 +316,12 @@ public final class Flowables {
         }
     }
 
-    public static <T> Flowable<T> mergeInterleaved(Flowable<Flowable<T>> flowables, int maxConcurrency, int batchSize) {
-        return new FlowableMergeInterleave<T>(flowables, maxConcurrency, batchSize);
+    public static <T> Flowable<T> mergeInterleaved(Flowable<Flowable<T>> flowables, int maxConcurrency, int batchSize,
+            boolean delayError) {
+        return new FlowableMergeInterleave<T>(flowables, maxConcurrency, batchSize, delayError);
+    }
+
+    public static <T> Flowable<T> mergeInterleaved(Flowable<Flowable<T>> flowables, int maxConcurrency) {
+        return new FlowableMergeInterleave<T>(flowables, maxConcurrency, RxRingBuffer.SIZE, true);
     }
 }

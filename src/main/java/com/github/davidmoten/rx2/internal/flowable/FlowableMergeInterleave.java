@@ -26,28 +26,31 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
     private final int maxConcurrent;
     private final Flowable<Flowable<T>> sources;
     private final int batchSize;
+    private boolean delayError;
 
-    public FlowableMergeInterleave(Flowable<Flowable<T>> sources, int maxConcurrent,
-            int batchSize) {
+    public FlowableMergeInterleave(Flowable<Flowable<T>> sources, int maxConcurrent, int batchSize,
+            boolean delayError) {
         this.sources = sources;
         this.maxConcurrent = maxConcurrent;
         this.batchSize = batchSize;
+        this.delayError = delayError;
     }
 
     @Override
     protected void subscribeActual(Subscriber<? super T> s) {
-        MergeInterleaveSubscription<T> subscription = new MergeInterleaveSubscription<T>(sources,
-                maxConcurrent, batchSize, s);
+        MergeInterleaveSubscription<T> subscription = new MergeInterleaveSubscription<T>(sources, maxConcurrent,
+                batchSize, delayError, s);
         s.onSubscribe(subscription);
     }
 
-    private static final class MergeInterleaveSubscription<T>
-            implements Subscription, Subscriber<Flowable<T>> {
+    private static final class MergeInterleaveSubscription<T> implements Subscription, Subscriber<Flowable<T>> {
 
         private static final Object SOURCES_COMPLETE = new Object();
         private final AtomicBoolean once = new AtomicBoolean();
         private final Flowable<Flowable<T>> sources;
         private final int maxConcurrent;
+        private final int batchSize;
+        private final boolean delayError;
         private Subscriber<? super T> subscriber;
         private Subscription subscription;
         private volatile boolean cancelled;
@@ -61,7 +64,6 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
 
         // objects on queue can be Flowable, Subscriber,
         private final SimplePlainQueue<Object> queue;
-        private final int batchSize;
         private final List<SourceSubscriber<T>> sourceSubscribers = new ArrayList<SourceSubscriber<T>>();
         private int sourceSubscriberIndex;
         private boolean sourcesComplete;
@@ -69,11 +71,12 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         private int sourcesCount;
         private boolean isFirst = true;
 
-        public MergeInterleaveSubscription(Flowable<Flowable<T>> sources, int maxConcurrent,
-                int batchSize, Subscriber<? super T> subscriber) {
+        public MergeInterleaveSubscription(Flowable<Flowable<T>> sources, int maxConcurrent, int batchSize,
+                boolean delayError, Subscriber<? super T> subscriber) {
             this.sources = sources;
             this.maxConcurrent = maxConcurrent;
             this.batchSize = batchSize;
+            this.delayError = delayError;
             this.subscriber = subscriber;
             this.queue = new MpscLinkedQueue<Object>();
             this.batchFinished = RingBuffer.create(maxConcurrent + 1);
@@ -140,12 +143,16 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
             if (wip.getAndIncrement() == 0) {
                 int missed = 1;
                 while (true) {
+                    long r = requested.get();
                     while (true) {
                         if (tryCancelled()) {
                             return;
                         }
-                        long r = requested.get();
                         long e = emitted;
+                        // limit reads of volatile requested
+                        if (e == r) {
+                            r = requested.get();
+                        }
                         while (e != r) {
                             T t = emissions.poll();
                             if (t != null) {
@@ -164,10 +171,11 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
                             }
                         }
                         emitted = e;
-                        if (e == r) {
+                        boolean d = finished;
+                        if (e == r && !finished) {
+                            // if there are no outstanding requests then exit the loop
                             break;
                         }
-                        boolean d = finished;
                         Object o = queue.poll();
                         if (o == null) {
                             if (d) {
@@ -175,6 +183,20 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
                                 if (err != null) {
                                     error = null;
                                     cleanup();
+                                    // note there may be items ready to emit
+                                    if (delayError) {
+                                        while (true) {
+                                            T t = emissions.poll();
+                                            if (t == null) {
+                                                break;
+                                            } else {
+                                                subscriber.onNext(t);
+                                                if (tryCancelled()) {
+                                                    return;
+                                                }
+                                            }
+                                        }
+                                    }
                                     subscriber.onError(err);
                                 } else {
                                     subscriber.onComplete();
@@ -215,7 +237,14 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
             if (!ok) {
                 throw new RuntimeException("ring buffer full!");
             }
-            batchFinished.poll().requestMore();
+            while (true) {
+                BatchFinished s = batchFinished.poll();
+                if (s != null) {
+                    s.requestMore();
+                } else {
+                    break;
+                }
+            }
         }
 
         private void cleanup() {
