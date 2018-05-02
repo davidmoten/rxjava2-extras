@@ -86,7 +86,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
                 BackpressureHelper.add(requested, n);
                 if (once.compareAndSet(false, true)) {
                     sources.subscribe(this);
-                    subscription.request(maxConcurrent);                    
+                    subscription.request(maxConcurrent);
                 }
                 System.out.println("requested = " + requested);
                 drain();
@@ -151,7 +151,6 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
                         // if subscriber has data or terminates then emit it round-robin style
                         // subscribers should only request batchSize at a time
                         long r = requested.get();
-                        System.out.println("requested=" + r);
                         long e = emitted;
                         while (e != r) {
                             T t = emissions.poll();
@@ -171,6 +170,9 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
                             }
                         }
                         emitted = e;
+                        if (e == r) {
+                            break;
+                        }
                         boolean d = finished;
                         Object o = queue.poll();
                         if (o == null) {
