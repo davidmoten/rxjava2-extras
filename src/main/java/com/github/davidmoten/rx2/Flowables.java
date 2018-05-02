@@ -1,6 +1,8 @@
 package com.github.davidmoten.rx2;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.reactivestreams.Publisher;
@@ -9,6 +11,7 @@ import org.reactivestreams.Subscription;
 import com.github.davidmoten.guavamini.Optional;
 import com.github.davidmoten.rx2.flowable.CachedFlowable;
 import com.github.davidmoten.rx2.flowable.CloseableFlowableWithReset;
+import com.github.davidmoten.rx2.internal.flowable.FlowableDeepTransform;
 import com.github.davidmoten.rx2.internal.flowable.FlowableFetchPagesByRequest;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMatch;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMergeInterleave;
@@ -16,6 +19,7 @@ import com.github.davidmoten.rx2.internal.flowable.FlowableRepeat;
 
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
+import io.reactivex.functions.Action;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
@@ -28,15 +32,13 @@ public final class Flowables {
         // prevent instantiation
     }
 
-    public static <A, B, K, C> Flowable<C> match(Flowable<A> a, Flowable<B> b,
-            Function<? super A, K> aKey, Function<? super B, K> bKey,
-            BiFunction<? super A, ? super B, C> combiner, int requestSize) {
+    public static <A, B, K, C> Flowable<C> match(Flowable<A> a, Flowable<B> b, Function<? super A, K> aKey,
+            Function<? super B, K> bKey, BiFunction<? super A, ? super B, C> combiner, int requestSize) {
         return new FlowableMatch<A, B, K, C>(a, b, aKey, bKey, combiner, requestSize);
     }
 
-    public static <A, B, K, C> Flowable<C> match(Flowable<A> a, Flowable<B> b,
-            Function<? super A, K> aKey, Function<? super B, K> bKey,
-            BiFunction<? super A, ? super B, C> combiner) {
+    public static <A, B, K, C> Flowable<C> match(Flowable<A> a, Flowable<B> b, Function<? super A, K> aKey,
+            Function<? super B, K> bKey, BiFunction<? super A, ? super B, C> combiner) {
         return match(a, b, aKey, bKey, combiner, DEFAULT_MATCH_BATCH_SIZE);
     }
 
@@ -131,8 +133,7 @@ public final class Flowables {
      * <pre>
      * {
      *     &#64;code
-     *     Movie top = mostPopularMovies().compose(Transformers.maxRequest(1)).first()
-     *             .blockingFirst();
+     *     Movie top = mostPopularMovies().compose(Transformers.maxRequest(1)).first().blockingFirst();
      * }
      * </pre>
      * <p>
@@ -171,8 +172,7 @@ public final class Flowables {
      * @return Flowable that fetches pages based on request amounts
      */
     public static <T> Flowable<T> fetchPagesByRequest(
-            final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch, long start,
-            int maxConcurrent) {
+            final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch, long start, int maxConcurrent) {
         return FlowableFetchPagesByRequest.create(fetch, start, maxConcurrent);
     }
 
@@ -220,8 +220,8 @@ public final class Flowables {
      *            the generic type of the source
      * @return cached observable that resets regularly on a time interval
      */
-    public static <T> Flowable<T> cache(final Flowable<T> source, final long duration,
-            final TimeUnit unit, final Scheduler.Worker worker) {
+    public static <T> Flowable<T> cache(final Flowable<T> source, final long duration, final TimeUnit unit,
+            final Scheduler.Worker worker) {
         final AtomicReference<CachedFlowable<T>> cacheRef = new AtomicReference<CachedFlowable<T>>();
         CachedFlowable<T> cache = new CachedFlowable<T>(source);
         cacheRef.set(cache);
@@ -257,8 +257,8 @@ public final class Flowables {
      * @return {@link CloseableFlowableWithReset} that should be closed once
      *         finished to prevent worker memory leak.
      */
-    public static <T> CloseableFlowableWithReset<T> cache(final Flowable<T> source,
-            final long duration, final TimeUnit unit, final Scheduler scheduler) {
+    public static <T> CloseableFlowableWithReset<T> cache(final Flowable<T> source, final long duration,
+            final TimeUnit unit, final Scheduler scheduler) {
         final AtomicReference<CachedFlowable<T>> cacheRef = new AtomicReference<CachedFlowable<T>>();
         final AtomicReference<Optional<Scheduler.Worker>> workerRef = new AtomicReference<Optional<Scheduler.Worker>>(
                 Optional.<Scheduler.Worker>absent());
@@ -335,7 +335,8 @@ public final class Flowables {
         return mergeInterleaved(publishers, maxConcurrency, 128, false);
     }
 
-    public static <T> MergeInterleaveBuilder<T> mergeInterleaved(Publisher<? extends Publisher<? extends T>> publishers) {
+    public static <T> MergeInterleaveBuilder<T> mergeInterleaved(
+            Publisher<? extends Publisher<? extends T>> publishers) {
         return new MergeInterleaveBuilder<T>(publishers);
     }
 
@@ -368,5 +369,38 @@ public final class Flowables {
         public Flowable<T> build() {
             return mergeInterleaved(publishers, maxConcurrency, batchSize, delayErrors);
         }
+    }
+
+    public static <T> Flowable<T> deepTransform(final Flowable<T> flowable,
+            BiFunction<Flowable<T>, AtomicBoolean, Flowable<T>> transform) {
+        return new FlowableDeepTransform<T>(flowable, transform);
+    }
+
+    public static <T> Flowable<T> deepTransform(final Flowable<T> flowable,
+            Function<Flowable<T>, Flowable<T>> transform) {
+        return deepTransform(flowable, new BiFunction<Flowable<T>, AtomicBoolean, Flowable<T>>() {
+
+            @Override
+            public Flowable<T> apply(final Flowable<T> f, final AtomicBoolean b) throws Exception {
+                return Flowable.defer(new Callable<Publisher<? extends T>>() {
+                    @Override
+                    public Publisher<? extends T> call() throws Exception {
+                        final long[] count = new long[1];
+                        return f.doOnNext(new Consumer<T>() {
+                            @Override
+                            public void accept(T x) throws Exception {
+                                count[0]++;
+                            }
+                        }).doOnComplete(new Action() {
+                            @Override
+                            public void run() throws Exception {
+                                b.set(count[0] == 1);
+                            }
+                        });
+                    }
+                });
+
+            }
+        });
     }
 }
