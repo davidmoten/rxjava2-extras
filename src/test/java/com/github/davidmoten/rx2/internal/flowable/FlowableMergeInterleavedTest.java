@@ -87,12 +87,34 @@ public class FlowableMergeInterleavedTest {
     
     @Test
     public void testInterleaveTwoCompletingStreamsSameSize() {
-        Flowable<Integer> a = Flowable.just(1, 1, 1);
-        Flowable<Integer> b = Flowable.just(2, 2, 2);
+        Flowable<Integer> a = Flowable.just(1, 1);
+        Flowable<Integer> b = Flowable.just(2, 2);
         Flowables.mergeInterleaved(Flowable.just(a, b), 2, 1, true) //
                 .doOnNext(Consumers.println()) //
                 .test() //
-                .assertValues(1, 2, 1, 2, 1, 2) //
+                .assertValues(1, 2, 1, 2) //
+                .assertComplete();
+    }
+    
+    @Test
+    public void testInterleaveCompletingStreamsDifferentSize() {
+        Flowable<Integer> a = Flowable.just(1, 1, 1);
+        Flowable<Integer> b = Flowable.just(2, 2);
+        Flowables.mergeInterleaved(Flowable.just(a, b), 2, 1, true) //
+                .doOnNext(Consumers.println()) //
+                .test() //
+                .assertValues(1, 2, 1, 2, 1) //
+                .assertComplete();
+    }
+    
+    @Test
+    public void testInterleaveCompletingStreamsWithEmpty() {
+        Flowable<Integer> a = Flowable.just(1, 1, 1);
+        Flowable<Integer> b = Flowable.empty();
+        Flowables.mergeInterleaved(Flowable.just(a, b), 2, 1, true) //
+                .doOnNext(Consumers.println()) //
+                .test() //
+                .assertValues(1, 1, 1) //
                 .assertComplete();
     }
 

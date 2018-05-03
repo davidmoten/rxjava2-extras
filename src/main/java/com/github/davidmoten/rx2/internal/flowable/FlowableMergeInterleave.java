@@ -65,7 +65,6 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         // objects on queue can be Flowable, Subscriber,
         private final SimplePlainQueue<Object> queue;
         private final List<SourceSubscriber<T>> sourceSubscribers = new ArrayList<SourceSubscriber<T>>();
-        private int sourceSubscriberIndex;
         private boolean sourcesComplete;
         private boolean allEmissionsComplete;
         private int sourcesCount;
@@ -183,19 +182,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
                                     error = null;
                                     cleanup();
                                     // note there may be items ready to emit
-                                    if (delayError) {
-                                        while (true) {
-                                            T t = emissions.poll();
-                                            if (t == null) {
-                                                break;
-                                            } else {
-                                                subscriber.onNext(t);
-                                                if (tryCancelled()) {
-                                                    return;
-                                                }
-                                            }
-                                        }
-                                    }
+                                    //TODO use delayError
                                     subscriber.onError(err);
                                 } else {
                                     subscriber.onComplete();
@@ -261,15 +248,12 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         }
 
         private void handleSourceTerminated(SourceComplete<T> event) {
-            int i = sourceSubscribers.indexOf(event.subscriber);
-            if (i >= sourceSubscriberIndex) {
-                sourceSubscriberIndex--;
-            }
             sourceSubscribers.remove(event.subscriber);
             if (!sourcesComplete) {
                 subscription.request(1);
             } else if (sourceSubscribers.isEmpty()) {
                 allEmissionsComplete = true;
+                System.out.println("emissions complete");
             }
         }
 
@@ -332,6 +316,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
 
         @Override
         public void onComplete() {
+            System.out.println("COMPLETE");
             parent.sourceComplete(this);
         }
 
