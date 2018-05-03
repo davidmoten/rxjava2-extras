@@ -169,4 +169,21 @@ public class RingBuffer<T> implements Queue<T> {
     public T element() {
         return notImplemented();
     }
+    
+    @Override
+    public String toString() {
+        StringBuilder s = new StringBuilder();
+        s.append("RingBuffer[");
+        boolean first = true;
+        for (T value: this) {
+            if (!first) {
+                s.append(", ");
+            } else {
+                first = false;
+            }
+            s.append(String.valueOf(value));
+        }
+        s.append("]");
+        return s.toString();
+    }
 }

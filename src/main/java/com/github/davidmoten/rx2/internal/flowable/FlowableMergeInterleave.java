@@ -69,7 +69,6 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         private boolean sourcesComplete;
         private boolean allEmissionsComplete;
         private int sourcesCount;
-        private boolean isFirst = true;
 
         public MergeInterleaveSubscription(Flowable<Flowable<T>> sources, int maxConcurrent, int batchSize,
                 boolean delayError, Subscriber<? super T> subscriber) {
@@ -237,6 +236,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
             if (!ok) {
                 throw new RuntimeException("ring buffer full!");
             }
+            System.out.println("batchFinished=" + batchFinished);
             while (true) {
                 BatchFinished s = batchFinished.poll();
                 if (s != null) {
@@ -256,11 +256,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         private void handleSourceArrived(SourceArrived<T> event) {
             SourceSubscriber<T> subscriber = new SourceSubscriber<T>(this);
             sourceSubscribers.add(subscriber);
-            batchFinished.offer(subscriber);
-            if (isFirst) {
-                queue.offer(subscriber);
-                isFirst = false;
-            }
+            queue.offer(subscriber);
             event.flowable.subscribe(subscriber);
         }
 
@@ -290,8 +286,10 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
 
         public void sourceNext(T t, SourceSubscriber<T> sourceSubscriber) {
             queue.offer(t);
+            System.out.println("value on queue " + t);
             if (sourceSubscriber != null) {
                 queue.offer(sourceSubscriber);
+                System.out.println(sourceSubscriber + " batch finished on queue");
             }
             drain();
         }
@@ -305,6 +303,11 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
 
         SourceSubscriber(MergeInterleaveSubscription<T> parent) {
             this.parent = parent;
+        }
+
+        @Override
+        public String toString() {
+            return "SourceSubscriber-" + hashCode();
         }
 
         @Override
@@ -334,6 +337,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
 
         @Override
         public void requestMore() {
+            System.out.println(this + " requesting more ");
             subscription.get().request(parent.batchSize);
         }
 
