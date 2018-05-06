@@ -1,9 +1,7 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -38,12 +36,13 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
 
     @Override
     protected void subscribeActual(Subscriber<? super T> s) {
-        MergeInterleaveSubscription<T> subscription = new MergeInterleaveSubscription<T>(sources, maxConcurrent,
-                batchSize, delayError, s);
+        MergeInterleaveSubscription<T> subscription = new MergeInterleaveSubscription<T>(sources,
+                maxConcurrent, batchSize, delayError, s);
         s.onSubscribe(subscription);
     }
 
-    private static final class MergeInterleaveSubscription<T> implements Subscription, Subscriber<Flowable<T>> {
+    private static final class MergeInterleaveSubscription<T>
+            implements Subscription, Subscriber<Flowable<T>> {
 
         private static final Object SOURCES_COMPLETE = new Object();
         private final AtomicBoolean once = new AtomicBoolean();
@@ -58,7 +57,6 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         private volatile boolean finished;
         private final AtomicLong requested = new AtomicLong();
         private final AtomicInteger wip = new AtomicInteger();
-        private final Queue<T> emissions = new LinkedList<T>();
         private long emitted;
         private final RingBuffer<BatchFinished> batchFinished;
 
@@ -66,11 +64,10 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         private final SimplePlainQueue<Object> queue;
         private final List<SourceSubscriber<T>> sourceSubscribers = new ArrayList<SourceSubscriber<T>>();
         private boolean sourcesComplete;
-        private boolean allEmissionsComplete;
         private int sourcesCount;
 
-        public MergeInterleaveSubscription(Flowable<Flowable<T>> sources, int maxConcurrent, int batchSize,
-                boolean delayError, Subscriber<? super T> subscriber) {
+        public MergeInterleaveSubscription(Flowable<Flowable<T>> sources, int maxConcurrent,
+                int batchSize, boolean delayError, Subscriber<? super T> subscriber) {
             this.sources = sources;
             this.maxConcurrent = maxConcurrent;
             this.batchSize = batchSize;
@@ -129,7 +126,6 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
             if (cancelled) {
                 subscription.cancel();
                 queue.clear();
-                emissions.clear();
                 return true;
             } else {
                 return false;
@@ -140,39 +136,22 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         private void drain() {
             if (wip.getAndIncrement() == 0) {
                 int missed = 1;
+                long e = emitted;
                 while (true) {
+                    if (tryCancelled()) {
+                        return;
+                    }
                     long r = requested.get();
-                    while (true) {
-                        if (tryCancelled()) {
-                            return;
-                        }
-                        long e = emitted;
-                        // limit reads of volatile requested
-                        if (e == r) {
-                            r = requested.get();
-                        }
-                        while (e != r) {
-                            T t = emissions.poll();
-                            if (t != null) {
-                                subscriber.onNext(t);
-                                e++;
-                            } else {
-                                if (allEmissionsComplete) {
-                                    subscriber.onComplete();
-                                    return;
-                                } else {
-                                    break;
-                                }
-                            }
-                            if (tryCancelled()) {
+                    while (e != r) {
+                        boolean d = finished;
+                        if (d && !delayError) {
+                            Throwable err = error;
+                            if (err != null) {
+                                error = null;
+                                cleanup();
+                                subscriber.onError(err);
                                 return;
                             }
-                        }
-                        emitted = e;
-                        boolean d = finished;
-                        if (e == r && !finished) {
-                            // if there are no outstanding requests then exit the loop
-                            break;
                         }
                         Object o = queue.poll();
                         if (o == null) {
@@ -181,8 +160,6 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
                                 if (err != null) {
                                     error = null;
                                     cleanup();
-                                    // note there may be items ready to emit
-                                    //TODO use delayError
                                     subscriber.onError(err);
                                 } else {
                                     subscriber.onComplete();
@@ -201,14 +178,15 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
                             } else if (o == SOURCES_COMPLETE) {
                                 sourcesComplete = true;
                             } else {
-                                // is emission
-                                emissions.offer((T) o);
+                                subscriber.onNext((T) o);
+                                e++;
                             }
                         }
                         if (tryCancelled()) {
                             return;
                         }
                     }
+                    emitted = e;
                     missed = wip.addAndGet(-missed);
                     if (missed == 0) {
                         return;
@@ -252,8 +230,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
             if (!sourcesComplete) {
                 subscription.request(1);
             } else if (sourceSubscribers.isEmpty()) {
-                allEmissionsComplete = true;
-                System.out.println("emissions complete");
+                subscriber.onComplete();
             }
         }
 
