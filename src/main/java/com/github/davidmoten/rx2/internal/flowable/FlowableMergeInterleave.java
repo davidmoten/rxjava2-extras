@@ -226,11 +226,12 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         }
 
         private void handleSourceTerminated(SourceComplete<T> event) {
+            System.out.println(event.subscriber + " terminated");
             sourceSubscribers.remove(event.subscriber);
             if (!sourcesComplete) {
                 subscription.request(1);
             } else if (sourceSubscribers.isEmpty()) {
-                subscriber.onComplete();
+                finished = true;
             }
         }
 
