@@ -41,9 +41,10 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         s.onSubscribe(subscription);
     }
 
-    private static final class MergeInterleaveSubscription<T>
+    private static final class MergeInterleaveSubscription<T> extends AtomicInteger
             implements Subscription, Subscriber<Flowable<T>> {
 
+        private static final long serialVersionUID = -6416801556759306113L;
         private static final Object SOURCES_COMPLETE = new Object();
         private final AtomicBoolean once = new AtomicBoolean();
         private final Flowable<Flowable<T>> sources;
@@ -56,7 +57,6 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         private Throwable error;
         private volatile boolean finished;
         private final AtomicLong requested = new AtomicLong();
-        private final AtomicInteger wip = new AtomicInteger();
         private long emitted;
         private final RingBuffer<BatchFinished> batchFinished;
 
@@ -134,7 +134,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
 
         @SuppressWarnings("unchecked")
         private void drain() {
-            if (wip.getAndIncrement() == 0) {
+            if (getAndIncrement() == 0) {
                 int missed = 1;
                 long e = emitted;
                 long r = requested.get();
@@ -190,7 +190,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
                         }
                     }
                     emitted = e;
-                    missed = wip.addAndGet(-missed);
+                    missed = addAndGet(-missed);
                     if (missed == 0) {
                         return;
                     }

@@ -1,5 +1,6 @@
 package com.github.davidmoten.rx2;
 
+import java.util.Arrays;
 import java.util.regex.Pattern;
 
 import org.openjdk.jmh.annotations.Benchmark;
@@ -45,6 +46,23 @@ public class Benchmarks {
     @Benchmark
     public String splitSimple() {
         return source.compose(Strings.splitSimple("\n")).blockingLast();
+    }
+
+    @Benchmark
+    public Long mergeTwoStreams() {
+        Flowable<Integer> a = Flowable.range(0, 100000);
+        return Flowable.merge(Flowable.just(a, a, a)).count().blockingGet();
+    }
+
+    @Benchmark
+    public Long mergeTwoStreamsInterleaved() {
+        Flowable<Integer> a = Flowable.range(0, 100000);
+        return Flowables.mergeInterleaved(Flowable.just(a, a, a)) //
+                .maxConcurrency(4) //
+                .batchSize(128) //
+                .build() //
+                .count() //
+                .blockingGet();
     }
 
     @Benchmark

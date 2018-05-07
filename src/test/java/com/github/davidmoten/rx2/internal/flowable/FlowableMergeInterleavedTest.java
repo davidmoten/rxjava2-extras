@@ -7,7 +7,7 @@ import com.github.davidmoten.rx2.Flowables;
 
 import io.reactivex.Flowable;
 
-public class FlowableMergeInterleavedTest {
+public final class FlowableMergeInterleavedTest {
 
     @Test
     public void testInterleaveTwoInfiniteStreams() {
