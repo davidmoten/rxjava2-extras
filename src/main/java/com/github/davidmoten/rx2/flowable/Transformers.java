@@ -19,7 +19,6 @@ import com.github.davidmoten.rx2.internal.flowable.FlowableDoOnEmpty;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMapLast;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMatch;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMaxRequest;
-import com.github.davidmoten.rx2.internal.flowable.FlowableMergeInterleave;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMinRequest;
 import com.github.davidmoten.rx2.internal.flowable.FlowableRepeatingTransform;
 import com.github.davidmoten.rx2.internal.flowable.FlowableReverse;
