@@ -274,11 +274,6 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         }
 
         @Override
-        public String toString() {
-            return "SourceSubscriber-" + hashCode();
-        }
-
-        @Override
         public void onSubscribe(Subscription s) {
             SubscriptionHelper.setOnce(subscription, s);
         }

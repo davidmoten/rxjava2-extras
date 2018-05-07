@@ -1,11 +1,13 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.github.davidmoten.rx2.Consumers;
 import com.github.davidmoten.rx2.Flowables;
 
 import io.reactivex.Flowable;
+import io.reactivex.schedulers.Schedulers;
 
 public final class FlowableMergeInterleavedTest {
 
@@ -147,6 +149,17 @@ public final class FlowableMergeInterleavedTest {
                 .test() //
                 .assertNoValues() //
                 .assertError(e);
+    }
+
+    @Test
+    @Ignore
+    public void testInterleaveAsync() {
+        Flowable<Integer> a = Flowable.just(1).repeat(100).subscribeOn(Schedulers.io());
+        Flowable<Integer> b = Flowable.just(2).repeat(100);
+        Flowables.mergeInterleaved(Flowable.just(a, b), 2, 2, true) //
+                .test() //
+                .assertValueCount(200) //
+                .assertComplete();
     }
 
 }
