@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
@@ -22,12 +23,12 @@ import io.reactivex.internal.util.BackpressureHelper;
 public final class FlowableMergeInterleave<T> extends Flowable<T> {
 
     private final int maxConcurrent;
-    private final Flowable<Flowable<T>> sources;
+    private final Publisher<? extends Publisher<? extends T>> sources;
     private final int batchSize;
     private boolean delayErrors;
 
-    public FlowableMergeInterleave(Flowable<Flowable<T>> sources, int maxConcurrent, int batchSize,
-            boolean delayErrors) {
+    public FlowableMergeInterleave(Publisher<? extends Publisher<? extends T>> sources,
+            int maxConcurrent, int batchSize, boolean delayErrors) {
         this.sources = sources;
         this.maxConcurrent = maxConcurrent;
         this.batchSize = batchSize;
@@ -42,12 +43,12 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
     }
 
     private static final class MergeInterleaveSubscription<T> extends AtomicInteger
-            implements Subscription, Subscriber<Flowable<T>> {
+            implements Subscription, Subscriber<Publisher<? extends T>> {
 
         private static final long serialVersionUID = -6416801556759306113L;
         private static final Object SOURCES_COMPLETE = new Object();
         private final AtomicBoolean once = new AtomicBoolean();
-        private final Flowable<Flowable<T>> sources;
+        private final Publisher<? extends Publisher<? extends T>> sources;
         private final int maxConcurrent;
         private final int batchSize;
         private final boolean delayErrors;
@@ -66,8 +67,9 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         private boolean sourcesComplete;
         private long sourcesCount;
 
-        public MergeInterleaveSubscription(Flowable<Flowable<T>> sources, int maxConcurrent,
-                int batchSize, boolean delayErrors, Subscriber<? super T> subscriber) {
+        public MergeInterleaveSubscription(Publisher<? extends Publisher<? extends T>> sources,
+                int maxConcurrent, int batchSize, boolean delayErrors,
+                Subscriber<? super T> subscriber) {
             this.sources = sources;
             this.maxConcurrent = maxConcurrent;
             this.batchSize = batchSize;
@@ -101,7 +103,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         }
 
         @Override
-        public void onNext(Flowable<T> f) {
+        public void onNext(Publisher<? extends T> f) {
             sourcesCount++;
             queue.offer(new SourceArrived<T>(f));
             if (sourcesCount >= maxConcurrent) {
@@ -308,9 +310,9 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
     }
 
     private static final class SourceArrived<T> {
-        final Flowable<T> flowable;
+        final Publisher<? extends T> flowable;
 
-        SourceArrived(Flowable<T> flowable) {
+        SourceArrived(Publisher<? extends T> flowable) {
             this.flowable = flowable;
         }
     }

@@ -177,4 +177,9 @@ public final class FlowableMergeInterleavedTest {
                 .assertNotTerminated();
     }
 
+    
+    @Test
+    public void testInterleaveCancelSources() {
+        //TODO
+    }
 }

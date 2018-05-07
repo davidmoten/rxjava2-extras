@@ -3,6 +3,7 @@ package com.github.davidmoten.rx2;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 
 import com.github.davidmoten.guavamini.Optional;
@@ -324,29 +325,29 @@ public final class Flowables {
 
     private static final int DEFAULT_RING_BUFFER_SIZE = 128;
 
-    public static <T> Flowable<T> mergeInterleaved(Flowable<Flowable<T>> flowables,
+    public static <T> Flowable<T> mergeInterleaved(Publisher<? extends Publisher<? extends T>> publishers,
             int maxConcurrency, int batchSize, boolean delayErrors) {
-        return new FlowableMergeInterleave<T>(flowables, maxConcurrency, batchSize, delayErrors);
+        return new FlowableMergeInterleave<T>(publishers, maxConcurrency, batchSize, delayErrors);
     }
 
-    public static <T> Flowable<T> mergeInterleaved(Flowable<Flowable<T>> flowables,
+    public static <T> Flowable<T> mergeInterleaved(Publisher<? extends Publisher<? extends T>> publishers,
             int maxConcurrency) {
-        return new FlowableMergeInterleave<T>(flowables, maxConcurrency, 128, true);
+        return new FlowableMergeInterleave<T>(publishers, maxConcurrency, 128, true);
     }
 
-    public static <T> MergeInterleaveBuilder<T> mergeInterleaved(Flowable<Flowable<T>> flowables) {
-        return new MergeInterleaveBuilder<T>(flowables);
+    public static <T> MergeInterleaveBuilder<T> mergeInterleaved(Publisher<? extends Publisher<? extends T>> publishers) {
+        return new MergeInterleaveBuilder<T>(publishers);
     }
 
     public static final class MergeInterleaveBuilder<T> {
 
-        private Flowable<Flowable<T>> flowables;
+        private final Publisher<? extends Publisher<? extends T>> publishers;
         private int maxConcurrency = 4;
         private int batchSize = DEFAULT_RING_BUFFER_SIZE;
         private boolean delayErrors = false;
 
-        MergeInterleaveBuilder(Flowable<Flowable<T>> flowables) {
-            this.flowables = flowables;
+        MergeInterleaveBuilder(Publisher<? extends Publisher<? extends T>> publishers) {
+            this.publishers = publishers;
         }
 
         public MergeInterleaveBuilder<T> maxConcurrency(int maxConcurrency) {
@@ -365,7 +366,7 @@ public final class Flowables {
         }
 
         public Flowable<T> build() {
-            return mergeInterleaved(flowables, maxConcurrency, batchSize, delayErrors);
+            return mergeInterleaved(publishers, maxConcurrency, batchSize, delayErrors);
         }
     }
 }
