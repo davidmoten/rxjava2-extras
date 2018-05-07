@@ -9,6 +9,7 @@ import com.github.davidmoten.rx2.Flowables;
 
 import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subscribers.TestSubscriber;
 
 public final class FlowableMergeInterleavedTest {
 
@@ -161,6 +162,19 @@ public final class FlowableMergeInterleavedTest {
                 .awaitDone(10, TimeUnit.SECONDS) //
                 .assertValueCount(200) //
                 .assertComplete();
+    }
+
+    @Test
+    public void testInterleaveCancel() {
+        Flowable<Integer> a = Flowable.just(1).repeat();
+        Flowable<Integer> b = Flowable.just(2).repeat();
+        TestSubscriber<Integer> ts = Flowables.mergeInterleaved(Flowable.just(a, b), 2, 1, true) //
+                .test(3);
+        ts.assertValues(1, 2, 1);
+        ts.cancel();
+        ts.requestMore(100) //
+                .assertValueCount(3) //
+                .assertNotTerminated();
     }
 
 }
