@@ -1,13 +1,16 @@
 package com.github.davidmoten.rx2;
 
-import java.util.Arrays;
+import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
+import org.reactivestreams.Publisher;
 
+import io.reactivex.Emitter;
 import io.reactivex.Flowable;
+import io.reactivex.functions.Consumer;
 import rx.Observable;
 import rx.Observable.Transformer;
 import rx.observables.StringObservable;
@@ -48,16 +51,33 @@ public class Benchmarks {
         return source.compose(Strings.splitSimple("\n")).blockingLast();
     }
 
+    private static Flowable<Integer> range = Flowable
+            .defer(new Callable<Publisher<? extends Integer>>() {
+                final int[] count = new int[1];
+
+                @Override
+                public Publisher<? extends Integer> call() throws Exception {
+                    return Flowable.generate(new Consumer<Emitter<Integer>>() {
+                        @Override
+                        public void accept(Emitter<Integer> emitter) throws Exception {
+                            count[0]++;
+                            emitter.onNext(count[0]);
+                            if (count[0] == 100000) {
+                                emitter.onComplete();
+                            }
+                        }
+                    });
+                }
+            });
+
     @Benchmark
     public Long mergeTwoStreams() {
-        Flowable<Integer> a = Flowable.range(0, 100000);
-        return Flowable.merge(Flowable.just(a, a, a)).count().blockingGet();
+        return Flowable.merge(Flowable.just(range, range, range)).count().blockingGet();
     }
 
     @Benchmark
     public Long mergeTwoStreamsInterleaved() {
-        Flowable<Integer> a = Flowable.range(0, 100000);
-        return Flowables.mergeInterleaved(Flowable.just(a, a, a)) //
+        return Flowables.mergeInterleaved(Flowable.just(range, range, range)) //
                 .maxConcurrency(4) //
                 .batchSize(128) //
                 .build() //
