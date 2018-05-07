@@ -211,7 +211,6 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
             if (!ok) {
                 throw new RuntimeException("ring buffer full!");
             }
-            System.out.println("batchFinished=" + batchFinished);
             while (true) {
                 BatchFinished s = batchFinished.poll();
                 if (s != null) {
@@ -236,7 +235,6 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         }
 
         private void handleSourceComplete(SourceComplete<T> event) {
-            System.out.println(event.subscriber + " terminated");
             sourceSubscribers.remove(event.subscriber);
             if (!sourcesComplete) {
                 subscription.request(1);
@@ -258,10 +256,8 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
 
         public void sourceNext(T t, SourceSubscriber<T> sourceSubscriber) {
             queue.offer(t);
-            System.out.println("value on queue " + t);
             if (sourceSubscriber != null) {
                 queue.offer(sourceSubscriber);
-                System.out.println(sourceSubscriber + " batch finished on queue");
             }
             drain();
         }
@@ -304,13 +300,11 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
 
         @Override
         public void onComplete() {
-            System.out.println("COMPLETE");
             parent.sourceComplete(this);
         }
 
         @Override
         public void requestMore() {
-            System.out.println(this + " requesting more ");
             subscription.get().request(parent.batchSize);
         }
 

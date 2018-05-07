@@ -14,7 +14,6 @@ public final class FlowableMergeInterleavedTest {
         Flowable<Integer> a = Flowable.just(1).repeat();
         Flowable<Integer> b = Flowable.just(2).repeat();
         Flowables.mergeInterleaved(Flowable.just(a, b), 2, 2, true) //
-                .doOnNext(Consumers.println()) //
                 .test(4) //
                 .assertValues(1, 1, 2, 2) //
                 .assertNotTerminated();
@@ -25,7 +24,6 @@ public final class FlowableMergeInterleavedTest {
         Flowable<Integer> a = Flowable.just(1).repeat();
         Flowable<Integer> b = Flowable.just(2).repeat();
         Flowables.mergeInterleaved(Flowable.just(a, b), 2, 2, true) //
-                .doOnNext(Consumers.println()) //
                 .test(1) //
                 .assertValues(1) //
                 .assertNotTerminated();
@@ -36,7 +34,6 @@ public final class FlowableMergeInterleavedTest {
         Flowable<Integer> a = Flowable.just(1).repeat();
         Flowable<Integer> b = Flowable.just(2).repeat();
         Flowables.mergeInterleaved(Flowable.just(a, b), 2, 1, true) //
-                .doOnNext(Consumers.println()) //
                 .test(5) //
                 .assertValues(1, 2, 1, 2, 1) //
                 .assertNotTerminated();
@@ -46,7 +43,6 @@ public final class FlowableMergeInterleavedTest {
     public void testInterleaveOneStream() {
         Flowable<Integer> a = Flowable.just(1).repeat(6);
         Flowables.mergeInterleaved(Flowable.just(a), 2, 2, true) //
-                .doOnNext(Consumers.println()) //
                 .test(3) //
                 .assertValues(1, 1, 1) //
                 .assertNotTerminated() //
@@ -71,7 +67,6 @@ public final class FlowableMergeInterleavedTest {
         Flowable<Integer> a = Flowable.just(1).repeat();
         Flowable<Integer> b = Flowable.just(2, 2);
         Flowables.mergeInterleaved(Flowable.just(a, b), 2, 1, true) //
-                .doOnNext(Consumers.println()) //
                 .test(6) //
                 .assertValues(1, 2, 1, 2, 1, 1) //
                 .assertNotTerminated();
@@ -82,7 +77,6 @@ public final class FlowableMergeInterleavedTest {
         Flowable<Integer> a = Flowable.just(1).repeat();
         Flowable<Integer> b = Flowable.never();
         Flowables.mergeInterleaved(Flowable.just(a, b), 2, 1, true) //
-                .doOnNext(Consumers.println()) //
                 .test(3) //
                 .assertValues(1, 1, 1) //
                 .assertNotTerminated();
@@ -93,7 +87,6 @@ public final class FlowableMergeInterleavedTest {
         Flowable<Integer> a = Flowable.never();
         Flowable<Integer> b = Flowable.just(1).repeat();
         Flowables.mergeInterleaved(Flowable.just(a, b), 2, 1, true) //
-                .doOnNext(Consumers.println()) //
                 .test(3) //
                 .assertValues(1, 1, 1) //
                 .assertNotTerminated();
@@ -104,7 +97,6 @@ public final class FlowableMergeInterleavedTest {
         Flowable<Integer> a = Flowable.just(1, 1);
         Flowable<Integer> b = Flowable.just(2, 2);
         Flowables.mergeInterleaved(Flowable.just(a, b), 2, 1, true) //
-                .doOnNext(Consumers.println()) //
                 .test() //
                 .assertValues(1, 2, 1, 2) //
                 .assertComplete();
@@ -115,7 +107,6 @@ public final class FlowableMergeInterleavedTest {
         Flowable<Integer> a = Flowable.just(1, 1, 1);
         Flowable<Integer> b = Flowable.just(2, 2);
         Flowables.mergeInterleaved(Flowable.just(a, b), 2, 1, true) //
-                .doOnNext(Consumers.println()) //
                 .test() //
                 .assertValues(1, 2, 1, 2, 1) //
                 .assertComplete();
@@ -126,7 +117,6 @@ public final class FlowableMergeInterleavedTest {
         Flowable<Integer> a = Flowable.just(1, 1, 1);
         Flowable<Integer> b = Flowable.empty();
         Flowables.mergeInterleaved(Flowable.just(a, b), 2, 1, true) //
-                .doOnNext(Consumers.println()) //
                 .test() //
                 .assertValues(1, 1, 1) //
                 .assertComplete();
@@ -138,7 +128,6 @@ public final class FlowableMergeInterleavedTest {
         RuntimeException e = new RuntimeException();
         Flowable<Integer> b = Flowable.error(e);
         Flowables.mergeInterleaved(Flowable.just(a, b), 2, 1, true) //
-                .doOnNext(Consumers.println()) //
                 .test() //
                 .assertValues(1, 1, 1) //
                 .assertError(e);
