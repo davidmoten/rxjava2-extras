@@ -53,11 +53,11 @@ public class Benchmarks {
 
     private static Flowable<Integer> range = Flowable
             .defer(new Callable<Publisher<? extends Integer>>() {
-                final int[] count = new int[1];
-
                 @Override
                 public Publisher<? extends Integer> call() throws Exception {
                     return Flowable.generate(new Consumer<Emitter<Integer>>() {
+                        final int[] count = new int[1];
+
                         @Override
                         public void accept(Emitter<Integer> emitter) throws Exception {
                             count[0]++;
@@ -117,6 +117,6 @@ public class Benchmarks {
     }
 
     public static void main(String[] args) {
-        range.doOnNext(Consumers.println()).subscribe();
+        new Benchmarks().mergeTwoStreams();
     }
 }
