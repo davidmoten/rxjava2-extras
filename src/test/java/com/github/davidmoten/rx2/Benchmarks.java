@@ -62,7 +62,7 @@ public class Benchmarks {
                         public void accept(Emitter<Integer> emitter) throws Exception {
                             count[0]++;
                             emitter.onNext(count[0]);
-                            if (count[0] == 100000) {
+                            if (count[0] == 1000) {
                                 emitter.onComplete();
                             }
                         }
@@ -117,8 +117,6 @@ public class Benchmarks {
     }
 
     public static void main(String[] args) {
-        while (true) {
-            source.compose(Strings.splitSimple("\n")).blockingLast();
-        }
+        range.doOnNext(Consumers.println()).subscribe();
     }
 }
