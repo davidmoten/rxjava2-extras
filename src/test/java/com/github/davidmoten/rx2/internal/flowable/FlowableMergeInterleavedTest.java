@@ -41,17 +41,31 @@ public class FlowableMergeInterleavedTest {
                 .assertValues(1, 2, 1, 2, 1) //
                 .assertNotTerminated();
     }
-    
+
     @Test
     public void testInterleaveOneStream() {
-        Flowable<Integer> a = Flowable.just(1).repeat();
+        Flowable<Integer> a = Flowable.just(1).repeat(6);
         Flowables.mergeInterleaved(Flowable.just(a), 2, 2, true) //
                 .doOnNext(Consumers.println()) //
-                .test(5) //
+                .test(3) //
+                .assertValues(1, 1, 1) //
+                .assertNotTerminated() //
+                .requestMore(2) //
                 .assertValues(1, 1, 1, 1, 1) //
-                .assertNotTerminated();
+                .requestMore(100) //
+                .assertValueCount(6) //
+                .assertComplete();
     }
-    
+
+    @Test
+    public void testInterleaveOneStreamEmpty() {
+        Flowable<Integer> a = Flowable.empty();
+        Flowables.mergeInterleaved(Flowable.just(a), 2, 2, true) //
+                .test() //
+                .assertNoValues() //
+                .assertComplete();
+    }
+
     @Test
     public void testInterleaveInfiniteStreamWithFiniteStream() {
         Flowable<Integer> a = Flowable.just(1).repeat();
@@ -62,7 +76,7 @@ public class FlowableMergeInterleavedTest {
                 .assertValues(1, 2, 1, 2, 1, 1) //
                 .assertNotTerminated();
     }
-    
+
     @Test
     public void testInterleaveInfiniteStreamWithNever() {
         Flowable<Integer> a = Flowable.just(1).repeat();
@@ -73,7 +87,7 @@ public class FlowableMergeInterleavedTest {
                 .assertValues(1, 1, 1) //
                 .assertNotTerminated();
     }
-    
+
     @Test
     public void testInterleaveInfiniteStreamWithNeverReversed() {
         Flowable<Integer> a = Flowable.never();
@@ -84,7 +98,7 @@ public class FlowableMergeInterleavedTest {
                 .assertValues(1, 1, 1) //
                 .assertNotTerminated();
     }
-    
+
     @Test
     public void testInterleaveTwoCompletingStreamsSameSize() {
         Flowable<Integer> a = Flowable.just(1, 1);
@@ -95,7 +109,7 @@ public class FlowableMergeInterleavedTest {
                 .assertValues(1, 2, 1, 2) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testInterleaveCompletingStreamsDifferentSize() {
         Flowable<Integer> a = Flowable.just(1, 1, 1);
@@ -106,7 +120,7 @@ public class FlowableMergeInterleavedTest {
                 .assertValues(1, 2, 1, 2, 1) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testInterleaveCompletingStreamsWithEmpty() {
         Flowable<Integer> a = Flowable.just(1, 1, 1);
@@ -118,5 +132,28 @@ public class FlowableMergeInterleavedTest {
                 .assertComplete();
     }
 
+    @Test
+    public void testMergeWithErrorDelayed() {
+        Flowable<Integer> a = Flowable.just(1, 1, 1);
+        RuntimeException e = new RuntimeException();
+        Flowable<Integer> b = Flowable.error(e);
+        Flowables.mergeInterleaved(Flowable.just(a, b), 2, 1, true) //
+                .doOnNext(Consumers.println()) //
+                .test() //
+                .assertValues(1, 1, 1) //
+                .assertError(e);
+    }
 
+    @Test
+    public void testMergeWithErrorNoDelay() {
+        Flowable<Integer> a = Flowable.just(1, 1, 1);
+        RuntimeException e = new RuntimeException();
+        Flowable<Integer> b = Flowable.error(e);
+        Flowables.mergeInterleaved(Flowable.just(a, b), 2, 1, false) //
+                .doOnNext(Consumers.println()) //
+                .test() //
+                .assertNoValues() //
+                .assertError(e);
+    }
+    
 }
