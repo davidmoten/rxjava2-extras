@@ -149,11 +149,15 @@ public class FlowableMergeInterleavedTest {
         Flowable<Integer> a = Flowable.just(1, 1, 1);
         RuntimeException e = new RuntimeException();
         Flowable<Integer> b = Flowable.error(e);
-        Flowables.mergeInterleaved(Flowable.just(a, b), 2, 1, false) //
+        Flowables.mergeInterleaved(Flowable.just(a, b)) //
+                .maxConcurrency(2) //
+                .batchSize(1) //
+                .delayErrors(false) //
+                .build() //
                 .doOnNext(Consumers.println()) //
                 .test() //
                 .assertNoValues() //
                 .assertError(e);
     }
-    
+
 }

@@ -24,20 +24,20 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
     private final int maxConcurrent;
     private final Flowable<Flowable<T>> sources;
     private final int batchSize;
-    private boolean delayError;
+    private boolean delayErrors;
 
     public FlowableMergeInterleave(Flowable<Flowable<T>> sources, int maxConcurrent, int batchSize,
-            boolean delayError) {
+            boolean delayErrors) {
         this.sources = sources;
         this.maxConcurrent = maxConcurrent;
         this.batchSize = batchSize;
-        this.delayError = delayError;
+        this.delayErrors = delayErrors;
     }
 
     @Override
     protected void subscribeActual(Subscriber<? super T> s) {
         MergeInterleaveSubscription<T> subscription = new MergeInterleaveSubscription<T>(sources,
-                maxConcurrent, batchSize, delayError, s);
+                maxConcurrent, batchSize, delayErrors, s);
         s.onSubscribe(subscription);
     }
 
@@ -49,7 +49,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         private final Flowable<Flowable<T>> sources;
         private final int maxConcurrent;
         private final int batchSize;
-        private final boolean delayError;
+        private final boolean delayErrors;
         private Subscriber<? super T> subscriber;
         private Subscription subscription;
         private volatile boolean cancelled;
@@ -67,11 +67,11 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         private long sourcesCount;
 
         public MergeInterleaveSubscription(Flowable<Flowable<T>> sources, int maxConcurrent,
-                int batchSize, boolean delayError, Subscriber<? super T> subscriber) {
+                int batchSize, boolean delayErrors, Subscriber<? super T> subscriber) {
             this.sources = sources;
             this.maxConcurrent = maxConcurrent;
             this.batchSize = batchSize;
-            this.delayError = delayError;
+            this.delayErrors = delayErrors;
             this.subscriber = subscriber;
             this.queue = new MpscLinkedQueue<Object>();
             this.batchFinished = RingBuffer.create(maxConcurrent + 1);
@@ -147,7 +147,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
                     }
                     while (e != r) {
                         boolean d = finished;
-                        if (d && !delayError) {
+                        if (d && !delayErrors) {
                             Throwable err = error;
                             if (err != null) {
                                 error = null;

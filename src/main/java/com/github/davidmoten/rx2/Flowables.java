@@ -25,13 +25,15 @@ public final class Flowables {
         // prevent instantiation
     }
 
-    public static <A, B, K, C> Flowable<C> match(Flowable<A> a, Flowable<B> b, Function<? super A, K> aKey,
-            Function<? super B, K> bKey, BiFunction<? super A, ? super B, C> combiner, int requestSize) {
+    public static <A, B, K, C> Flowable<C> match(Flowable<A> a, Flowable<B> b,
+            Function<? super A, K> aKey, Function<? super B, K> bKey,
+            BiFunction<? super A, ? super B, C> combiner, int requestSize) {
         return new FlowableMatch<A, B, K, C>(a, b, aKey, bKey, combiner, requestSize);
     }
 
-    public static <A, B, K, C> Flowable<C> match(Flowable<A> a, Flowable<B> b, Function<? super A, K> aKey,
-            Function<? super B, K> bKey, BiFunction<? super A, ? super B, C> combiner) {
+    public static <A, B, K, C> Flowable<C> match(Flowable<A> a, Flowable<B> b,
+            Function<? super A, K> aKey, Function<? super B, K> bKey,
+            BiFunction<? super A, ? super B, C> combiner) {
         return match(a, b, aKey, bKey, combiner, DEFAULT_MATCH_BATCH_SIZE);
     }
 
@@ -126,7 +128,8 @@ public final class Flowables {
      * <pre>
      * {
      *     &#64;code
-     *     Movie top = mostPopularMovies().compose(Transformers.maxRequest(1)).first().blockingFirst();
+     *     Movie top = mostPopularMovies().compose(Transformers.maxRequest(1)).first()
+     *             .blockingFirst();
      * }
      * </pre>
      * <p>
@@ -165,7 +168,8 @@ public final class Flowables {
      * @return Flowable that fetches pages based on request amounts
      */
     public static <T> Flowable<T> fetchPagesByRequest(
-            final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch, long start, int maxConcurrent) {
+            final BiFunction<? super Long, ? super Long, ? extends Flowable<T>> fetch, long start,
+            int maxConcurrent) {
         return FlowableFetchPagesByRequest.create(fetch, start, maxConcurrent);
     }
 
@@ -213,8 +217,8 @@ public final class Flowables {
      *            the generic type of the source
      * @return cached observable that resets regularly on a time interval
      */
-    public static <T> Flowable<T> cache(final Flowable<T> source, final long duration, final TimeUnit unit,
-            final Scheduler.Worker worker) {
+    public static <T> Flowable<T> cache(final Flowable<T> source, final long duration,
+            final TimeUnit unit, final Scheduler.Worker worker) {
         final AtomicReference<CachedFlowable<T>> cacheRef = new AtomicReference<CachedFlowable<T>>();
         CachedFlowable<T> cache = new CachedFlowable<T>(source);
         cacheRef.set(cache);
@@ -250,8 +254,8 @@ public final class Flowables {
      * @return {@link CloseableFlowableWithReset} that should be closed once
      *         finished to prevent worker memory leak.
      */
-    public static <T> CloseableFlowableWithReset<T> cache(final Flowable<T> source, final long duration,
-            final TimeUnit unit, final Scheduler scheduler) {
+    public static <T> CloseableFlowableWithReset<T> cache(final Flowable<T> source,
+            final long duration, final TimeUnit unit, final Scheduler scheduler) {
         final AtomicReference<CachedFlowable<T>> cacheRef = new AtomicReference<CachedFlowable<T>>();
         final AtomicReference<Optional<Scheduler.Worker>> workerRef = new AtomicReference<Optional<Scheduler.Worker>>(
                 Optional.<Scheduler.Worker>absent());
@@ -316,12 +320,48 @@ public final class Flowables {
         }
     }
 
-    public static <T> Flowable<T> mergeInterleaved(Flowable<Flowable<T>> flowables, int maxConcurrency, int batchSize,
-            boolean delayError) {
-        return new FlowableMergeInterleave<T>(flowables, maxConcurrency, batchSize, delayError);
+    public static <T> Flowable<T> mergeInterleaved(Flowable<Flowable<T>> flowables,
+            int maxConcurrency, int batchSize, boolean delayErrors) {
+        return new FlowableMergeInterleave<T>(flowables, maxConcurrency, batchSize, delayErrors);
     }
 
-    public static <T> Flowable<T> mergeInterleaved(Flowable<Flowable<T>> flowables, int maxConcurrency) {
+    public static <T> Flowable<T> mergeInterleaved(Flowable<Flowable<T>> flowables,
+            int maxConcurrency) {
         return new FlowableMergeInterleave<T>(flowables, maxConcurrency, RxRingBuffer.SIZE, true);
+    }
+
+    public static <T> MergeInterleaveBuilder<T> mergeInterleaved(Flowable<Flowable<T>> flowables) {
+        return new MergeInterleaveBuilder<T>(flowables);
+    }
+
+    public static final class MergeInterleaveBuilder<T> {
+
+        private Flowable<Flowable<T>> flowables;
+        private int maxConcurrency = 4;
+        private int batchSize = RxRingBuffer.SIZE;
+        private boolean delayErrors = false;
+
+        MergeInterleaveBuilder(Flowable<Flowable<T>> flowables) {
+            this.flowables = flowables;
+        }
+
+        public MergeInterleaveBuilder<T> maxConcurrency(int maxConcurrency) {
+            this.maxConcurrency = maxConcurrency;
+            return this;
+        }
+
+        public MergeInterleaveBuilder<T> batchSize(int batchSize) {
+            this.batchSize = batchSize;
+            return this;
+        }
+
+        public MergeInterleaveBuilder<T> delayErrors(boolean delayErrors) {
+            this.delayErrors = delayErrors;
+            return this;
+        }
+
+        public Flowable<T> build() {
+            return mergeInterleaved(flowables, maxConcurrency, batchSize, delayErrors);
+        }
     }
 }
