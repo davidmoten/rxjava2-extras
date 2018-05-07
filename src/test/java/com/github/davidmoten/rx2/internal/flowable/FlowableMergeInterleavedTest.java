@@ -1,6 +1,7 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
-import org.junit.Ignore;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Test;
 
 import com.github.davidmoten.rx2.Consumers;
@@ -152,12 +153,12 @@ public final class FlowableMergeInterleavedTest {
     }
 
     @Test
-    @Ignore
     public void testInterleaveAsync() {
         Flowable<Integer> a = Flowable.just(1).repeat(100).subscribeOn(Schedulers.io());
         Flowable<Integer> b = Flowable.just(2).repeat(100);
         Flowables.mergeInterleaved(Flowable.just(a, b), 2, 2, true) //
                 .test() //
+                .awaitDone(10, TimeUnit.SECONDS) //
                 .assertValueCount(200) //
                 .assertComplete();
     }

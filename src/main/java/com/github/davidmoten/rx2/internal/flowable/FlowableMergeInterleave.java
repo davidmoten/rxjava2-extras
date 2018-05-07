@@ -211,14 +211,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
             if (!ok) {
                 throw new RuntimeException("ring buffer full!");
             }
-            while (true) {
-                BatchFinished s = batchFinished.poll();
-                if (s != null) {
-                    s.requestMore();
-                } else {
-                    break;
-                }
-            }
+            batchFinished.poll().requestMore();
         }
 
         private void cleanup() {
