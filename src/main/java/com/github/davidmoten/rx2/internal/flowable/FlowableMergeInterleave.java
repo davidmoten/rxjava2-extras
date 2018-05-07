@@ -174,9 +174,9 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
                             } else if (o instanceof SourceArrived) {
                                 handleSourceArrived((SourceArrived<T>) o);
                             } else if (o instanceof SourceComplete) {
-                                handleSourceTerminated((SourceComplete<T>) o);
+                                handleSourceComplete((SourceComplete<T>) o);
                             } else if (o == SOURCES_COMPLETE) {
-                                sourcesComplete = true;
+                                handleSourcesComplete();
                             } else {
                                 subscriber.onNext((T) o);
                                 e++;
@@ -192,6 +192,13 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
                         return;
                     }
                 }
+            }
+        }
+
+        private void handleSourcesComplete() {
+            sourcesComplete = true;
+            if (sourceSubscribers.isEmpty()) {
+                finished = true;
             }
         }
 
@@ -225,12 +232,12 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
             event.flowable.subscribe(subscriber);
         }
 
-        private void handleSourceTerminated(SourceComplete<T> event) {
+        private void handleSourceComplete(SourceComplete<T> event) {
             System.out.println(event.subscriber + " terminated");
             sourceSubscribers.remove(event.subscriber);
             if (!sourcesComplete) {
                 subscription.request(1);
-            } else if (sourceSubscribers.isEmpty()) {
+            } else if (sourceSubscribers.isEmpty() && sourcesComplete) {
                 finished = true;
             }
         }
