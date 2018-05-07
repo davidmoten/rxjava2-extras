@@ -64,7 +64,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         private final SimplePlainQueue<Object> queue;
         private final List<SourceSubscriber<T>> sourceSubscribers = new ArrayList<SourceSubscriber<T>>();
         private boolean sourcesComplete;
-        private int sourcesCount;
+        private long sourcesCount;
 
         public MergeInterleaveSubscription(Flowable<Flowable<T>> sources, int maxConcurrent,
                 int batchSize, boolean delayError, Subscriber<? super T> subscriber) {
@@ -137,11 +137,14 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
             if (wip.getAndIncrement() == 0) {
                 int missed = 1;
                 long e = emitted;
+                long r = requested.get();
                 while (true) {
                     if (tryCancelled()) {
                         return;
                     }
-                    long r = requested.get();
+                    if (e == r) {
+                        r = requested.get();
+                    }
                     while (e != r) {
                         boolean d = finished;
                         if (d && !delayError) {
