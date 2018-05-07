@@ -1,21 +1,23 @@
 package com.github.davidmoten.rx2;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.reactivestreams.Subscription;
+
 import com.github.davidmoten.guavamini.Optional;
 import com.github.davidmoten.rx2.flowable.CachedFlowable;
 import com.github.davidmoten.rx2.flowable.CloseableFlowableWithReset;
-import com.github.davidmoten.rx2.internal.flowable.*;
+import com.github.davidmoten.rx2.internal.flowable.FlowableFetchPagesByRequest;
+import com.github.davidmoten.rx2.internal.flowable.FlowableMatch;
+import com.github.davidmoten.rx2.internal.flowable.FlowableMergeInterleave;
+import com.github.davidmoten.rx2.internal.flowable.FlowableRepeat;
 
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
-import rx.internal.util.RxRingBuffer;
-
-import org.reactivestreams.Subscription;
-
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 public final class Flowables {
 
@@ -320,6 +322,8 @@ public final class Flowables {
         }
     }
 
+    private static final int DEFAULT_RING_BUFFER_SIZE = 128;
+
     public static <T> Flowable<T> mergeInterleaved(Flowable<Flowable<T>> flowables,
             int maxConcurrency, int batchSize, boolean delayErrors) {
         return new FlowableMergeInterleave<T>(flowables, maxConcurrency, batchSize, delayErrors);
@@ -327,7 +331,7 @@ public final class Flowables {
 
     public static <T> Flowable<T> mergeInterleaved(Flowable<Flowable<T>> flowables,
             int maxConcurrency) {
-        return new FlowableMergeInterleave<T>(flowables, maxConcurrency, RxRingBuffer.SIZE, true);
+        return new FlowableMergeInterleave<T>(flowables, maxConcurrency, 128, true);
     }
 
     public static <T> MergeInterleaveBuilder<T> mergeInterleaved(Flowable<Flowable<T>> flowables) {
@@ -338,7 +342,7 @@ public final class Flowables {
 
         private Flowable<Flowable<T>> flowables;
         private int maxConcurrency = 4;
-        private int batchSize = RxRingBuffer.SIZE;
+        private int batchSize = DEFAULT_RING_BUFFER_SIZE;
         private boolean delayErrors = false;
 
         MergeInterleaveBuilder(Flowable<Flowable<T>> flowables) {
