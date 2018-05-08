@@ -14,7 +14,7 @@ import com.github.davidmoten.rx2.flowable.CloseableFlowableWithReset;
 import com.github.davidmoten.rx2.internal.flowable.FlowableDeepTransform;
 import com.github.davidmoten.rx2.internal.flowable.FlowableFetchPagesByRequest;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMatch;
-import com.github.davidmoten.rx2.internal.flowable.FlowableMergeInterleave;
+import com.github.davidmoten.rx2.internal.flowable.FlowableMergeInterleaved;
 import com.github.davidmoten.rx2.internal.flowable.FlowableRepeat;
 
 import io.reactivex.Flowable;
@@ -327,7 +327,7 @@ public final class Flowables {
 
     public static <T> Flowable<T> mergeInterleaved(Publisher<? extends Publisher<? extends T>> publishers,
             int maxConcurrency, int batchSize, boolean delayErrors) {
-        return new FlowableMergeInterleave<T>(publishers, maxConcurrency, batchSize, delayErrors);
+        return new FlowableMergeInterleaved<T>(publishers, maxConcurrency, batchSize, delayErrors);
     }
 
     public static <T> Flowable<T> mergeInterleaved(Publisher<? extends Publisher<? extends T>> publishers,

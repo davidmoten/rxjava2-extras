@@ -20,14 +20,14 @@ import io.reactivex.internal.queue.MpscLinkedQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 
-public final class FlowableMergeInterleave<T> extends Flowable<T> {
+public final class FlowableMergeInterleaved<T> extends Flowable<T> {
 
     private final int maxConcurrent;
     private final Publisher<? extends Publisher<? extends T>> sources;
     private final int batchSize;
     private boolean delayErrors;
 
-    public FlowableMergeInterleave(Publisher<? extends Publisher<? extends T>> sources,
+    public FlowableMergeInterleaved(Publisher<? extends Publisher<? extends T>> sources,
             int maxConcurrent, int batchSize, boolean delayErrors) {
         this.sources = sources;
         this.maxConcurrent = maxConcurrent;
