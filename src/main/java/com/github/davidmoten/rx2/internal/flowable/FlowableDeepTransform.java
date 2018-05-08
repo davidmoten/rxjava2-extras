@@ -48,7 +48,7 @@ public class FlowableDeepTransform<T> extends Flowable<T> {
         private boolean transformCompleted;
 
         // if can stop transforming
-        private volatile boolean doneCalled;
+        private boolean doneCalled;
         private long emitted;
 
         public DeepTransformSubscriber(Flowable<T> source,
@@ -109,18 +109,20 @@ public class FlowableDeepTransform<T> extends Flowable<T> {
             if (wip.getAndIncrement() == 0) {
                 int missed = 1;
                 while (true) {
-                    long r = requested.get();
-                    long e = emitted;
-                    while (e != r) {
-                        T t = queue2.poll();
-                        if (t == null) {
-                            break;
-                        } else {
-                            child.onNext(t);
-                            e++;
+                    if (doneCalled && transformCompleted) {
+                        long r = requested.get();
+                        long e = emitted;
+                        while (e != r) {
+                            T t = queue2.poll();
+                            if (t == null) {
+                                break;
+                            } else {
+                                child.onNext(t);
+                                e++;
+                            }
                         }
+                        emitted = e;
                     }
-                    emitted = e;
                     missed = wip.addAndGet(-missed);
                     if (missed == 0) {
                         return;
