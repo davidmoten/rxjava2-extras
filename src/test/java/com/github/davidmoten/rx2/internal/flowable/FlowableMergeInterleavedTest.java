@@ -3,11 +3,14 @@ package com.github.davidmoten.rx2.internal.flowable;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
+import org.reactivestreams.Publisher;
 
 import com.github.davidmoten.rx2.Consumers;
 import com.github.davidmoten.rx2.Flowables;
+import com.github.davidmoten.rx2.flowable.Transformers;
 
 import io.reactivex.Flowable;
+import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subscribers.TestSubscriber;
 
@@ -189,7 +192,7 @@ public final class FlowableMergeInterleavedTest {
 
     @Test
     public void testManySources() {
-        //one million sources
+        // one million sources
         int n = 1000000;
         Flowables.mergeInterleaved(Flowable.just(Flowable.just(1)).repeat(n)) //
                 .batchSize(2) //
@@ -198,5 +201,19 @@ public final class FlowableMergeInterleavedTest {
                 .count() //
                 .test() //
                 .assertValue((long) n);
+    }
+
+    @Test
+    public void testFlatMap() {
+        Flowable.range(1, 1000)
+                .compose(Transformers.flatMapInterleaved(new Function<Object, Publisher<? extends Object>>() {
+                    @Override
+                    public Publisher<? extends Object> apply(Object x) throws Exception {
+                        return Flowable.just(x);
+                    }
+                }, 3)) //
+                .count() //
+                .test() //
+                .assertValue(1000L);
     }
 }

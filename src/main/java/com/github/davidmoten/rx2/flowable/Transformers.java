@@ -440,4 +440,19 @@ public final class Transformers {
         return reduce(reducer, maxChained, Long.MAX_VALUE);
     }
 
+    public static <T, R> FlowableTransformer<T, R> flatMapInterleaved(final Function<? super T, ? extends Publisher<? extends R>> mapper,
+            final int maxConcurrency) {
+        return flatMapInterleaved(mapper, maxConcurrency, 128, false);
+    }
+    
+    public static <T, R> FlowableTransformer<T, R> flatMapInterleaved(final Function<? super T, ? extends Publisher<? extends R>> mapper,
+             final int maxConcurrency, final int bufferSize, final boolean delayErrors) {
+        return new FlowableTransformer<T, R>() {
+            @Override
+            public Publisher<R> apply(Flowable<T> f) {
+                return Flowables.mergeInterleaved(f.map(mapper), maxConcurrency, bufferSize, delayErrors);
+            }
+        };
+    }
+    
 }
