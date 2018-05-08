@@ -110,6 +110,8 @@ Maybe<String> o = Flowable
 
 `repeat`
 
+[`mergeInterleaved`](#mergeinterleaved)
+
 [Transformers (Flowable)](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/flowable/Transformers.html)
 ---------------------------
 [`collectStats`](#collectstats)
@@ -117,6 +119,8 @@ Maybe<String> o = Flowable
 [`doOnEmpty`](#doonempty)
 
 [`collectWhile`](#collectwhile)
+
+[`flatMapInterleaved`](#flatmapinterleaved)
 
 [`mapLast`](#maplast)
 
@@ -383,6 +387,16 @@ flowable
 ```
 
 See also: [`minRequest`](#minrequest), [`rebatchRequests`](#rebatchrequests)
+
+mergeInterleaved
+-------------------
+<img src="/src/docs/mergeInterleaved.png?raw=true" />
+
+When you use `Flowable.merge` on synchronous sources the sources are completely consumed serially. As a consequence if you want to merge two infinite sources synchronously then you only get the first source and the second source is never read.
+
+`Flowables.mergeInterleaved` round-robins the requests to the window of current publishers (up to `maxConcurrent`) so that two or more infinite streams can be merged without resorting to apply asynchronicity via an asynchronous scheduler.
+
+There is a sacrifice made in that the operator is less performant than merging asynchronous streams because only one stream is requested from at a time. In addition the operator does not include micro- and macro-fusion optimisations.
 
 minRequest
 -------------
