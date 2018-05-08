@@ -390,7 +390,7 @@ See also: [`minRequest`](#minrequest), [`rebatchRequests`](#rebatchrequests)
 
 mergeInterleaved
 -------------------
-<img src="/src/docs/mergeInterleaved.png?raw=true" style="max-width:492px" />
+<img src="/src/docs/mergeInterleaved.png?raw=true"/>
 
 When you use `Flowable.merge` on synchronous sources the sources are completely consumed serially. As a consequence if you want to merge two infinite sources synchronously then you only get the first source and the second source is never read.
 
