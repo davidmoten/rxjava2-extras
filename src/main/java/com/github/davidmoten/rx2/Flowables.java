@@ -372,16 +372,16 @@ public final class Flowables {
     }
 
     public static <T> Flowable<T> deepTransform(final Flowable<T> flowable,
-            BiFunction<Flowable<T>, AtomicBoolean, Flowable<T>> transform) {
+            BiFunction<Flowable<T>, Runnable, Flowable<T>> transform) {
         return new FlowableDeepTransform<T>(flowable, transform);
     }
 
     public static <T> Flowable<T> deepTransform(final Flowable<T> flowable,
             Function<Flowable<T>, Flowable<T>> transform) {
-        return deepTransform(flowable, new BiFunction<Flowable<T>, AtomicBoolean, Flowable<T>>() {
+        return deepTransform(flowable, new BiFunction<Flowable<T>, Runnable, Flowable<T>>() {
 
             @Override
-            public Flowable<T> apply(final Flowable<T> f, final AtomicBoolean b) throws Exception {
+            public Flowable<T> apply(final Flowable<T> f, final Runnable b) throws Exception {
                 return Flowable.defer(new Callable<Publisher<? extends T>>() {
                     @Override
                     public Publisher<? extends T> call() throws Exception {
@@ -394,7 +394,9 @@ public final class Flowables {
                         }).doOnComplete(new Action() {
                             @Override
                             public void run() throws Exception {
-                                b.set(count[0] == 1);
+                                if (count[0] == 1) {
+                                    b.run();
+                                }
                             }
                         });
                     }

@@ -1,8 +1,8 @@
 package com.github.davidmoten.rx2.internal.flowable;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.github.davidmoten.rx2.Flowables;
@@ -14,11 +14,12 @@ import io.reactivex.functions.Function;
 public class FlowableDeepTransformTest {
 
     @Test
+    @Ignore
     public void test() {
         Flowable<String> source = Flowable.just("a", "b", "c", "d", "e", "f", "g");
-        Flowables.deepTransform(source, new BiFunction<Flowable<String>, AtomicBoolean, Flowable<String>>() {
+        Flowables.deepTransform(source, new BiFunction<Flowable<String>, Runnable, Flowable<String>>() {
             @Override
-            public Flowable<String> apply(final Flowable<String> f, final AtomicBoolean b) throws Exception {
+            public Flowable<String> apply(final Flowable<String> f, final Runnable b) throws Exception {
                 return f.buffer(2) //
                         .map(new Function<List<String>, String>() {
                             @Override
