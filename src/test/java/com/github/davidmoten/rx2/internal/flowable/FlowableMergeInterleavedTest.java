@@ -177,9 +177,26 @@ public final class FlowableMergeInterleavedTest {
                 .assertNotTerminated();
     }
 
-    
     @Test
-    public void testInterleaveCancelSources() {
-        //TODO
+    public void testSourcesError() {
+        RuntimeException ex = new RuntimeException("boo");
+        Flowables.mergeInterleaved(Flowable.<Flowable<Integer>>error(ex)) //
+                .build() //
+                .test() //
+                .assertNoValues() //
+                .assertError(ex);
+    }
+
+    @Test
+    public void testManySources() {
+        //one million sources
+        int n = 1000000;
+        Flowables.mergeInterleaved(Flowable.just(Flowable.just(1)).repeat(n)) //
+                .batchSize(2) //
+                .maxConcurrency(3) //
+                .build() //
+                .count() //
+                .test() //
+                .assertValue((long) n);
     }
 }

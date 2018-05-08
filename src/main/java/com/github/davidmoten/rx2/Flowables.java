@@ -332,7 +332,7 @@ public final class Flowables {
 
     public static <T> Flowable<T> mergeInterleaved(Publisher<? extends Publisher<? extends T>> publishers,
             int maxConcurrency) {
-        return new FlowableMergeInterleave<T>(publishers, maxConcurrency, 128, true);
+        return mergeInterleaved(publishers, maxConcurrency, 128, false);
     }
 
     public static <T> MergeInterleaveBuilder<T> mergeInterleaved(Publisher<? extends Publisher<? extends T>> publishers) {

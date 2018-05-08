@@ -126,8 +126,7 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
 
         private boolean tryCancelled() {
             if (cancelled) {
-                subscription.cancel();
-                queue.clear();
+                cleanup();
                 return true;
             } else {
                 return false;
@@ -210,23 +209,25 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
         private void handleBatchFinished(BatchFinished b) {
             Preconditions.checkNotNull(b);
             boolean ok = batchFinished.offer(b);
-            if (!ok) {
-                throw new RuntimeException("ring buffer full!");
-            }
+            assert ok;
             batchFinished.poll().requestMore();
         }
 
         private void cleanup() {
+            subscription.cancel();
             for (SourceSubscriber<T> s : sourceSubscribers) {
                 s.cancel();
             }
+            sourceSubscribers.clear();
+            queue.clear();
+            batchFinished.clear();
         }
 
         private void handleSourceArrived(SourceArrived<T> event) {
             SourceSubscriber<T> subscriber = new SourceSubscriber<T>(this);
             sourceSubscribers.add(subscriber);
             queue.offer(subscriber);
-            event.flowable.subscribe(subscriber);
+            event.publisher.subscribe(subscriber);
         }
 
         private void handleSourceComplete(SourceComplete<T> event) {
@@ -310,10 +311,10 @@ public final class FlowableMergeInterleave<T> extends Flowable<T> {
     }
 
     private static final class SourceArrived<T> {
-        final Publisher<? extends T> flowable;
+        final Publisher<? extends T> publisher;
 
-        SourceArrived(Publisher<? extends T> flowable) {
-            this.flowable = flowable;
+        SourceArrived(Publisher<? extends T> publisher) {
+            this.publisher = publisher;
         }
     }
 
