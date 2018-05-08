@@ -62,12 +62,18 @@ public final class Transformers {
     }
 
     /**
-     * Returns a transformer that when a stream is empty runs the given {@link Action}.
+     * Returns a transformer that when a stream is empty runs the given
+     * {@link Action}.
      * 
-     * <p><img src="https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/doOnEmpty.png" alt="image">
+     * <p>
+     * <img src=
+     * "https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/doOnEmpty.png"
+     * alt="image">
      * 
-     * @param action to be called when the stream is determined to be empty.
-     * @param <T> item type
+     * @param action
+     *            to be called when the stream is determined to be empty.
+     * @param <T>
+     *            item type
      * 
      * @return a transformer that when a stream is empty runs the given action.
      */
@@ -138,12 +144,19 @@ public final class Transformers {
     }
 
     /**
-     * <p>Converts a stream of {@code Number} to a stream of {@link Statistics} about those numbers.
+     * <p>
+     * Converts a stream of {@code Number} to a stream of {@link Statistics} about
+     * those numbers.
      * 
-     * <p><img src="https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/collectStats.png" alt="image">
+     * <p>
+     * <img src=
+     * "https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/collectStats.png"
+     * alt="image">
      * 
-     * @param <T> item type
-     * @return transformer that converts a stream of Number to a stream of Statistics
+     * @param <T>
+     *            item type
+     * @return transformer that converts a stream of Number to a stream of
+     *         Statistics
      */
     @SuppressWarnings("unchecked")
     public static <T extends Number> FlowableTransformer<T, Statistics> collectStats() {
@@ -181,15 +194,25 @@ public final class Transformers {
      * Returns a transformer that emits collections of items with the collection
      * boundaries determined by the given {@link BiPredicate}.
      * 
-     * <p><img src="https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/collectWhile.png" alt="image">
+     * <p>
+     * <img src=
+     * "https://raw.githubusercontent.com/davidmoten/rxjava2-extras/master/src/docs/collectWhile.png"
+     * alt="image">
      * 
-     * @param collectionFactory factory to create a new collection
-     * @param add method to add an item to a collection
-     * @param condition while true will continue to add to the current collection
-     * @param emitRemainder whether to emit the remainder as a collection
-     * @param <T> item type
-     * @param <R> collection type
-     * @return transform that collects while some conditions is returned then starts a new collection
+     * @param collectionFactory
+     *            factory to create a new collection
+     * @param add
+     *            method to add an item to a collection
+     * @param condition
+     *            while true will continue to add to the current collection
+     * @param emitRemainder
+     *            whether to emit the remainder as a collection
+     * @param <T>
+     *            item type
+     * @param <R>
+     *            collection type
+     * @return transform that collects while some conditions is returned then starts
+     *         a new collection
      */
     public static <T, R> FlowableTransformer<T, R> collectWhile(final Callable<R> collectionFactory,
             final BiFunction<? super R, ? super T, ? extends R> add, final BiPredicate<? super R, ? super T> condition,
@@ -416,4 +439,20 @@ public final class Transformers {
             final Function<? super Flowable<T>, ? extends Flowable<T>> reducer, final int maxChained) {
         return reduce(reducer, maxChained, Long.MAX_VALUE);
     }
+
+    public static <T, R> FlowableTransformer<T, R> flatMapInterleaved(final Function<? super T, ? extends Publisher<? extends R>> mapper,
+            final int maxConcurrency) {
+        return flatMapInterleaved(mapper, maxConcurrency, 128, false);
+    }
+    
+    public static <T, R> FlowableTransformer<T, R> flatMapInterleaved(final Function<? super T, ? extends Publisher<? extends R>> mapper,
+             final int maxConcurrency, final int bufferSize, final boolean delayErrors) {
+        return new FlowableTransformer<T, R>() {
+            @Override
+            public Publisher<R> apply(Flowable<T> f) {
+                return Flowables.mergeInterleaved(f.map(mapper), maxConcurrency, bufferSize, delayErrors);
+            }
+        };
+    }
+    
 }

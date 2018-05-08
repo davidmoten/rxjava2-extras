@@ -1,12 +1,16 @@
 package com.github.davidmoten.rx2;
 
+import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
+import org.reactivestreams.Publisher;
 
+import io.reactivex.Emitter;
 import io.reactivex.Flowable;
+import io.reactivex.functions.Consumer;
 import rx.Observable;
 import rx.Observable.Transformer;
 import rx.observables.StringObservable;
@@ -47,6 +51,40 @@ public class Benchmarks {
         return source.compose(Strings.splitSimple("\n")).blockingLast();
     }
 
+    private static Flowable<Integer> range = Flowable
+            .defer(new Callable<Publisher<? extends Integer>>() {
+                @Override
+                public Publisher<? extends Integer> call() throws Exception {
+                    return Flowable.generate(new Consumer<Emitter<Integer>>() {
+                        final int[] count = new int[1];
+
+                        @Override
+                        public void accept(Emitter<Integer> emitter) throws Exception {
+                            count[0]++;
+                            emitter.onNext(count[0]);
+                            if (count[0] == 1000) {
+                                emitter.onComplete();
+                            }
+                        }
+                    });
+                }
+            });
+
+    @Benchmark
+    public Long mergeTwoStreams() {
+        return Flowable.merge(Flowable.just(range, range, range)).count().blockingGet();
+    }
+
+    @Benchmark
+    public Long mergeTwoStreamsInterleaved() {
+        return Flowables.mergeInterleaved(Flowable.just(range, range, range)) //
+                .maxConcurrency(4) //
+                .batchSize(128) //
+                .build() //
+                .count() //
+                .blockingGet();
+    }
+
     @Benchmark
     public String splitRxJavaStringTake5() {
         return Observable.just(lines).compose(new Transformer<String, String>() {
@@ -79,8 +117,6 @@ public class Benchmarks {
     }
 
     public static void main(String[] args) {
-        while (true) {
-            source.compose(Strings.splitSimple("\n")).blockingLast();
-        }
+        new Benchmarks().mergeTwoStreams();
     }
 }
