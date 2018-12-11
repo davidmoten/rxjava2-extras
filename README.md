@@ -804,4 +804,51 @@ Flowable.just(3, 2, 5, 1, 6, 4)
     .compose(Transformers.<Integer>windowMin(3))
 ```
 
+CachedObservabe
+-----------------------
 
+A `CachedObservable` is similar to RxJava's native `cache()` operator, but it allows manually clearing the cache at any arbitrary moment using its `reset()` method. On the next subscription, it will rebuild the cache all over again. 
+
+Below is a simple demonstration of the `CachedObservable`. Notice that it will keep replaying the cached `LocalTime` until `reset()` is called. 
+
+```java
+import com.github.davidmoten.rx2.Observables;
+import com.github.davidmoten.rx2.observable.CachedObservable;
+import io.reactivex.Observable;
+
+import java.time.LocalTime;
+
+public class CachedObservableDemo {
+
+    public static void main(String[] args) {
+
+        // declare source
+        Observable<LocalTime> source =
+                Observable.fromCallable(LocalTime::now);
+
+        // create CachedObservable
+        CachedObservable<LocalTime> cached = Observables.cache(source);
+
+        // initial subscription
+        cached.subscribe(System.out::println);
+
+        // sleep 3 seconds, still prints same value
+        sleep(3000);
+        cached.subscribe(System.out::println);
+
+        // reset, sleep another 3 seconds, a new cache is built on next subscription
+        cached.reset();
+        sleep(3000);
+        cached.subscribe(System.out::println);
+    }
+
+    public static void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+```
