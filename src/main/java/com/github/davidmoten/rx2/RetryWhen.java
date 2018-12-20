@@ -101,12 +101,12 @@ public final class RetryWhen {
                 if (!exceptionPredicate.test(e.throwable()))
                     return Flowable.error(e.throwable());
                 for (Class<? extends Throwable> cls : failExceptions) {
-                    if (e.throwable().getClass().isAssignableFrom(cls))
+                    if (cls.isAssignableFrom(e.throwable().getClass()))
                         return Flowable.error(e.throwable());
                 }
                 if (retryExceptions.size() > 0) {
                     for (Class<? extends Throwable> cls : retryExceptions) {
-                        if (e.throwable().getClass().isAssignableFrom(cls))
+                        if (cls.isAssignableFrom(e.throwable().getClass()))
                             return Flowable.just(e);
                     }
                     return Flowable.error(e.throwable());

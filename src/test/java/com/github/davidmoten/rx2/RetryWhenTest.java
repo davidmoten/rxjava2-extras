@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
+import org.reactivestreams.Subscription;
 
 import com.github.davidmoten.junit.Asserts;
 import com.github.davidmoten.rx2.RetryWhen.ErrorAndDuration;
@@ -116,6 +117,32 @@ public class RetryWhenTest {
                 .subscribe(ts);
         ts.assertValues(1, 2);
         ts.assertError(ex);
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testRetryWhenSubClassWorksWithInstanceOf() {
+        Exception ex = new IllegalArgumentException("boo");
+        final AtomicInteger count = new AtomicInteger();
+        Flowable.error(ex)
+                // force error after 3 emissions
+                .doOnSubscribe(new Consumer<Subscription>() {
+					@Override
+					public void accept(Subscription sub) throws Exception {
+						count.incrementAndGet();
+					}
+				}) //
+                // retry with backoff
+                .retryWhen(RetryWhen //
+                		.maxRetries(2) //
+                		.scheduler(Schedulers.trampoline()) //
+                        .retryWhenInstanceOf(Exception.class) //
+                        .build())
+                // go
+                .test() //
+                .assertNoValues() //
+                .assertError(ex);
+        assertEquals(3, count.get());
     }
 
     @SuppressWarnings("unchecked")
