@@ -12,6 +12,7 @@ Jdk:
 - oraclejdk7
 - openjdk7
 - openjdk6
+- openjdk11
 env:
   global:
   - SONATYPE_USERNAME=davidmoten
