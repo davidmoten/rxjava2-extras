@@ -803,5 +803,3 @@ Sliding window minimum/maximum:
 Flowable.just(3, 2, 5, 1, 6, 4)
     .compose(Transformers.<Integer>windowMin(3))
 ```
-
-
