@@ -141,7 +141,7 @@ public final class FlowableRepeatingTransformTest {
         for (int n = 5; n <= 100; n++) {
             int m = (int) Math.round(Math.floor(Math.log(n) / Math.log(2))) - 1;
             for (int maxChained = Math.max(3, m); maxChained < 6; maxChained++) {
-                System.out.println("maxChained=" + maxChained + ",n=" + n);
+//                System.out.println("maxChained=" + maxChained + ",n=" + n);
                 check(n, maxChained);
             }
         }
@@ -153,7 +153,7 @@ public final class FlowableRepeatingTransformTest {
         for (int n = 5; n <= 100; n++) {
             int m = (int) Math.round(Math.floor(Math.log(n) / Math.log(2))) - 1;
             for (int maxChained = Math.max(3, m); maxChained < 6; maxChained++) {
-                System.out.println("maxChained=" + maxChained + ",n=" + n);
+//                System.out.println("maxChained=" + maxChained + ",n=" + n);
                 checkAsync(n, maxChained);
             }
         }
