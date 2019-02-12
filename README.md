@@ -96,7 +96,7 @@ Maybe<String> o = Flowable
 
 [RetryWhen](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/RetryWhen.html)
 ------------
-[Builder](#retrywhen) for `.retryWhen()`
+[Builder](#retrywhen-1) for `.retryWhen()`
 
 [IO](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/IO.html)
 -------------
