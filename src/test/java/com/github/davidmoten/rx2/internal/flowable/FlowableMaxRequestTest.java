@@ -124,9 +124,9 @@ public class FlowableMaxRequestTest {
     @Test
     public void checkCancel() {
         List<Long> requests = new CopyOnWriteArrayList<Long>();
-        TestSubscriber<Object> ts = Flowable.range(1, 10) //
+        TestSubscriber<Integer> ts = Flowable.range(1, 10) //
                 .doOnRequest(Consumers.addLongTo(requests)) //
-                .compose(Transformers.maxRequest(3)) //
+                .compose(Transformers.<Integer>maxRequest(3)) //
                 .test(4).assertValues(1, 2, 3, 4); //
         ts.cancel();
         ts.requestMore(3);
