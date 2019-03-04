@@ -204,7 +204,8 @@ public final class Transformers {
      * @param add
      *            method to add an item to a collection
      * @param condition
-     *            while true will continue to add to the current collection
+     *            while true will continue to add to the current collection. Do not
+     *            modify the given collection!
      * @param emitRemainder
      *            whether to emit the remainder as a collection
      * @param <T>
