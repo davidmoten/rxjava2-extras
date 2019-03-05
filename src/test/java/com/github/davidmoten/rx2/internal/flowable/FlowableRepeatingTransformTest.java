@@ -234,7 +234,6 @@ public final class FlowableRepeatingTransformTest {
         };
         Flowable.just(1, 5) //
                 .to(Transformers.repeat(plusOne, 3, 1, tester)) //
-                .doOnNext(Consumers.println()) //
                 .test() //
                 .assertValues(2, 6) //
                 .assertComplete();
@@ -319,7 +318,6 @@ public final class FlowableRepeatingTransformTest {
     private static void check(int n, int maxChained) {
         int result = Flowable.range(1, n) //
                 .to(Transformers.reduce(reducer, maxChained)) //
-                .doOnNext(Consumers.println()) //
                 .single(-1) //
                 .blockingGet();
         Assert.assertEquals(sum(n), result);
