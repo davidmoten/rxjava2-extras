@@ -4,18 +4,22 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import org.reactivestreams.Publisher;
 
 import com.github.davidmoten.guavamini.Preconditions;
 import com.github.davidmoten.rx2.BiFunctions;
 import com.github.davidmoten.rx2.Flowables;
+import com.github.davidmoten.rx2.Functions;
 import com.github.davidmoten.rx2.StateMachine;
 import com.github.davidmoten.rx2.StateMachine2;
 import com.github.davidmoten.rx2.Statistics;
 import com.github.davidmoten.rx2.buffertofile.Options;
 import com.github.davidmoten.rx2.internal.flowable.FlowableCollectWhile;
 import com.github.davidmoten.rx2.internal.flowable.FlowableDoOnEmpty;
+import com.github.davidmoten.rx2.internal.flowable.FlowableInsertMaybe;
+import com.github.davidmoten.rx2.internal.flowable.FlowableInsertTimeout;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMapLast;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMatch;
 import com.github.davidmoten.rx2.internal.flowable.FlowableMaxRequest;
@@ -31,13 +35,17 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableTransformer;
+import io.reactivex.Maybe;
 import io.reactivex.Notification;
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.BiPredicate;
 import io.reactivex.functions.Function;
 import io.reactivex.functions.Function3;
+import io.reactivex.functions.Predicate;
+import io.reactivex.schedulers.Schedulers;
 
 public final class Transformers {
 
@@ -430,7 +438,7 @@ public final class Transformers {
                                     }
                                 }
                             }) //
-                            .dematerialize();
+                            .dematerialize(Functions.<Notification<Object>>identity());
                 }
             });
         }
@@ -441,13 +449,14 @@ public final class Transformers {
         return reduce(reducer, maxChained, Long.MAX_VALUE);
     }
 
-    public static <T, R> FlowableTransformer<T, R> flatMapInterleaved(final Function<? super T, ? extends Publisher<? extends R>> mapper,
-            final int maxConcurrency) {
+    public static <T, R> FlowableTransformer<T, R> flatMapInterleaved(
+            final Function<? super T, ? extends Publisher<? extends R>> mapper, final int maxConcurrency) {
         return flatMapInterleaved(mapper, maxConcurrency, 128, false);
     }
-    
-    public static <T, R> FlowableTransformer<T, R> flatMapInterleaved(final Function<? super T, ? extends Publisher<? extends R>> mapper,
-             final int maxConcurrency, final int bufferSize, final boolean delayErrors) {
+
+    public static <T, R> FlowableTransformer<T, R> flatMapInterleaved(
+            final Function<? super T, ? extends Publisher<? extends R>> mapper, final int maxConcurrency,
+            final int bufferSize, final boolean delayErrors) {
         return new FlowableTransformer<T, R>() {
             @Override
             public Publisher<R> apply(Flowable<T> f) {
@@ -455,5 +464,266 @@ public final class Transformers {
             }
         };
     }
+
+    /**
+     * For every onNext emission from the source stream, the {@code valueToInsert}
+     * Maybe is subscribed to. If the Maybe emits before the next upstream emission
+     * then the result from the Maybe will be inserted into the stream. If the Maybe
+     * does not emit before the next upstream emission then it is cancelled (and no
+     * value is inserted).
+     * 
+     * @param valueToInsert
+     *            a Maybe is calculated from last source emission and subscribed to.
+     *            If succeeds before next source emission then result is inserted
+     *            into stream.
+     * @param <T>
+     *            stream element type
+     * @return source with operator insert applied
+     */
+    public static <T> FlowableTransformer<T, T> insert(
+            final Function<? super T, ? extends Maybe<? extends T>> valueToInsert) {
+        return new FlowableTransformer<T, T>() {
+
+            @Override
+            public Publisher<T> apply(Flowable<T> source) {
+                return new FlowableInsertMaybe<T>(source, valueToInsert);
+            }
+
+        };
+    }
     
+    public static <T> FlowableTransformer<T, T> insert(long timeout, TimeUnit unit, T value) {
+        return insert(Functions.constant(timeout), unit, value);
+    }
+    
+    public static <T> FlowableTransformer<T, T> insert(Function<? super T, ? extends Long> timeout, TimeUnit unit,
+            T value) {
+        return insert(timeout, unit, Functions.constant(value));
+    }
+    
+    public static <T> FlowableTransformer<T, T> insert(Function<? super T, ? extends Long> timeout, TimeUnit unit,
+            Function<? super T, ? extends T> value) {
+        return insert(timeout, unit, value, Schedulers.computation());
+    }
+    
+    public static <T> FlowableTransformer<T, T> insert(final Function<? super T, ? extends Long> timeout,
+            final TimeUnit unit, final Function<? super T, ? extends T> value, final Scheduler scheduler) {
+        return new FlowableTransformer<T, T>() {
+
+            @Override
+            public Publisher<T> apply(Flowable<T> source) {
+                return new FlowableInsertTimeout<T>(source, timeout, unit, value, scheduler);
+            }
+
+        };
+    }
+    
+    public static <T> FlowableTransformer<T, T> insert(
+            final Maybe<? extends T> valueToInsert) {
+        return new FlowableTransformer<T, T>() {
+
+            @Override
+            public Publisher<T> apply(Flowable<T> source) {
+                return new FlowableInsertMaybe<T>(source, Functions.constant(valueToInsert));
+            }
+
+        };
+    }
+
+    private static final class MyOptional<T> {
+        private static final MyOptional<Object> EMPTY = new MyOptional<Object>(null);
+
+        final T t;
+
+        private MyOptional(T t) {
+            this.t = t;
+        }
+
+        static <T> MyOptional<T> of(T t) {
+            Preconditions.checkNotNull(t);
+            return new MyOptional<T>(t);
+        }
+
+        @SuppressWarnings("unchecked")
+        static <T> MyOptional<T> empty() {
+            return (MyOptional<T>) EMPTY;
+        }
+
+        boolean isPresent() {
+            return t != null;
+        }
+
+        T get() {
+            Preconditions.checkNotNull(t);
+            return t;
+        }
+
+        private static final Function<Object, MyOptional<Object>> OF = new Function<Object, MyOptional<Object>>() {
+            @Override
+            public MyOptional<Object> apply(Object x) throws Exception {
+                return MyOptional.of(x);
+            }
+        };
+
+        @SuppressWarnings("unchecked")
+        static <T> Function<Object, MyOptional<T>> of() {
+            return (Function<Object, MyOptional<T>>) (Function<Object, ?>) OF;
+        }
+
+        private static final BiFunction<List<Object>, MyOptional<Object>, List<Object>> ADD = new BiFunction<List<Object>, MyOptional<Object>, List<Object>>() {
+            @Override
+            public List<Object> apply(List<Object> list, MyOptional<Object> x) throws Exception {
+                if (x.isPresent()) {
+                    list.add(x.get());
+                }
+                return list;
+            }
+        };
+
+        @SuppressWarnings("unchecked")
+        static <T> BiFunction<List<T>, MyOptional<T>, List<T>> addIfPresent() {
+            return (BiFunction<List<T>, MyOptional<T>, List<T>>) (BiFunction<?, ?, ?>) ADD;
+        }
+
+        // does not really belong in MyOptional but saves creating another class
+        private static final Predicate<List<Object>> LIST_HAS_ELEMENTS = new Predicate<List<Object>>() {
+            @Override
+            public boolean test(List<Object> list) throws Exception {
+                return !list.isEmpty();
+            }
+        };
+
+        // does not really belong in MyOptional but saves creating another class
+        @SuppressWarnings("unchecked")
+        static <T> Predicate<List<T>> listHasElements() {
+            return (Predicate<List<T>>) (Predicate<?>) LIST_HAS_ELEMENTS;
+        }
+    }
+
+    /**
+     * Buffers the source {@link Flowable} into {@link List}s, emitting Lists when
+     * the size of a list reaches {@code maxSize} or if the elapsed time since last
+     * emission from the source reaches the given duration.
+     * {@link Schedulers#computation} is used for scheduling an inserted emission.
+     * 
+     * @param maxSize
+     *            max size of emitted lists
+     * @param duration
+     *            buffered list is emitted if the elapsed time since last emission
+     *            from the source reaches this duration
+     * @param unit
+     *            unit of {@code duration}
+     * @param <T>
+     *            type of the source stream items
+     * @return source with operator applied
+     */
+    public static <T> FlowableTransformer<T, List<T>> buffer(final int maxSize, final long duration,
+            final TimeUnit unit) {
+        return buffer(maxSize, Functions.constant(duration), unit);
+    }
+
+    /**
+     * Buffers the source {@link Flowable} into {@link List}s, emitting Lists when the size of a
+     * list reaches {@code maxSize} or if the elapsed time since last emission from
+     * the source reaches the given duration.
+     * 
+     * @param maxSize
+     *            max size of emitted lists
+     * @param duration
+     *            buffered list is emitted if the elapsed time since last emission
+     *            from the source reaches this duration
+     * @param unit
+     *            unit of {@code duration}
+     * @param scheduler
+     *            scheduler to use to schedule emission of a buffer (as a list) if
+     *            the time since last emission from the source reaches duration
+     * @param <T>
+     *            type of the source stream items
+     * @return source with operator applied
+     */
+    public static <T> FlowableTransformer<T, List<T>> buffer(final int maxSize, final long duration,
+            final TimeUnit unit, final Scheduler scheduler) {
+        return buffer(maxSize, Functions.constant(duration), unit, scheduler);
+    }
+    
+    /**
+     * Buffers the source {@link Flowable} into {@link List}s, emitting Lists when
+     * the size of a list reaches {@code maxSize} or if the elapsed time since last
+     * emission from the source reaches the given duration. An emission on timeout
+     * is scheduled on {@link Schedulers#computation()}.
+     * 
+     * @param maxSize
+     *            max size of emitted lists
+     * @param duration
+     *            function that based on the last emission calculates the elapsed
+     *            time to be used before emitting a buffered list
+     * @param unit
+     *            unit of {@code duration}
+     * @param <T>
+     *            type of the source stream items
+     * @return source with operator applied
+     */
+    public static <T> FlowableTransformer<T, List<T>> buffer(final int maxSize,
+            final Function<? super T, ? extends Long> duration, final TimeUnit unit) {
+        return buffer(maxSize, duration, unit, Schedulers.computation());
+    }
+    
+    /**
+     * Buffers the source {@link Flowable} into {@link List}s, emitting Lists when
+     * the size of a list reaches {@code maxSize} or if the elapsed time since last
+     * emission from the source reaches the given duration.
+     * 
+     * @param maxSize
+     *            max size of emitted lists
+     * @param duration
+     *            function that based on the last emission calculates the elapsed
+     *            time to be used before emitting a buffered list
+     * @param unit
+     *            unit of {@code duration}
+     * @param scheduler
+     *            scheduler to use to schedule emission of a buffer (as a list) if
+     *            the time since last emission from the source reaches duration
+     * @param <T>
+     *            type of the source stream items
+     * @return source with operator applied
+     */
+    public static <T> FlowableTransformer<T, List<T>> buffer(final int maxSize,
+            final Function<? super T, ? extends Long> duration, final TimeUnit unit, final Scheduler scheduler) {
+
+        final BiPredicate<List<T>, MyOptional<T>> condition = new BiPredicate<List<T>, MyOptional<T>>() {
+            @Override
+            public boolean test(List<T> list, MyOptional<T> x) throws Exception {
+                return list.size() < maxSize && x.isPresent();
+            }
+        };
+        Function<MyOptional<T>, Long> timeout = new Function<MyOptional<T>, Long>() {
+            @Override
+            public Long apply(MyOptional<T> t) throws Exception {
+                return duration.apply(t.get());
+            }
+        };
+        final FlowableTransformer<MyOptional<T>, MyOptional<T>> insert = insert(timeout, unit,
+                Functions.constant(MyOptional.<T>empty()), scheduler);
+
+        final FlowableTransformer<MyOptional<T>, List<T>> collectWhile = collectWhile( //
+                // factory
+                ListFactoryHolder.<T>factory(), //
+                // add function
+                MyOptional.<T>addIfPresent(), //
+                // condition
+                condition);
+
+        return new FlowableTransformer<T, List<T>>() {
+            @Override
+            public Publisher<List<T>> apply(Flowable<T> source) {
+
+                return source //
+                        .map(MyOptional.<T>of()) //
+                        .compose(insert) //
+                        .compose(collectWhile)
+                        // need this filter because sometimes nothing gets added to list
+                        .filter(MyOptional.<T>listHasElements()); //
+            }
+        };
+    }
 }

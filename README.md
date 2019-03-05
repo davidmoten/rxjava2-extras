@@ -114,13 +114,17 @@ Maybe<String> o = Flowable
 
 [Transformers (Flowable)](https://davidmoten.github.io/rxjava2-extras/apidocs/com/github/davidmoten/rx2/flowable/Transformers.html)
 ---------------------------
+[`buffer`](#buffer) with size and timeout
+
 [`collectStats`](#collectstats)
 
 [`doOnEmpty`](#doonempty)
 
 [`collectWhile`](#collectwhile)
 
-[`flatMapInterleaved`](#flatmapinterleaved)
+[`flatMapInterleaved`](#mergeinterleaved)
+
+[`insert`](#insert)
 
 [`mapLast`](#maplast)
 
@@ -220,6 +224,21 @@ SchedulerHelper
 
 # Documentation
 
+buffer
+--------------------------
+To buffer on maximum size and time since last source emission:
+
+```java
+flowable.compose(
+  Transformers.buffer(maxSize, 10, TimeUnit.SECONDS));
+```
+ You can also make the timeout dependent on the last emission:
+
+```java
+flowable.compose(
+  Transformers.buffer(maxSize, x -> timeout(x), TimeUnit.SECONDS));
+```
+
 collectStats
 ---------------------------
 Accumulate statistics, emitting the accumulated results with each item.
@@ -311,6 +330,33 @@ mostPopularMovies()
 
 A bit more detail about `fetchPagesByRequest`:
 * if the `fetch` function returns a `Flowable` that delivers fewer than the requested number of items then the overall stream completes.
+
+insert
+-------------------------
+Inserts zero or one items into a stream if the given Maybe succeeds before the next source emission.
+
+Example:
+```java
+Flowable
+  .interval(1, TimeUnit.SECONDS)
+  .compose(Transformers.insert(
+     Maybe.just(-1L).delay(500, TimeUnit.MILLISECONDS))) 
+  .forEach(System.out::println);
+```
+produces (with 500ms intervals between every emission):
+```
+0
+-1
+1
+-1
+2
+-1
+3
+-1
+4
+-1
+...
+```
     
 mapLast
 -------------------------
