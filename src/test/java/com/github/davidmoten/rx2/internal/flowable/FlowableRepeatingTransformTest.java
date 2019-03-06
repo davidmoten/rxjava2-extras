@@ -14,7 +14,6 @@ import org.junit.runners.MethodSorters;
 import org.mockito.Mockito;
 
 import com.github.davidmoten.rx2.Actions;
-import com.github.davidmoten.rx2.Consumers;
 import com.github.davidmoten.rx2.exceptions.ThrowingException;
 import com.github.davidmoten.rx2.flowable.Transformers;
 
