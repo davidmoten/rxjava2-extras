@@ -7,6 +7,7 @@ import java.util.concurrent.Callable;
 
 import org.reactivestreams.Publisher;
 
+import com.github.davidmoten.guavamini.Optional;
 import com.github.davidmoten.guavamini.Preconditions;
 import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
 import com.github.davidmoten.rx2.internal.flowable.buffertofile.FlowableOnBackpressureBufferToFile;
@@ -158,7 +159,7 @@ public final class Options {
 
         private Callable<File> fileFactory = FileFactoryHolder.INSTANCE;
         private int pageSizeBytes = 1024 * 1024;
-        private Scheduler scheduler = Schedulers.io();
+        private Optional<Scheduler> scheduler = Optional.absent();
 
         BuilderObservable() {
         }
@@ -186,7 +187,7 @@ public final class Options {
          * @return this
          */
         public BuilderObservable scheduler(Scheduler scheduler) {
-            this.scheduler = scheduler;
+            this.scheduler = Optional.of(scheduler);
             return this;
         }
 
@@ -237,7 +238,8 @@ public final class Options {
         }
 
         public <T> Function<Observable<T>, Flowable<T>> serializer(final Serializer<T> serializer) {
-            final Options options = new Options(fileFactory, pageSizeBytes, scheduler);
+            Scheduler s = scheduler.isPresent() ? scheduler.get() : Schedulers.io();
+            final Options options = new Options(fileFactory, pageSizeBytes, s);
             return new Function<Observable<T>, Flowable<T>>() {
 
                 @Override

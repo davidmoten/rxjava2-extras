@@ -191,7 +191,7 @@ public final class RetryWhen {
 
         private Flowable<Long> delays = Flowable.just(0L).repeat();
         private Optional<Integer> maxRetries = Optional.absent();
-        private Optional<Scheduler> scheduler = Optional.of(Schedulers.computation());
+        private Optional<Scheduler> scheduler = Optional.absent();
         private Consumer<? super ErrorAndDuration> action = Consumers.doNothing();
 
         private Builder() {
@@ -298,7 +298,8 @@ public final class RetryWhen {
             if (maxRetries.isPresent()) {
                 delays = delays.take(maxRetries.get());
             }
-            return notificationHandler(delays, scheduler.get(), action, retryExceptions, failExceptions,
+            Scheduler s = scheduler.isPresent() ? scheduler.get() : Schedulers.computation();
+            return notificationHandler(delays, s, action, retryExceptions, failExceptions,
                     exceptionPredicate);
         }
 
