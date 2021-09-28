@@ -15,7 +15,7 @@ Features
 * [`Observable Transformers`](#transformers-observable)
 * [`Serialized`](#serialized)
 * tests pass on Linux, Windows 10, Solaris 10
-* supports Java 1.6+
+* supports Java 1.8+
 * requires rxjava 2.0.7+
 
 Status: *released to Maven Central*
