@@ -25,7 +25,7 @@
         <rxjava2.version>2.2.21</rxjava2.version>
 
         <cobertura.version>2.7</cobertura.version>
-        <checkstyle.version>2.16</checkstyle.version>
+        <checkstyle.version>3.1.1</checkstyle.version>
         <findbugs.version>2.5.4</findbugs.version>
         <javadoc.version>2.10.3</javadoc.version>
         <pmd.version>3.5</pmd.version>
