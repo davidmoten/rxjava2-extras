@@ -24,13 +24,13 @@
         <slf4j.version>1.7.32</slf4j.version>
         <rxjava2.version>2.2.21</rxjava2.version>
 
-        <javadoc.version>3.2.0</javadoc.version>
+        <javadoc.version>3.3.1</javadoc.version>
         <checkstyle.version>3.1.1</checkstyle.version>
         <pmd.version>3.15.0</pmd.version>
         <project.info.version>3.1.1</project.info.version>
         <jxr.version>3.1.1</jxr.version>
         <taglist.version>2.4</taglist.version>
-        <spotbugs.version>4.4.1</spotbugs.version>
+        <spotbugs.version>4.5.0.0</spotbugs.version>
         <m3.site.version>3.9.1</m3.site.version>
         <changelog.version>2.2</changelog.version>
         <changelog.version>2.2</changelog.version>
