@@ -34,7 +34,7 @@
         <m3.site.version>3.12.0</m3.site.version>
         <changelog.version>2.2</changelog.version>
         <changelog.version>2.2</changelog.version>
-        <bundle.plugin.version>5.1.4</bundle.plugin.version>
+        <bundle.plugin.version>5.1.5</bundle.plugin.version>
         <jacoco.version>0.8.8</jacoco.version>
 
     </properties>
