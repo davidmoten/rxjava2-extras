@@ -3,6 +3,7 @@ package com.github.davidmoten.rx2.buffertofile;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
 import java.util.concurrent.Callable;
 
 import org.reactivestreams.Publisher;
@@ -260,7 +261,7 @@ public final class Options {
             @Override
             public File call() {
                 try {
-                    return File.createTempFile(DEFAULT_FILE_PREFIX, ".obj");
+                    return Files.createTempFile(DEFAULT_FILE_PREFIX, ".obj").toFile();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
