@@ -35,7 +35,7 @@
         <changelog.version>2.2</changelog.version>
         <changelog.version>2.2</changelog.version>
         <bundle.plugin.version>5.1.8</bundle.plugin.version>
-        <jacoco.version>0.8.9</jacoco.version>
+        <jacoco.version>0.8.10</jacoco.version>
 
     </properties>
 
