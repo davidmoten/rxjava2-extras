@@ -27,7 +27,7 @@
         <javadoc.version>3.7.0</javadoc.version>
         <checkstyle.version>3.4.0</checkstyle.version>
         <pmd.version>3.23.0</pmd.version>
-        <project.info.version>3.6.0</project.info.version>
+        <project.info.version>3.6.1</project.info.version>
         <jxr.version>3.4.0</jxr.version>
         <taglist.version>3.0.0</taglist.version>
         <spotbugs.version>4.8.6.0</spotbugs.version>
