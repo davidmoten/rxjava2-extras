@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.github.davidmoten</groupId>
         <artifactId>sonatype-parent</artifactId>
-        <version>0.1</version>
+        <version>0.2.3</version>
     </parent>
     <artifactId>rxjava2-extras</artifactId>
     <version>0.2.3-SNAPSHOT</version>
