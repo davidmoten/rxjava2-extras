@@ -21,7 +21,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <jmh.version>1.37</jmh.version>
         <exec.version>3.6.3</exec.version>
-        <slf4j.version>1.7.33</slf4j.version>
+        <slf4j.version>2.0.18</slf4j.version>
         <rxjava2.version>2.2.21</rxjava2.version>
 
         <javadoc.version>3.12.0</javadoc.version>
