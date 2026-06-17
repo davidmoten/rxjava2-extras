@@ -59,7 +59,7 @@ public class FlowablesTest {
 
         timed.subscribe();
         try {
-            Thread.sleep(4000);
+            Thread.sleep(4500);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
